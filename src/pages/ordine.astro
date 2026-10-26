@@ -1,0 +1,433 @@
+---
+import Base from '../layouts/Base.astro';
+import TestataPagina from '../components/TestataPagina.astro';
+import Icona from '../components/Icona.astro';
+import { sito, linkWhatsApp } from '../lib/sito';
+
+const whatsapp = linkWhatsApp('Buongiorno, ho una domanda sul mio ordine.');
+---
+
+<Base titolo="Il tuo ordine" descrizione="Controlla lo stato del tuo ordine FGItalia." senzaWhatsapp>
+  <TestataPagina
+    sopratitolo="Ordini"
+    titolo="Segui il tuo ordine"
+    testo="Inserisci il numero d’ordine e l’email usata per l’acquisto, oppure apri il link che trovi nell’email di conferma."
+  />
+
+  <section class="contenitore ordine" data-ordine>
+    <div class="avviso avviso--attesa" data-vista="attesa" hidden>
+      <Icona nome="lucchetto" dimensione={28} />
+      <div>
+        <strong>Pagamento ricevuto, grazie!</strong>
+        <p>Stiamo registrando il tuo ordine: tra pochi secondi lo vedrai qui sotto e riceverai un’email di conferma.</p>
+      </div>
+    </div>
+
+    <form class="cerca" data-vista="cerca" data-cerca>
+      <label><span>Numero d’ordine</span><input name="n" required placeholder="FG-261026-ABCD" autocomplete="off" /></label>
+      <label><span>Email</span><input name="e" type="email" required autocomplete="email" /></label>
+      <button class="pulsante pulsante--primario" type="submit">Cerca l’ordine</button>
+      <p class="cerca__errore" role="alert" data-errore hidden></p>
+    </form>
+
+    <article class="dettaglio" data-vista="dettaglio" hidden>
+      <header>
+        <div>
+          <span class="sopratitolo">Ordine</span>
+          <h2 data-numero></h2>
+          <p data-data></p>
+        </div>
+        <span class="stato" data-stato></span>
+      </header>
+
+      <ol class="tappe" data-tappe>
+        <li data-tappa="ricevuto"><span><Icona nome="spunta" dimensione={18} /></span>Ricevuto</li>
+        <li data-tappa="in_lavorazione"><span><Icona nome="pacco" dimensione={18} /></span>In lavorazione</li>
+        <li data-tappa="spedito"><span><Icona nome="camion" dimensione={18} /></span>Spedito</li>
+        <li data-tappa="consegnato"><span><Icona nome="posizione" dimensione={18} /></span>Consegnato</li>
+      </ol>
+
+      <div class="consegna" data-consegna hidden></div>
+
+      <table class="prodotti">
+        <tbody data-righe></tbody>
+        <tfoot>
+          <tr><th scope="row">Spedizione</th><td data-spedizione></td></tr>
+          <tr class="prodotti__totale"><th scope="row">Totale (IVA inclusa)</th><td data-totale></td></tr>
+        </tfoot>
+      </table>
+
+      <h3>Aggiornamenti</h3>
+      <ul class="storico" data-storico></ul>
+
+      <p class="aiuto">
+        Hai domande sull’ordine? Scrivici a <a href={`mailto:${sito.email}`}>{sito.email}</a>{
+          whatsapp && (
+            <>
+              {' '}
+              o su{' '}
+              <a href={whatsapp} target="_blank" rel="noopener">
+                WhatsApp
+              </a>
+            </>
+          )
+        }.
+      </p>
+    </article>
+  </section>
+</Base>
+
+<script>
+  import { svuotaCarrello } from '../lib/carrello';
+  import { euro } from '../lib/negozio';
+
+  interface VistaOrdine {
+    numero: string;
+    creato: string;
+    stato: string;
+    statoTesto: string;
+    righe: { titolo: string; quantita: number; totaleCent: number }[];
+    totali: { spedizioneCent: number; totaleCent: number };
+    consegna?: { corriere?: string; tracking?: string; link?: string };
+    storico: { stato: string; data: string; nota?: string }[];
+  }
+
+  const TESTI: Record<string, string> = {
+    in_attesa_pagamento: 'In attesa di pagamento',
+    ricevuto: 'Ricevuto',
+    in_lavorazione: 'In lavorazione',
+    spedito: 'Spedito',
+    consegnato: 'Consegnato',
+    annullato: 'Annullato',
+  };
+  const ORDINE_TAPPE = ['ricevuto', 'in_lavorazione', 'spedito', 'consegnato'];
+
+  const radice = document.querySelector<HTMLElement>('[data-ordine]')!;
+  const $ = <T extends HTMLElement>(sel: string) => radice.querySelector<T>(sel)!;
+  const mostra = (...viste: string[]) =>
+    radice.querySelectorAll<HTMLElement>('[data-vista]').forEach((el) => (el.hidden = !viste.includes(el.dataset.vista!)));
+  const escape = (t: string) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+  const dataOra = (iso: string) =>
+    new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
+
+  function disegna(o: VistaOrdine) {
+    mostra('dettaglio');
+    $('[data-numero]').textContent = o.numero;
+    $('[data-data]').textContent = `Effettuato il ${dataOra(o.creato)}`;
+    const stato = $('[data-stato]');
+    stato.textContent = o.statoTesto;
+    stato.dataset.valore = o.stato;
+
+    const raggiunta = ORDINE_TAPPE.indexOf(o.stato);
+    radice.querySelectorAll<HTMLElement>('[data-tappa]').forEach((li) => {
+      li.classList.toggle('fatta', ORDINE_TAPPE.indexOf(li.dataset.tappa!) <= raggiunta);
+    });
+    $('[data-tappe]').hidden = o.stato === 'annullato' || o.stato === 'in_attesa_pagamento';
+
+    const c = o.consegna;
+    const consegna = $('[data-consegna]');
+    consegna.hidden = !(c && (c.corriere || c.tracking));
+    if (c) {
+      consegna.innerHTML = `<strong>Spedizione</strong>${c.corriere ? `<span>Corriere: ${escape(c.corriere)}</span>` : ''}${
+        c.tracking ? `<span>Tracciamento: ${escape(c.tracking)}</span>` : ''
+      }${c.link && /^https?:\/\//.test(c.link) ? `<a class="pulsante pulsante--scuro" href="${escape(c.link)}" target="_blank" rel="noopener">Traccia la spedizione</a>` : ''}`;
+    }
+
+    $('[data-righe]').innerHTML = o.righe
+      .map((r) => `<tr><th scope="row">${r.quantita} × ${escape(r.titolo)}</th><td>${euro(r.totaleCent)}</td></tr>`)
+      .join('');
+    $('[data-spedizione]').textContent = o.totali.spedizioneCent ? euro(o.totali.spedizioneCent) : 'Gratuita';
+    $('[data-totale]').textContent = euro(o.totali.totaleCent);
+    $('[data-storico]').innerHTML = [...o.storico]
+      .reverse()
+      .map(
+        (s) =>
+          `<li><time>${dataOra(s.data)}</time><strong>${TESTI[s.stato] ?? escape(s.stato)}</strong>${s.nota ? `<p>${escape(s.nota)}</p>` : ''}</li>`,
+      )
+      .join('');
+  }
+
+  async function carica(parametri: URLSearchParams): Promise<boolean> {
+    const risposta = await fetch(`/api/ordine?${parametri}`);
+    if (!risposta.ok) return false;
+    disegna(await risposta.json());
+    return true;
+  }
+
+  const url = new URLSearchParams(location.search);
+  if (url.get('n') && url.get('t')) {
+    const daPagamento = url.get('pagato') === '1';
+    if (daPagamento) {
+      svuotaCarrello();
+      mostra('attesa');
+    }
+    // dopo il pagamento Stripe avvisa il sito in pochi secondi: riprovo per un po'
+    const tentativi = daPagamento ? 15 : 1;
+    (async () => {
+      for (let i = 0; i < tentativi; i++) {
+        if (await carica(new URLSearchParams({ n: url.get('n')!, t: url.get('t')! }))) return;
+        if (i < tentativi - 1) await new Promise((r) => setTimeout(r, 2000));
+      }
+      if (!daPagamento) {
+        mostra('cerca');
+        $('[data-errore]').textContent = 'Link non valido: cerca l’ordine con numero ed email.';
+        $('[data-errore]').hidden = false;
+      }
+    })();
+  }
+
+  $<HTMLFormElement>('[data-cerca]').addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const dati = new FormData(e.target as HTMLFormElement);
+    const errore = $('[data-errore]');
+    errore.hidden = true;
+    const trovato = await carica(new URLSearchParams({ n: String(dati.get('n')).trim(), e: String(dati.get('e')).trim() }));
+    if (!trovato) {
+      errore.textContent = 'Ordine non trovato: controlla il numero e l’email.';
+      errore.hidden = false;
+    }
+  });
+</script>
+
+<style>
+  .ordine {
+    max-width: 820px;
+    padding-block: 16px clamp(56px, 9vw, 112px);
+  }
+
+  .avviso {
+    display: flex;
+    gap: 16px;
+    padding: 20px 24px;
+    margin-bottom: 24px;
+    border-radius: var(--raggio);
+    background: #ecfdf3;
+    color: #067647;
+  }
+
+  .avviso p {
+    margin: 4px 0 0;
+    color: var(--grigio-700);
+  }
+
+  .cerca {
+    display: grid;
+    grid-template-columns: 1fr 1fr auto;
+    align-items: end;
+    gap: 12px;
+    padding: 24px;
+    border-radius: 20px;
+    background: var(--bianco);
+    box-shadow: var(--ombra-forte);
+  }
+
+  .cerca label span {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--grigio-700);
+  }
+
+  .cerca input {
+    width: 100%;
+    padding: 13px 16px;
+    font: inherit;
+    border: 1px solid var(--grigio-300);
+    border-radius: 12px;
+  }
+
+  .cerca__errore {
+    grid-column: 1 / -1;
+    margin: 0;
+    color: #b42318;
+    font-weight: 600;
+  }
+
+  .dettaglio {
+    padding: clamp(20px, 4vw, 40px);
+    border-radius: 24px;
+    background: var(--bianco);
+    box-shadow: var(--ombra-forte);
+  }
+
+  .dettaglio header {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .dettaglio h2 {
+    margin: 0;
+    font-size: 1.6rem;
+  }
+
+  .dettaglio header p {
+    margin: 4px 0 0;
+    color: var(--grigio-500);
+  }
+
+  .stato {
+    align-self: flex-start;
+    padding: 6px 14px;
+    border-radius: 999px;
+    background: var(--blu-100);
+    color: var(--blu-700);
+    font-weight: 800;
+  }
+
+  .stato[data-valore='spedito'],
+  .stato[data-valore='consegnato'] {
+    background: #ecfdf3;
+    color: #067647;
+  }
+
+  .stato[data-valore='annullato'] {
+    background: #fef3f2;
+    color: #b42318;
+  }
+
+  .tappe {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    list-style: none;
+    margin: 0 0 28px;
+    padding: 0;
+    counter-reset: tappa;
+  }
+
+  .tappe li {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 8px;
+    font-size: 0.85rem;
+    font-weight: 700;
+    text-align: center;
+    color: var(--grigio-500);
+  }
+
+  .tappe li::before {
+    content: '';
+    position: absolute;
+    top: 19px;
+    right: 50%;
+    width: 100%;
+    height: 3px;
+    background: var(--grigio-200);
+    z-index: 0;
+  }
+
+  .tappe li:first-child::before {
+    display: none;
+  }
+
+  .tappe li span {
+    position: relative;
+    z-index: 1;
+    display: inline-flex;
+    width: 40px;
+    height: 40px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--grigio-200);
+    color: var(--grigio-500);
+  }
+
+  .tappe li.fatta {
+    color: var(--blu-900);
+  }
+
+  .tappe li.fatta span {
+    background: var(--accento);
+    color: var(--blu-900);
+  }
+
+  .tappe li.fatta::before {
+    background: var(--accento);
+  }
+
+  .consegna {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 20px;
+    padding: 16px 20px;
+    margin-bottom: 28px;
+    border-radius: 14px;
+    background: var(--blu-50);
+  }
+
+  .consegna[hidden] {
+    display: none;
+  }
+
+  .prodotti {
+    width: 100%;
+    border-collapse: collapse;
+    margin-bottom: 28px;
+  }
+
+  .prodotti :global(th),
+  .prodotti :global(td) {
+    padding: 10px 0;
+    border-bottom: 1px solid var(--grigio-200);
+    text-align: left;
+    font-weight: 400;
+  }
+
+  .prodotti :global(td) {
+    padding-left: 12px;
+    text-align: right;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .prodotti__totale th,
+  .prodotti__totale td {
+    font-weight: 800;
+    border-bottom: 0;
+  }
+
+  .storico {
+    list-style: none;
+    margin: 0 0 24px;
+    padding: 0;
+  }
+
+  .storico :global(li) {
+    padding: 10px 0 10px 16px;
+    border-left: 3px solid var(--blu-100);
+  }
+
+  .storico :global(time) {
+    display: block;
+    font-size: 0.82rem;
+    color: var(--grigio-500);
+  }
+
+  .storico :global(p) {
+    margin: 4px 0 0;
+    color: var(--grigio-700);
+  }
+
+  .aiuto {
+    margin: 0;
+    font-size: 0.92rem;
+    color: var(--grigio-700);
+  }
+
+  @media (max-width: 640px) {
+    .cerca {
+      grid-template-columns: 1fr;
+    }
+
+    .tappe li {
+      font-size: 0.72rem;
+    }
+  }
+</style>

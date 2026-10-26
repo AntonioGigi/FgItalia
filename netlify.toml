@@ -5,16 +5,11 @@
 [build.environment]
   NODE_VERSION = "22"
 
-# Vecchi indirizzi del sito WordPress → nuove pagine (mantiene i link e Google)
-[[redirects]]
-  from = "/apparecchiature-elettromedicali/*"
-  to = "/prodotti/"
-  status = 301
+# Funzioni server del negozio (pagamenti, ordini, avvisi) in netlify/functions
+[functions]
+  node_bundler = "esbuild"
 
-[[redirects]]
-  from = "/cookie-policy/"
-  to = "/privacy/"
-  status = 301
+# I reindirizzamenti dai vecchi indirizzi WordPress sono in public/_redirects
 
 [[headers]]
   for = "/*"

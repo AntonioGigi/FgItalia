@@ -1,0 +1,307 @@
+---
+import { render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import TestataPagina from '../../components/TestataPagina.astro';
+import Icona from '../../components/Icona.astro';
+import IscrizioneAvvisi from '../../components/IscrizioneAvvisi.astro';
+import { corsiPubblicati } from '../../lib/catalogo';
+import { formatoData, prezzo } from '../../lib/sito';
+
+const { prossimi, passati } = await corsiPubblicati();
+const conTesto = await Promise.all(prossimi.map(async (corso) => ({ corso, Content: (await render(corso)).Content })));
+---
+
+<Base titolo="Corsi di formazione" descrizione="Corsi teorico-pratici per fisioterapisti organizzati da FGItalia: tecnologie e tecniche per la riabilitazione.">
+  <TestataPagina
+    sopratitolo="Formazione"
+    titolo="Corsi per professionisti"
+    testo="Corsi teorico-pratici per conoscere le tecnologie e le tecniche più efficaci in riabilitazione. Iscriviti o chiedici di essere avvisato sui prossimi appuntamenti."
+    briciole={[{ href: '/corsi/', testo: 'Corsi' }]}
+  />
+
+  <section class="contenitore corsi">
+    <div>
+      <h2>Prossimi corsi</h2>
+      {
+        conTesto.length === 0 ? (
+          <div class="nessuno">
+            <Icona nome="calendario" dimensione={36} />
+            <p>
+              Al momento non ci sono corsi in calendario. Lascia i tuoi dati nel modulo: ti avvisiamo appena apriamo le
+              iscrizioni al prossimo corso.
+            </p>
+          </div>
+        ) : (
+          <ol class="elenco">
+            {conTesto.map(({ corso, Content }) => (
+              <li class="corso appare">
+                <div class="corso__data">
+                  <strong>{corso.data.data.getDate()}</strong>
+                  <span>{corso.data.data.toLocaleDateString('it-IT', { month: 'short' })}</span>
+                </div>
+                <div>
+                  <h3>{corso.data.titolo}</h3>
+                  <ul class="corso__info">
+                    <li>
+                      <Icona nome="calendario" dimensione={16} /> {formatoData.format(corso.data.data)}
+                      {corso.data.orario && ` · ${corso.data.orario}`}
+                    </li>
+                    {corso.data.luogo && (
+                      <li>
+                        <Icona nome="posizione" dimensione={16} /> {corso.data.luogo}
+                      </li>
+                    )}
+                    {corso.data.docente && (
+                      <li>
+                        <Icona nome="persone" dimensione={16} /> {corso.data.docente}
+                      </li>
+                    )}
+                    {corso.data.prezzo && (
+                      <li>
+                        <Icona nome="euro" dimensione={16} /> {prezzo(corso.data.prezzo)}
+                      </li>
+                    )}
+                  </ul>
+                  <div class="prosa">
+                    <Content />
+                  </div>
+                </div>
+              </li>
+            ))}
+          </ol>
+        )
+      }
+
+      {
+        passati.length > 0 && (
+          <>
+            <h2 class="passati__titolo">Corsi già svolti</h2>
+            <ul class="passati">
+              {passati.map((c) => (
+                <li>
+                  <time datetime={c.data.data.toISOString()}>{formatoData.format(c.data.data)}</time>
+                  <span>{c.data.titolo}</span>
+                </li>
+              ))}
+            </ul>
+          </>
+        )
+      }
+    </div>
+
+    <form class="modulo-corsi" id="iscrizione" name="corsi" method="POST" action="/grazie/" data-netlify="true" netlify-honeypot="sito-web">
+      <input type="hidden" name="form-name" value="corsi" />
+      <p hidden>
+        <label>Non compilare questo campo: <input name="sito-web" /></label>
+      </p>
+      <h2>{prossimi.length ? 'Iscriviti' : 'Avvisami sui prossimi corsi'}</h2>
+      <label>
+        <span>Corso</span>
+        <select name="corso">
+          {prossimi.map((c) => <option>{`${c.data.titolo} – ${formatoData.format(c.data.data)}`}</option>)}
+          <option>Avvisami sui prossimi corsi</option>
+        </select>
+      </label>
+      <label><span>Nome e cognome *</span><input name="nome" required autocomplete="name" /></label>
+      <label><span>Email *</span><input type="email" name="email" required autocomplete="email" /></label>
+      <label><span>Telefono</span><input type="tel" name="telefono" autocomplete="tel" /></label>
+      <label><span>Professione</span><input name="professione" placeholder="Es. fisioterapista" /></label>
+      <label class="modulo-corsi__privacy">
+        <input type="checkbox" name="privacy" required />
+        <span>Ho letto l’<a href="/privacy/" target="_blank">informativa privacy</a>. *</span>
+      </label>
+      <button class="pulsante pulsante--primario" type="submit">Invia <Icona nome="freccia" /></button>
+    </form>
+  </section>
+
+  <section class="contenitore avvisi-corsi">
+    <IscrizioneAvvisi titolo="Avvisami quando esce un nuovo corso" />
+  </section>
+</Base>
+
+<style>
+  .corsi {
+    display: grid;
+    grid-template-columns: 1.5fr 1fr;
+    gap: clamp(32px, 5vw, 64px);
+    align-items: start;
+    padding-block: 24px 56px;
+  }
+
+  .avvisi-corsi {
+    padding-bottom: clamp(56px, 9vw, 112px);
+  }
+
+  .corsi h2 {
+    font-size: 1.5rem;
+  }
+
+  .nessuno {
+    display: flex;
+    gap: 16px;
+    align-items: flex-start;
+    padding: 28px;
+    border-radius: var(--raggio);
+    background: var(--blu-50);
+    color: var(--blu-600);
+  }
+
+  .nessuno p {
+    margin: 0;
+    color: var(--grigio-700);
+  }
+
+  .elenco {
+    display: grid;
+    gap: 20px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .corso {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 24px;
+    padding: 28px;
+    border-radius: var(--raggio);
+    border: 1px solid var(--grigio-200);
+  }
+
+  .corso__data {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 76px;
+    height: 84px;
+    border-radius: 16px;
+    background: var(--blu-800);
+    color: var(--bianco);
+    text-transform: uppercase;
+  }
+
+  .corso__data strong {
+    font-size: 1.9rem;
+    line-height: 1;
+  }
+
+  .corso__data span {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--accento);
+  }
+
+  .corso__info {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px 18px;
+    list-style: none;
+    margin: 0 0 12px;
+    padding: 0;
+    font-size: 0.93rem;
+    font-weight: 600;
+    color: var(--grigio-700);
+  }
+
+  .corso__info li {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+  }
+
+  .passati__titolo {
+    margin-top: 48px;
+  }
+
+  .passati {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--grigio-200);
+  }
+
+  .passati li {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 4px 20px;
+    padding: 14px 0;
+    border-bottom: 1px solid var(--grigio-200);
+  }
+
+  .passati time {
+    min-width: 150px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--grigio-500);
+  }
+
+  .modulo-corsi {
+    display: grid;
+    gap: 16px;
+    padding: clamp(24px, 4vw, 36px);
+    border-radius: 24px;
+    background: var(--bianco);
+    box-shadow: var(--ombra-forte);
+    scroll-margin-top: 100px;
+  }
+
+  .modulo-corsi h2 {
+    margin: 0;
+  }
+
+  .modulo-corsi label > span {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--grigio-700);
+  }
+
+  .modulo-corsi input:not([type='checkbox']),
+  .modulo-corsi select {
+    width: 100%;
+    padding: 13px 16px;
+    font: inherit;
+    font-size: 1rem;
+    border: 1px solid var(--grigio-300);
+    border-radius: 12px;
+    background: var(--bianco);
+  }
+
+  .modulo-corsi input:focus,
+  .modulo-corsi select:focus {
+    outline: none;
+    border-color: var(--accento);
+    box-shadow: 0 0 0 4px rgb(248 200 0 / 0.2);
+  }
+
+  .modulo-corsi__privacy {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .modulo-corsi__privacy input {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    accent-color: var(--accento-testo);
+  }
+
+  .modulo-corsi__privacy span {
+    font-weight: 400 !important;
+  }
+
+  @media (max-width: 900px) {
+    .corsi {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .corso {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

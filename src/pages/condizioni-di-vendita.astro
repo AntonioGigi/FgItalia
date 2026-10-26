@@ -1,0 +1,93 @@
+---
+import Base from '../layouts/Base.astro';
+import TestataPagina from '../components/TestataPagina.astro';
+import { sito, indirizzoCompleto, prezzo } from '../lib/sito';
+
+const costoSpedizione = prezzo(sito.spedizione_costo);
+const soglia = sito.spedizione_gratis_da > 0 ? prezzo(sito.spedizione_gratis_da) : undefined;
+---
+
+<Base titolo="Condizioni di vendita" descrizione={`Condizioni generali di vendita online di ${sito.ragione_sociale}.`}>
+  <TestataPagina titolo="Condizioni di vendita" briciole={[{ href: '/condizioni-di-vendita/', testo: 'Condizioni di vendita' }]} />
+
+  <section class="contenitore">
+    <div class="prosa testo">
+      <h2>Venditore</h2>
+      <p>
+        {sito.ragione_sociale}, {indirizzoCompleto}, P.IVA {sito.piva}. Email <a href={`mailto:${sito.email}`}>{sito.email}</a>{
+          sito.telefono && `, telefono ${sito.telefono}`
+        }.
+      </p>
+
+      <h2>Prezzi e ordini</h2>
+      <p>
+        I prezzi del catalogo sono indicati in euro IVA esclusa; nel carrello e nella pagina di pagamento è mostrato il
+        totale IVA inclusa. Il contratto si conclude quando ricevi l’email di conferma dell’ordine.
+      </p>
+      <p>
+        I prodotti indicati come disponibili potrebbero non esserlo più per ragioni tecniche. In questo caso ti
+        avvisiamo subito via email o per telefono e potrai scegliere se attendere o annullare l’ordine con rimborso
+        completo.
+      </p>
+
+      <h2>Pagamenti</h2>
+      <p>
+        Puoi pagare con carta di credito o debito, PayPal, Apple Pay e Google Pay. I pagamenti avvengono sulla pagina
+        sicura di Stripe: i dati della carta non passano mai dal nostro sito.
+      </p>
+
+      <h2>Fattura</h2>
+      <p>
+        Per ricevere la fattura elettronica inserisci partita IVA e codice SDI o PEC (oppure il codice fiscale) nella
+        pagina di pagamento, oppure scrivici entro 4 giorni dall’ordine.
+      </p>
+
+      <h2>Spedizione</h2>
+      <p>
+        Spediamo in tutta Italia con corriere. Il costo di spedizione è di {costoSpedizione} IVA inclusa{
+          soglia && `, gratuito per ordini a partire da ${soglia} IVA esclusa`
+        }. Quando l’ordine parte ricevi un’email con il codice di tracciamento; lo stato dell’ordine è sempre
+        consultabile nella pagina <a href="/ordine/">Segui il tuo ordine</a>.
+      </p>
+      <p>
+        In caso di merce mancante o danneggiata, segnalacelo entro 3 giorni dalla consegna scrivendo a
+        <a href={`mailto:${sito.email}`}>{sito.email}</a>.
+      </p>
+
+      <h2>Diritto di recesso</h2>
+      <p>
+        Se acquisti come consumatore puoi recedere entro 14 giorni dal ricevimento della merce, alle seguenti
+        condizioni:
+      </p>
+      <ul>
+        <li>il recesso riguarda il prodotto acquistato nella sua interezza, non solo una parte (es. accessori);</li>
+        <li>non si applica ai prodotti sigillati una volta aperti (es. elettrodi e articoli monouso imbustati);</li>
+        <li>
+          il prodotto deve essere integro e restituito nell’imballo originale, completo di documentazione e accessori;
+        </li>
+        <li>le spese di restituzione sono a carico del cliente, che è responsabile della merce fino al suo arrivo da noi;</li>
+        <li>
+          non si applica agli articoli non a magazzino ordinati su richiesta specifica del cliente: in questo caso te lo
+          comunichiamo prima della conferma.
+        </li>
+      </ul>
+      <p>
+        Ricevuto e controllato il prodotto, rimborsiamo l’importo pagato entro 14 giorni con lo stesso metodo di
+        pagamento. Se l’imballo originale risulta danneggiato può essere trattenuto un contributo del 10% per il
+        ripristino della merce.
+      </p>
+
+      <h2>Garanzia</h2>
+      <p>I prodotti sono coperti dalla garanzia legale di conformità prevista dal Codice del Consumo.</p>
+
+      <h2>Legge applicabile</h2>
+      <p>Il contratto di vendita si intende concluso in Italia ed è regolato dalla legge italiana.</p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .testo {
+    padding-block: 24px clamp(56px, 9vw, 112px);
+  }
+</style>

@@ -1,0 +1,489 @@
+---
+import Base from '../layouts/Base.astro';
+import TestataPagina from '../components/TestataPagina.astro';
+import Icona from '../components/Icona.astro';
+import { sito } from '../lib/sito';
+---
+
+<Base titolo="Carrello" descrizione="Il tuo carrello FGItalia." senzaWhatsapp>
+  <TestataPagina titolo="Il tuo carrello" briciole={[{ href: '/carrello/', testo: 'Carrello' }]} />
+
+  <section class="contenitore carrello" data-carrello data-whatsapp={sito.whatsapp}>
+    <div class="carrello__caricamento" data-stato="caricamento">Caricamento del carrello…</div>
+
+    <div class="carrello__vuoto" data-stato="vuoto" hidden>
+      <Icona nome="carrello" dimensione={44} />
+      <h2>Il carrello è vuoto</h2>
+      <p>Sfoglia il catalogo e aggiungi i prodotti che ti servono.</p>
+      <a class="pulsante pulsante--primario" href="/prodotti/">Vai al catalogo <Icona nome="freccia" /></a>
+    </div>
+
+    <div class="carrello__griglia" data-stato="pieno" hidden>
+      <div>
+        <ul class="righe" data-righe></ul>
+        <p class="carrello__nota" data-nota-rimossi hidden>
+          Alcuni prodotti non sono più disponibili e sono stati tolti dal carrello.
+        </p>
+      </div>
+
+      <aside class="riepilogo">
+        <h2>Riepilogo</h2>
+        <dl>
+          <div><dt>Prodotti</dt><dd data-prodotti></dd></div>
+          <div><dt>Spedizione</dt><dd data-spedizione></dd></div>
+          <div class="riepilogo__totale"><dt>Totale</dt><dd data-totale></dd></div>
+        </dl>
+        <p class="riepilogo__iva">IVA inclusa (<span data-iva></span>)</p>
+        <p class="riepilogo__soglia" data-soglia hidden></p>
+
+        <label class="riepilogo__condizioni">
+          <input type="checkbox" data-condizioni />
+          <span>Ho letto e accetto le <a href="/condizioni-di-vendita/" target="_blank">condizioni di vendita</a></span>
+        </label>
+
+        <button class="pulsante pulsante--primario riepilogo__paga" type="button" data-paga>
+          <Icona nome="lucchetto" /> Paga in sicurezza
+        </button>
+        <p class="riepilogo__metodi">Carta di credito o debito · PayPal · Apple Pay · Google Pay</p>
+        <p class="riepilogo__errore" role="alert" data-errore hidden></p>
+
+        {
+          sito.whatsapp && (
+            <>
+              <div class="riepilogo__oppure">
+                <span>oppure</span>
+              </div>
+              <button class="pulsante pulsante--whatsapp riepilogo__paga" type="button" data-whatsapp-ordine>
+                <Icona nome="whatsapp" /> Ordina su WhatsApp
+              </button>
+              <p class="riepilogo__metodi">Ti rispondiamo con conferma, tempi di consegna e modalità di pagamento.</p>
+            </>
+          )
+        }
+
+        <p class="riepilogo__fattura">
+          <Icona nome="documento" dimensione={16} /> Ti serve la fattura? Inserisci partita IVA e codice SDI o PEC nella pagina
+          di pagamento.
+        </p>
+      </aside>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { caricaCatalogo, impostaQuantita, leggiCarrello, EVENTO } from '../lib/carrello';
+  import { calcolaTotali, euro, normalizzaCarrello, type Catalogo } from '../lib/negozio';
+
+  const radice = document.querySelector<HTMLElement>('[data-carrello]')!;
+  const $ = <T extends HTMLElement>(sel: string) => radice.querySelector<T>(sel)!;
+  const mostra = (stato: string) =>
+    radice.querySelectorAll<HTMLElement>('[data-stato]').forEach((el) => (el.hidden = el.dataset.stato !== stato));
+
+  const escape = (t: string) => t.replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+
+  let catalogo: Catalogo;
+
+  function disegna() {
+    const salvato = leggiCarrello();
+    const valido = normalizzaCarrello(salvato, catalogo);
+    $('[data-nota-rimossi]').hidden = valido.length === salvato.length;
+    const t = calcolaTotali(valido, catalogo);
+    if (t.righe.length === 0) return mostra('vuoto');
+    mostra('pieno');
+
+    $('[data-righe]').innerHTML = t.righe
+      .map(
+        (r) => `<li class="riga" data-id="${escape(r.id)}">
+          <a class="riga__foto" href="/prodotti/${escape(r.id)}/">${r.immagine ? `<img src="${escape(r.immagine)}" alt="" loading="lazy">` : ''}</a>
+          <div class="riga__info">
+            <a href="/prodotti/${escape(r.id)}/">${escape(r.titolo)}</a>
+            <span>${euro(r.unitarioCent)} cad. IVA inclusa</span>
+          </div>
+          <div class="riga__quantita" role="group" aria-label="Quantità di ${escape(r.titolo)}">
+            <button type="button" data-cambia="-1" aria-label="Diminuisci">−</button>
+            <span>${r.quantita}</span>
+            <button type="button" data-cambia="1" aria-label="Aumenta">+</button>
+          </div>
+          <strong class="riga__totale">${euro(r.totaleCent)}</strong>
+          <button class="riga__rimuovi" type="button" data-rimuovi aria-label="Rimuovi ${escape(r.titolo)}">×</button>
+        </li>`,
+      )
+      .join('');
+
+    $('[data-prodotti]').textContent = euro(t.prodottiCent);
+    $('[data-spedizione]').textContent = t.spedizioneCent ? euro(t.spedizioneCent) : 'Gratuita';
+    $('[data-totale]').textContent = euro(t.totaleCent);
+    $('[data-iva]').textContent = `di cui IVA ${euro(t.ivaCent)}`;
+    const soglia = $('[data-soglia]');
+    soglia.hidden = !t.mancaPerGratisCent;
+    soglia.textContent = `Aggiungi altri ${euro(t.mancaPerGratisCent)} (IVA esclusa) per la spedizione gratuita.`;
+  }
+
+  radice.addEventListener('click', async (e) => {
+    const bersaglio = e.target as HTMLElement;
+    const riga = bersaglio.closest<HTMLElement>('[data-id]');
+    if (riga) {
+      const id = riga.dataset.id!;
+      const attuale = leggiCarrello().find((r) => r.id === id)?.quantita ?? 0;
+      const cambio = bersaglio.closest<HTMLElement>('[data-cambia]');
+      if (cambio) impostaQuantita(id, attuale + Number(cambio.dataset.cambia));
+      if (bersaglio.closest('[data-rimuovi]')) impostaQuantita(id, 0);
+      return;
+    }
+
+    if (bersaglio.closest('[data-whatsapp-ordine]')) {
+      const t = calcolaTotali(leggiCarrello(), catalogo);
+      const elenco = t.righe.map((r) => `• ${r.quantita} × ${r.titolo}`).join('\n');
+      const testo = `Buongiorno, vorrei ordinare:\n${elenco}\n\nTotale indicativo: ${euro(t.totaleCent)} IVA inclusa`;
+      const numero = (radice.dataset.whatsapp ?? '').replace(/\D/g, '');
+      window.open(`https://wa.me/${numero.startsWith('39') ? numero : `39${numero}`}?text=${encodeURIComponent(testo)}`, '_blank');
+      return;
+    }
+
+    const paga = bersaglio.closest<HTMLButtonElement>('[data-paga]');
+    if (paga) {
+      const errore = $('[data-errore]');
+      errore.hidden = true;
+      if (!$<HTMLInputElement>('[data-condizioni]').checked) {
+        errore.textContent = 'Per continuare accetta le condizioni di vendita.';
+        errore.hidden = false;
+        return;
+      }
+      paga.disabled = true;
+      paga.textContent = 'Apertura del pagamento sicuro…';
+      try {
+        const risposta = await fetch('/api/checkout', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ carrello: leggiCarrello() }),
+        });
+        const dati = await risposta.json().catch(() => ({}));
+        if (!risposta.ok || !dati.url) throw new Error(dati.errore);
+        location.href = dati.url;
+      } catch (err) {
+        errore.textContent =
+          (err as Error).message || 'Non è stato possibile avviare il pagamento. Riprova o ordina su WhatsApp.';
+        errore.hidden = false;
+        paga.disabled = false;
+        paga.textContent = 'Paga in sicurezza';
+      }
+    }
+  });
+
+  caricaCatalogo()
+    .then((c) => {
+      catalogo = c;
+      if (!c.negozioAttivo) radice.querySelectorAll<HTMLElement>('[data-paga], [data-paga] + .riepilogo__metodi').forEach((el) => (el.hidden = true));
+      disegna();
+      window.addEventListener(EVENTO, disegna);
+      window.addEventListener('storage', disegna);
+    })
+    .catch(() => {
+      $('[data-stato="caricamento"]').textContent = 'Non è stato possibile caricare il carrello. Ricarica la pagina.';
+    });
+</script>
+
+<style>
+  .carrello {
+    padding-block: 16px clamp(56px, 9vw, 112px);
+  }
+
+  .carrello__caricamento {
+    padding: 48px 0;
+    color: var(--grigio-500);
+  }
+
+  .carrello__vuoto {
+    text-align: center;
+    padding: 64px 24px;
+    border-radius: var(--raggio);
+    background: var(--blu-50);
+    color: var(--blu-600);
+  }
+
+  .carrello__vuoto svg {
+    margin: 0 auto 12px;
+  }
+
+  .carrello__vuoto p {
+    color: var(--grigio-700);
+  }
+
+  .carrello__griglia {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: clamp(24px, 4vw, 48px);
+    align-items: start;
+  }
+
+  .carrello__griglia[hidden] {
+    display: none;
+  }
+
+  .righe {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    border-top: 1px solid var(--grigio-200);
+  }
+
+  .righe :global(.riga) {
+    display: grid;
+    grid-template-columns: 76px 1fr auto auto 32px;
+    align-items: center;
+    gap: 16px;
+    padding: 16px 0;
+    border-bottom: 1px solid var(--grigio-200);
+  }
+
+  .righe :global(.riga__foto) {
+    width: 76px;
+    height: 76px;
+    border-radius: 12px;
+    background: var(--grigio-100);
+    overflow: hidden;
+  }
+
+  .righe :global(.riga__foto img) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 6px;
+    mix-blend-mode: multiply;
+  }
+
+  .righe :global(.riga__info a) {
+    display: block;
+    font-weight: 700;
+    color: var(--blu-900);
+    text-decoration: none;
+  }
+
+  .righe :global(.riga__info span) {
+    font-size: 0.85rem;
+    color: var(--grigio-500);
+  }
+
+  .righe :global(.riga__quantita) {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--grigio-300);
+    border-radius: 999px;
+  }
+
+  .righe :global(.riga__quantita button) {
+    width: 36px;
+    height: 36px;
+    border: 0;
+    background: none;
+    font-size: 1.1rem;
+    color: var(--blu-900);
+    cursor: pointer;
+  }
+
+  .righe :global(.riga__quantita span) {
+    min-width: 24px;
+    text-align: center;
+    font-weight: 700;
+  }
+
+  .righe :global(.riga__totale) {
+    min-width: 96px;
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .righe :global(.riga__rimuovi) {
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--grigio-100);
+    font-size: 1.2rem;
+    color: var(--grigio-700);
+    cursor: pointer;
+  }
+
+  .carrello__nota {
+    margin-top: 16px;
+    color: #b42318;
+    font-weight: 600;
+  }
+
+  .riepilogo {
+    position: sticky;
+    top: 100px;
+    padding: clamp(20px, 3vw, 32px);
+    border-radius: 24px;
+    background: var(--bianco);
+    box-shadow: var(--ombra-forte);
+  }
+
+  .riepilogo h2 {
+    font-size: 1.4rem;
+  }
+
+  .riepilogo dl {
+    margin: 0;
+  }
+
+  .riepilogo dl div {
+    display: flex;
+    justify-content: space-between;
+    padding: 8px 0;
+  }
+
+  .riepilogo dt {
+    color: var(--grigio-700);
+  }
+
+  .riepilogo dd {
+    margin: 0;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .riepilogo .riepilogo__totale {
+    margin-top: 8px;
+    padding-top: 16px;
+    border-top: 1px solid var(--grigio-200);
+    font-size: 1.3rem;
+  }
+
+  .riepilogo__totale dt {
+    color: var(--blu-900);
+    font-weight: 800;
+  }
+
+  .riepilogo__iva {
+    margin: 0;
+    text-align: right;
+    font-size: 0.85rem;
+    color: var(--grigio-500);
+  }
+
+  .riepilogo__soglia {
+    margin: 16px 0 0;
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: var(--accento-chiaro);
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .riepilogo__condizioni {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    margin: 20px 0 16px;
+    font-size: 0.92rem;
+  }
+
+  .riepilogo__condizioni input {
+    width: 20px;
+    height: 20px;
+    margin-top: 1px;
+    flex-shrink: 0;
+    accent-color: var(--blu-700);
+  }
+
+  .riepilogo__paga {
+    width: 100%;
+  }
+
+  .riepilogo__paga:disabled {
+    opacity: 0.7;
+    cursor: wait;
+  }
+
+  .riepilogo__metodi {
+    margin: 8px 0 0;
+    text-align: center;
+    font-size: 0.82rem;
+    color: var(--grigio-500);
+  }
+
+  .riepilogo__errore {
+    margin: 12px 0 0;
+    padding: 10px 14px;
+    border-radius: 10px;
+    background: #fef3f2;
+    color: #b42318;
+    font-size: 0.9rem;
+    font-weight: 600;
+  }
+
+  .riepilogo__oppure {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 20px 0;
+    font-size: 0.85rem;
+    color: var(--grigio-500);
+  }
+
+  .riepilogo__oppure::before,
+  .riepilogo__oppure::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--grigio-200);
+  }
+
+  .riepilogo__fattura {
+    display: flex;
+    gap: 8px;
+    margin: 20px 0 0;
+    padding-top: 16px;
+    border-top: 1px solid var(--grigio-200);
+    font-size: 0.85rem;
+    color: var(--grigio-700);
+  }
+
+  .riepilogo__fattura svg {
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+
+  @media (max-width: 900px) {
+    .carrello__griglia {
+      grid-template-columns: 1fr;
+    }
+
+    .riepilogo {
+      position: static;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .righe :global(.riga) {
+      grid-template-columns: 64px 1fr auto;
+      grid-template-areas: 'foto info rimuovi' 'foto quantita totale';
+      gap: 8px 12px;
+    }
+
+    .righe :global(.riga__foto) {
+      grid-area: foto;
+      width: 64px;
+      height: 64px;
+    }
+
+    .righe :global(.riga__info) {
+      grid-area: info;
+    }
+
+    .righe :global(.riga__quantita) {
+      grid-area: quantita;
+      justify-self: start;
+    }
+
+    .righe :global(.riga__totale) {
+      grid-area: totale;
+      min-width: 0;
+    }
+
+    .righe :global(.riga__rimuovi) {
+      grid-area: rimuovi;
+    }
+  }
+</style>

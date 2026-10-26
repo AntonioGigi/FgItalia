@@ -1,15 +1,16 @@
 @import '@fontsource-variable/plus-jakarta-sans';
 
 :root {
-  --blu-900: #062a3a;
-  --blu-800: #0a3d54;
-  --blu-700: #0d5674;
-  --blu-600: #0f6f95;
-  --blu-100: #e3f2f8;
-  --blu-50: #f2f9fc;
-  --verde: #12b3a3;
-  --verde-scuro: #0b8a7e;
-  --verde-chiaro: #dcf6f2;
+  /* colori del logo FGItalia: blu reale e giallo */
+  --blu-900: #08163f;
+  --blu-800: #0c2566;
+  --blu-700: #003098;
+  --blu-600: #1d4fd1;
+  --blu-100: #e6edfc;
+  --blu-50: #f4f7fe;
+  --accento: #f8c800;
+  --accento-testo: #1d4fd1;
+  --accento-chiaro: #fff3c4;
   --grigio-900: #14212b;
   --grigio-700: #3d4d59;
   --grigio-500: #6b7b87;
@@ -22,8 +23,8 @@
   --font: 'Plus Jakarta Sans Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
   --raggio: 18px;
   --raggio-sm: 10px;
-  --ombra: 0 1px 2px rgb(6 42 58 / 0.06), 0 8px 24px rgb(6 42 58 / 0.08);
-  --ombra-forte: 0 2px 4px rgb(6 42 58 / 0.08), 0 20px 48px rgb(6 42 58 / 0.16);
+  --ombra: 0 1px 2px rgb(8 22 63 / 0.06), 0 8px 24px rgb(8 22 63 / 0.08);
+  --ombra-forte: 0 2px 4px rgb(8 22 63 / 0.08), 0 20px 48px rgb(8 22 63 / 0.16);
   --larghezza: 1200px;
   --gutter: clamp(16px, 4vw, 32px);
 }
@@ -109,7 +110,7 @@ p {
 }
 
 :focus-visible {
-  outline: 3px solid var(--verde);
+  outline: 3px solid var(--accento);
   outline-offset: 3px;
   border-radius: 4px;
 }
@@ -147,7 +148,7 @@ p {
   font-weight: 700;
   letter-spacing: 0.12em;
   text-transform: uppercase;
-  color: var(--verde-scuro);
+  color: var(--accento-testo);
   margin-bottom: 12px;
 }
 
@@ -192,13 +193,13 @@ p {
 }
 
 .pulsante--primario {
-  background: var(--verde);
+  background: var(--accento);
   color: var(--blu-900);
-  box-shadow: 0 6px 20px rgb(18 179 163 / 0.35);
+  box-shadow: 0 6px 20px rgb(248 200 0 / 0.35);
 }
 
 .pulsante--primario:hover {
-  background: #19c7b6;
+  background: #ffd633;
   color: var(--blu-900);
 }
 
@@ -259,9 +260,9 @@ p {
   font-weight: 700;
 }
 
-.etichetta--verde {
-  background: var(--verde-chiaro);
-  color: var(--verde-scuro);
+.etichetta--accento {
+  background: var(--accento-chiaro);
+  color: var(--accento-testo);
 }
 
 .prosa {
@@ -339,4 +340,11 @@ p {
 
 [hidden] {
   display: none !important;
+}
+
+@media (max-width: 560px) {
+  .griglia--prodotti {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
 }

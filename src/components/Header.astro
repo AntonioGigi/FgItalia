@@ -6,8 +6,8 @@ import { sito, soloCifre } from '../lib/sito';
 const voci = [
   { href: '/', testo: 'Home' },
   { href: '/prodotti/', testo: 'Prodotti' },
+  { href: '/corsi/', testo: 'Corsi' },
   { href: '/chi-siamo/', testo: 'Chi siamo' },
-  { href: '/novita/', testo: 'Novità' },
   { href: '/contatti/', testo: 'Contatti' },
 ];
 
@@ -53,6 +53,16 @@ const attiva = (href: string) => (href === '/' ? percorso === '/' : percorso.sta
         )
       }
       <a class="pulsante pulsante--primario testata__cta" href="/contatti/#preventivo">Preventivo</a>
+      {
+        sito.negozio_attivo && (
+          <a class="testata__carrello" href="/carrello/" aria-label="Carrello">
+            <Icona nome="carrello" />
+            <span class="testata__conta" data-conta-carrello hidden>
+              0
+            </span>
+          </a>
+        )
+      }
       <button class="testata__hamburger" type="button" aria-expanded="false" aria-controls="menu-principale" data-hamburger>
         <span class="solo-lettori">Apri il menu</span>
         <Icona nome="menu" class="icona-apri" />
@@ -63,6 +73,19 @@ const attiva = (href: string) => (href === '/' ? percorso === '/' : percorso.sta
 </header>
 
 <script>
+  import { EVENTO, pezziNelCarrello } from '../lib/carrello';
+
+  const conta = document.querySelector<HTMLElement>('[data-conta-carrello]');
+  const aggiornaConta = () => {
+    if (!conta) return;
+    const n = pezziNelCarrello();
+    conta.textContent = String(n);
+    conta.hidden = n === 0;
+  };
+  aggiornaConta();
+  window.addEventListener(EVENTO, aggiornaConta);
+  window.addEventListener('storage', aggiornaConta);
+
   const testata = document.querySelector<HTMLElement>('[data-testata]');
   const bottone = document.querySelector<HTMLButtonElement>('[data-hamburger]');
 
@@ -92,7 +115,7 @@ const attiva = (href: string) => (href === '/' ? percorso === '/' : percorso.sta
 
   .testata--scorsa {
     border-bottom-color: var(--grigio-200);
-    box-shadow: 0 4px 20px rgb(6 42 58 / 0.05);
+    box-shadow: 0 4px 20px rgb(8 22 63 / 0.05);
   }
 
   .testata__barra {
@@ -154,6 +177,39 @@ const attiva = (href: string) => (href === '/' ? percorso === '/' : percorso.sta
 
   .testata__cta {
     padding: 11px 20px;
+  }
+
+  .testata__carrello {
+    position: relative;
+    display: inline-flex;
+    width: 46px;
+    height: 46px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    color: var(--blu-900);
+    transition: background-color 0.15s ease;
+  }
+
+  .testata__carrello:hover {
+    background: var(--grigio-100);
+    color: var(--blu-900);
+  }
+
+  .testata__conta {
+    position: absolute;
+    top: 2px;
+    right: 0;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 5px;
+    border-radius: 999px;
+    background: var(--accento);
+    color: var(--blu-900);
+    font-size: 0.75rem;
+    font-weight: 800;
+    line-height: 20px;
+    text-align: center;
   }
 
   .testata__hamburger {
@@ -239,7 +295,7 @@ const attiva = (href: string) => (href === '/' ? percorso === '/' : percorso.sta
     .menu a:hover,
     .menu a[aria-current='page'] {
       background: none;
-      color: var(--verde-scuro);
+      color: var(--accento-testo);
     }
 
     .menu__mobile-extra {

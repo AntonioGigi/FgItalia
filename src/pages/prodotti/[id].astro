@@ -5,7 +5,7 @@ import Icona from '../../components/Icona.astro';
 import Condividi from '../../components/Condividi.astro';
 import CardProdotto from '../../components/CardProdotto.astro';
 import { prodottiPubblicati, type Prodotto } from '../../lib/catalogo';
-import { sito, soloCifre, linkWhatsApp } from '../../lib/sito';
+import { sito, soloCifre, linkWhatsApp, prezzo, statiDisponibilita } from '../../lib/sito';
 
 export async function getStaticPaths() {
   const prodotti = await prodottiPubblicati();
@@ -18,7 +18,12 @@ interface Props {
 }
 
 const { prodotto, tutti } = Astro.props;
-const { titolo, codice, descrizione_breve, immagini, specifiche, scheda_pdf } = prodotto.data;
+const { titolo, codice, descrizione_breve, immagini, specifiche, scheda_pdf, sottocategoria } = prodotto.data;
+const prezzoTesto = prezzo(prodotto.data.prezzo);
+const { disponibilita } = prodotto.data;
+const esaurito = disponibilita === 'esaurito';
+const acquistabileOnline = sito.negozio_attivo && !!prodotto.data.prezzo && !esaurito;
+const haDescrizione = prodotto.body?.trim().length;
 const categoria = await getEntry(prodotto.data.categoria);
 const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefined;
 const { Content } = await render(prodotto);
@@ -27,7 +32,10 @@ const correlati = tutti
   .filter((p) => p.id !== prodotto.id && p.data.categoria.id === prodotto.data.categoria.id)
   .slice(0, 3);
 
-const richiesta = `Buongiorno, vorrei informazioni e un preventivo per: ${titolo}${codice ? ` (cod. ${codice})` : ''}.`;
+const nomeCompleto = `${titolo}${codice ? ` (cod. ${codice})` : ''}`;
+const richiesta = esaurito
+  ? `Buongiorno, vorrei essere avvisato quando torna disponibile: ${nomeCompleto}.`
+  : `Buongiorno, vorrei ordinare o ricevere informazioni su: ${nomeCompleto}.`;
 const whatsapp = linkWhatsApp(richiesta);
 const linkPreventivo = `/contatti/?prodotto=${encodeURIComponent(titolo)}#preventivo`;
 
@@ -40,6 +48,15 @@ const datiStrutturati = {
   ...(immagini.length && { image: immagini.map((i) => new URL(i, Astro.site).toString()) }),
   ...(marca && { brand: { '@type': 'Brand', name: marca.data.nome } }),
   ...(categoria && { category: categoria.data.titolo }),
+  ...(prodotto.data.prezzo && {
+    offers: {
+      '@type': 'Offer',
+      price: prodotto.data.prezzo.toFixed(2),
+      priceCurrency: 'EUR',
+      availability: statiDisponibilita[disponibilita].schema,
+      priceSpecification: { '@type': 'PriceSpecification', valueAddedTaxIncluded: false },
+    },
+  }),
 };
 ---
 
@@ -83,21 +100,72 @@ const datiStrutturati = {
         <div class="scheda__info">
           <div class="scheda__etichette">
             {categoria && <a class="etichetta" href={`/categorie/${categoria.id}/`}>{categoria.data.titolo}</a>}
-            {marca && <span class="etichetta etichetta--verde">{marca.data.nome}</span>}
+            {sottocategoria && <span class="etichetta">{sottocategoria}</span>}
+            {marca && <span class="etichetta etichetta--accento">{marca.data.nome}</span>}
           </div>
           <h1>{titolo}</h1>
           {codice && <p class="scheda__codice">Codice: {codice}</p>}
           <p class="scheda__breve">{descrizione_breve}</p>
 
+          <p class:list={['scheda__stato', `scheda__stato--${disponibilita}`]}>
+            <span></span>
+            {statiDisponibilita[disponibilita].etichetta}
+            {disponibilita === 'esaurito' && ' – momentaneamente non ordinabile'}
+            {disponibilita === 'su_ordinazione' && ' – chiedici i tempi di consegna'}
+          </p>
+
+          <div class="scheda__prezzo">
+            {
+              prezzoTesto ? (
+                <>
+                  <strong>{prezzoTesto}</strong>
+                  <span>+ IVA</span>
+                </>
+              ) : (
+                <strong class="scheda__prezzo--richiesta">Prezzo su richiesta</strong>
+              )
+            }
+          </div>
+
+          {
+            acquistabileOnline && (
+              <form class="acquisto" data-acquisto={prodotto.id} onsubmit="return false">
+                <div class="quantita" role="group" aria-label="Quantità">
+                  <button type="button" data-meno aria-label="Diminuisci la quantità">
+                    <Icona nome="meno" dimensione={18} />
+                  </button>
+                  <input type="number" name="quantita" value="1" min="1" max="99" inputmode="numeric" aria-label="Quantità" />
+                  <button type="button" data-piu aria-label="Aumenta la quantità">
+                    <Icona nome="piu" dimensione={18} />
+                  </button>
+                </div>
+                <button class="pulsante pulsante--primario acquisto__aggiungi" type="submit">
+                  <Icona nome="carrello" /> Aggiungi al carrello
+                </button>
+                <p class="acquisto__avviso" role="status" data-avviso hidden>
+                  <Icona nome="spunta" dimensione={18} /> Aggiunto al carrello · <a href="/carrello/">Vai al carrello</a>
+                </p>
+                <p class="acquisto__pagamenti">
+                  <Icona nome="lucchetto" dimensione={16} /> Pagamento sicuro con carta, PayPal, Apple Pay e Google Pay
+                </p>
+              </form>
+            )
+          }
+
           <div class="scheda__azioni">
-            <a class="pulsante pulsante--primario" href={linkPreventivo}>Richiedi preventivo <Icona nome="freccia" /></a>
             {
               whatsapp && (
-                <a class="pulsante pulsante--whatsapp" href={whatsapp} target="_blank" rel="noopener">
-                  <Icona nome="whatsapp" /> Chiedi su WhatsApp
+                <a
+                  class:list={['pulsante', acquistabileOnline ? 'pulsante--contorno' : 'pulsante--whatsapp']}
+                  href={whatsapp}
+                  target="_blank"
+                  rel="noopener"
+                >
+                  <Icona nome="whatsapp" /> {esaurito ? 'Avvisami su WhatsApp' : 'Ordina su WhatsApp'}
                 </a>
               )
             }
+            <a class="pulsante pulsante--contorno" href={linkPreventivo}>Richiedi informazioni</a>
             {
               !whatsapp && sito.telefono && (
                 <a class="pulsante pulsante--contorno" href={`tel:${soloCifre(sito.telefono)}`}>
@@ -130,38 +198,48 @@ const datiStrutturati = {
     </div>
   </section>
 
-  <section class="sezione dettagli">
-    <div class="contenitore dettagli__griglia">
-      <div>
-        <h2>Descrizione</h2>
-        <div class="prosa"><Content /></div>
-      </div>
-      {
-        specifiche.length > 0 && (
-          <div>
-            <h2>Specifiche tecniche</h2>
-            <table class="specifiche">
-              <tbody>
-                {specifiche.map((s) => (
-                  <tr>
-                    <th scope="row">{s.nome}</th>
-                    <td>{s.valore}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )
-      }
-    </div>
-  </section>
+  {
+    (haDescrizione || specifiche.length > 0) && (
+      <section class="sezione dettagli">
+        <div class="contenitore dettagli__griglia">
+          {
+            haDescrizione ? (
+              <div>
+                <h2>Descrizione</h2>
+                <div class="prosa">
+                  <Content />
+                </div>
+              </div>
+            ) : null
+          }
+          {
+            specifiche.length > 0 && (
+              <div>
+                <h2>Specifiche tecniche</h2>
+                <table class="specifiche">
+                  <tbody>
+                    {specifiche.map((s) => (
+                      <tr>
+                        <th scope="row">{s.nome}</th>
+                        <td>{s.valore}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          }
+        </div>
+      </section>
+    )
+  }
 
   {
     correlati.length > 0 && (
       <section class="sezione sezione--chiara">
         <div class="contenitore">
           <h2>Altri prodotti in {categoria?.data.titolo}</h2>
-          <div class="griglia correlati">
+          <div class="griglia griglia--prodotti correlati">
             {correlati.map((p) => (
               <CardProdotto prodotto={p} />
             ))}
@@ -173,6 +251,21 @@ const datiStrutturati = {
 </Base>
 
 <script>
+  import { aggiungi } from '../../lib/carrello';
+
+  document.querySelectorAll<HTMLFormElement>('[data-acquisto]').forEach((modulo) => {
+    const campo = modulo.querySelector<HTMLInputElement>('input[name="quantita"]')!;
+    const avviso = modulo.querySelector<HTMLElement>('[data-avviso]');
+    const leggi = () => Math.min(99, Math.max(1, Math.floor(Number(campo.value)) || 1));
+    modulo.querySelector('[data-meno]')?.addEventListener('click', () => (campo.value = String(Math.max(1, leggi() - 1))));
+    modulo.querySelector('[data-piu]')?.addEventListener('click', () => (campo.value = String(Math.min(99, leggi() + 1))));
+    modulo.addEventListener('submit', () => {
+      aggiungi(modulo.dataset.acquisto!, leggi());
+      campo.value = '1';
+      if (avviso) avviso.hidden = false;
+    });
+  });
+
   document.querySelectorAll<HTMLElement>('[data-galleria]').forEach((galleria) => {
     const principale = galleria.querySelector<HTMLImageElement>('[data-principale]');
     const miniature = galleria.querySelectorAll<HTMLButtonElement>('[data-miniatura]');
@@ -243,7 +336,7 @@ const datiStrutturati = {
     justify-content: center;
     gap: 12px;
     color: var(--blu-600);
-    background: linear-gradient(135deg, var(--blu-50), var(--verde-chiaro));
+    background: linear-gradient(135deg, var(--blu-50), var(--accento-chiaro));
     font-weight: 600;
   }
 
@@ -267,7 +360,7 @@ const datiStrutturati = {
   }
 
   .galleria__miniature button[aria-current='true'] {
-    border-color: var(--verde);
+    border-color: var(--accento);
   }
 
   .galleria__miniature img {
@@ -302,6 +395,118 @@ const datiStrutturati = {
     font-size: 1.12rem;
     color: var(--grigio-700);
     margin-bottom: 28px;
+  }
+
+  .scheda__stato {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+    font-size: 0.95rem;
+    font-weight: 700;
+    color: #067647;
+  }
+
+  .scheda__stato span {
+    width: 9px;
+    height: 9px;
+    border-radius: 50%;
+    background: currentColor;
+  }
+
+  .scheda__stato--su_ordinazione {
+    color: var(--blu-700);
+  }
+
+  .scheda__stato--esaurito {
+    color: #b42318;
+  }
+
+  .scheda__prezzo {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .scheda__prezzo strong {
+    font-size: 2.1rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--blu-900);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .scheda__prezzo span {
+    font-weight: 600;
+    color: var(--grigio-500);
+  }
+
+  .scheda__prezzo .scheda__prezzo--richiesta {
+    font-size: 1.4rem;
+    color: var(--accento-testo);
+  }
+
+  .acquisto {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .quantita {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--grigio-300);
+    border-radius: 999px;
+    background: var(--bianco);
+  }
+
+  .quantita button {
+    display: inline-flex;
+    width: 46px;
+    height: 50px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: none;
+    color: var(--blu-900);
+    cursor: pointer;
+  }
+
+  .quantita input {
+    width: 44px;
+    border: 0;
+    font: inherit;
+    font-weight: 700;
+    text-align: center;
+    background: none;
+    -moz-appearance: textfield;
+  }
+
+  .quantita input::-webkit-inner-spin-button,
+  .quantita input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+  }
+
+  .acquisto__aggiungi {
+    flex: 1 1 220px;
+  }
+
+  .acquisto__avviso,
+  .acquisto__pagamenti {
+    flex-basis: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--grigio-500);
+  }
+
+  .acquisto__avviso {
+    font-weight: 700;
+    color: #067647;
   }
 
   .scheda__azioni {
@@ -357,7 +562,7 @@ const datiStrutturati = {
   }
 
   .scheda__garanzie svg {
-    color: var(--verde-scuro);
+    color: var(--accento-testo);
   }
 
   .dettagli {
@@ -366,7 +571,7 @@ const datiStrutturati = {
 
   .dettagli__griglia {
     display: grid;
-    grid-template-columns: 1.2fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
     gap: clamp(32px, 5vw, 64px);
   }
 

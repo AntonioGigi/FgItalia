@@ -5,7 +5,7 @@ import TestataPagina from '../../components/TestataPagina.astro';
 import CardProdotto from '../../components/CardProdotto.astro';
 import InvitoContatto from '../../components/InvitoContatto.astro';
 import Icona from '../../components/Icona.astro';
-import { prodottiPubblicati, categorieOrdinate } from '../../lib/catalogo';
+import { prodottiPubblicati, categorieOrdinate, perSottocategoria } from '../../lib/catalogo';
 
 export async function getStaticPaths() {
   const categorie = await getCollection('categorie');
@@ -19,6 +19,8 @@ interface Props {
 const { categoria } = Astro.props;
 const prodotti = (await prodottiPubblicati()).filter((p) => p.data.categoria.id === categoria.id);
 const altre = (await categorieOrdinate()).filter((c) => c.id !== categoria.id);
+const gruppi = perSottocategoria(prodotti);
+const ancora = (nome: string) => nome.toLowerCase().replace(/[^a-z0-9]+/g, '-');
 ---
 
 <Base titolo={categoria.data.titolo} descrizione={categoria.data.descrizione}>
@@ -31,19 +33,32 @@ const altre = (await categorieOrdinate()).filter((c) => c.id !== categoria.id);
       { href: `/categorie/${categoria.id}/`, testo: categoria.data.titolo },
     ]}
   >
-    <nav class="altre" aria-label="Altre categorie">
-      {altre.map((c) => <a href={`/categorie/${c.id}/`}>{c.data.titolo}</a>)}
-    </nav>
+    {
+      gruppi.length > 1 && (
+        <nav class="altre" aria-label="Sezioni della categoria">
+          {gruppi.map(([nome, elenco]) => (
+            <a href={`#${ancora(nome)}`}>
+              {nome} <span>{elenco.length}</span>
+            </a>
+          ))}
+        </nav>
+      )
+    }
   </TestataPagina>
 
   <section class="contenitore elenco">
     {
       prodotti.length > 0 ? (
-        <div class="griglia">
-          {prodotti.map((p) => (
-            <CardProdotto prodotto={p} />
-          ))}
-        </div>
+        gruppi.map(([nome, elenco]) => (
+          <div class="gruppo" id={ancora(nome)}>
+            {gruppi.length > 1 && <h2>{nome}</h2>}
+            <div class="griglia griglia--prodotti">
+              {elenco.map((p) => (
+                <CardProdotto prodotto={p} />
+              ))}
+            </div>
+          </div>
+        ))
       ) : (
         <div class="vuoto">
           <Icona nome={categoria.data.icona} dimensione={44} />
@@ -59,6 +74,11 @@ const altre = (await categorieOrdinate()).filter((c) => c.id !== categoria.id);
       )
     }
   </section>
+
+  <nav class="contenitore altre-categorie" aria-label="Altre categorie">
+    <span>Altre categorie:</span>
+    {altre.map((c) => <a href={`/categorie/${c.id}/`}>{c.data.titolo}</a>)}
+  </nav>
 
   <InvitoContatto />
 </Base>
@@ -80,6 +100,38 @@ const altre = (await categorieOrdinate()).filter((c) => c.id !== categoria.id);
     font-weight: 600;
     color: var(--grigio-700);
     text-decoration: none;
+  }
+
+  .altre span {
+    margin-left: 4px;
+    font-size: 0.8rem;
+    color: var(--grigio-500);
+  }
+
+  .gruppo {
+    scroll-margin-top: 100px;
+  }
+
+  .gruppo + .gruppo {
+    margin-top: 56px;
+  }
+
+  .gruppo h2 {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+
+  .altre-categorie {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px 16px;
+    margin-top: 48px;
+    font-weight: 600;
+  }
+
+  .altre-categorie span {
+    color: var(--grigio-500);
   }
 
   .altre a:hover {

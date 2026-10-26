@@ -11,7 +11,7 @@ const categorie = defineCollection({
   schema: z.object({
     titolo: z.string(),
     descrizione: z.string(),
-    icona: z.enum(['monitor', 'diagnostica', 'fisioterapia', 'riabilitazione', 'medicale', 'consumabili']),
+    icona: z.enum(['fisioterapia', 'consumabili', 'strumenti', 'palestra', 'monitor', 'diagnostica', 'riabilitazione', 'medicale']),
     ordine: z.number().default(99),
   }),
 });
@@ -30,9 +30,16 @@ const prodotti = defineCollection({
   schema: z.object({
     titolo: z.string(),
     categoria: reference('categorie'),
+    sottocategoria: vuotoComeAssente(z.string()),
     marca: vuotoComeAssente(reference('marchi')),
     codice: vuotoComeAssente(z.string()),
     descrizione_breve: z.string(),
+    /** Prezzo in euro IVA esclusa; se manca il sito mostra "Prezzo su richiesta" */
+    prezzo: z.preprocess((v) => (v === '' || v === null || v === 0 ? undefined : v), z.coerce.number().positive().optional()),
+    disponibilita: z.preprocess(
+      (v) => v || undefined,
+      z.enum(['disponibile', 'su_ordinazione', 'esaurito']).default('disponibile'),
+    ),
     immagini: z.preprocess((v) => v ?? [], z.array(z.string())),
     specifiche: z.preprocess((v) => v ?? [], z.array(z.object({ nome: z.string(), valore: z.coerce.string() }))),
     scheda_pdf: vuotoComeAssente(z.string()),
@@ -52,4 +59,21 @@ const novita = defineCollection({
   }),
 });
 
-export const collections = { categorie, marchi, prodotti, novita };
+const corsi = defineCollection({
+  loader: glob({ pattern: '*.md', base: './src/content/corsi' }),
+  schema: z.object({
+    titolo: z.string(),
+    data: z.coerce.date(),
+    orario: vuotoComeAssente(z.string()),
+    luogo: vuotoComeAssente(z.string()),
+    docente: vuotoComeAssente(z.string()),
+    prezzo: z.preprocess((v) => (v === '' || v === null || v === 0 ? undefined : v), z.coerce.number().positive().optional()),
+    immagine: vuotoComeAssente(z.string()),
+    riassunto: z.string(),
+    /** alla pubblicazione invia un'email agli iscritti agli avvisi */
+    avvisa_iscritti: z.boolean().default(true),
+    pubblicato: z.boolean().default(true),
+  }),
+});
+
+export const collections = { categorie, marchi, prodotti, novita, corsi };

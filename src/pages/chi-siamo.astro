@@ -29,28 +29,38 @@ const valori = [
     <div class="contenitore storia__griglia">
       <div class="prosa appare">
         <p class="testo-intro">
-          {sito.ragione_sociale} opera dal {sito.anno_fondazione} come grossista di apparecchiature elettromedicali,
-          articoli medicali e materiale di consumo.
+          Dal {sito.anno_fondazione} siamo grossisti specializzati nella fornitura di apparecchiature elettromedicali,
+          articoli medicali e materiale di consumo per studi, cliniche e ospedali.
         </p>
         <p>
-          Forniamo medici, fisioterapisti, studi, ambulatori, centri di riabilitazione e strutture sanitarie con
-          strumenti per il monitoraggio, la diagnostica, la fisioterapia e la riabilitazione, selezionati tra i
-          principali produttori del settore.
+          La nostra missione non è solo vendere prodotti di qualità, ma offrire una consulenza specializzata che aiuti
+          ogni cliente a trovare la soluzione migliore per le proprie esigenze. Per questo investiamo nella formazione
+          continua del nostro personale, per dare consigli aggiornati e competenti su ogni articolo.
         </p>
         <p>
-          In oltre {anniAttivita} anni di attività abbiamo costruito rapporti di fiducia basati sulla serietà, sulla
-          conoscenza dei prodotti e sulla disponibilità: per noi ogni fornitura è l’inizio di una collaborazione, non
-          una semplice vendita.
+          Collaboriamo con fornitori di fiducia e selezioniamo con cura ogni prodotto, perché risponda ai più alti
+          standard di qualità e sicurezza: dalle apparecchiature per tecarterapia, laserterapia ed elettroterapia agli
+          strumenti per la terapia manuale e ai materiali di consumo per l’attività di tutti i giorni.
+        </p>
+        <p>
+          Siamo fieri di affiancare i nostri clienti non solo come fornitori, ma come consulenti: costruiamo relazioni
+          di fiducia e cresciamo insieme a chi si affida a noi, in Sicilia e in tutta Italia.
         </p>
       </div>
       <aside class="storia__box appare">
         <strong>{anniAttivita}+</strong>
         <span>anni di esperienza nel settore elettromedicale</span>
         <hr />
-        <p>Sede: {sito.indirizzo}, {sito.citta}</p>
+        <p>Sede e showroom: {sito.indirizzo}, {sito.citta}</p>
         <p>P.IVA {sito.piva}</p>
       </aside>
     </div>
+  </section>
+
+  <section class="contenitore galleria-foto" aria-label="Il nostro showroom">
+    <img class="appare" src="/uploads/foto/showroom.webp" alt="Lo showroom con le apparecchiature per la fisioterapia" loading="lazy" />
+    <img class="appare" src="/uploads/foto/apparecchiatura.webp" alt="Dettaglio di un’apparecchiatura per la fisioterapia" loading="lazy" />
+    <img class="appare" src="/uploads/foto/taping.webp" alt="Nastri per kinesio taping" loading="lazy" />
   </section>
 
   <section class="sezione sezione--chiara">
@@ -108,7 +118,7 @@ const valori = [
     display: block;
     font-size: 4rem;
     line-height: 1;
-    color: var(--verde);
+    color: var(--accento);
   }
 
   .storia__box span {
@@ -127,6 +137,35 @@ const valori = [
   .storia__box p {
     margin: 0 0 4px;
     font-size: 0.95rem;
+  }
+
+  .galleria-foto {
+    display: grid;
+    grid-template-columns: 1fr 1.4fr 1.4fr;
+    gap: 16px;
+    margin-bottom: clamp(56px, 9vw, 112px);
+  }
+
+  .galleria-foto img {
+    width: 100%;
+    height: 340px;
+    object-fit: cover;
+    border-radius: var(--raggio);
+  }
+
+  @media (max-width: 760px) {
+    .galleria-foto {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .galleria-foto img:first-child {
+      grid-row: span 2;
+      height: 100%;
+    }
+
+    .galleria-foto img {
+      height: 200px;
+    }
   }
 
   .valori {
@@ -152,8 +191,8 @@ const valori = [
     align-items: center;
     justify-content: center;
     border-radius: 14px;
-    background: var(--verde-chiaro);
-    color: var(--verde-scuro);
+    background: var(--accento-chiaro);
+    color: var(--accento-testo);
     margin-bottom: 18px;
   }
 

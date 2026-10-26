@@ -15,7 +15,7 @@ const anno = new Date().getFullYear();
   <div class="contenitore piede__griglia">
     <div class="piede__marchio">
       <Logo chiaro />
-      <p>{sito.slogan}. Al servizio di medici, fisioterapisti, studi e strutture sanitarie dal {sito.anno_fondazione}.</p>
+      <p>{sito.slogan}. Al servizio di fisioterapisti, studi e strutture sanitarie dal {sito.anno_fondazione}.</p>
       {
         (instagram || facebook || whatsapp) && (
           <div class="piede__social">
@@ -56,9 +56,12 @@ const anno = new Date().getFullYear();
       <h2 class="piede__titolo">Azienda</h2>
       <ul class="piede__lista">
         <li><a href="/chi-siamo/">Chi siamo</a></li>
+        <li><a href="/corsi/">Corsi di formazione</a></li>
         <li><a href="/novita/">Novità e offerte</a></li>
         <li><a href="/contatti/">Contatti</a></li>
         <li><a href="/contatti/#preventivo">Richiedi un preventivo</a></li>
+        <li><a href="/ordine/">Segui il tuo ordine</a></li>
+        <li><a href="/condizioni-di-vendita/">Condizioni di vendita</a></li>
       </ul>
     </div>
 
@@ -117,7 +120,7 @@ const anno = new Date().getFullYear();
   }
 
   .piede a:hover {
-    color: var(--verde);
+    color: var(--accento);
   }
 
   .piede__griglia {
@@ -149,7 +152,7 @@ const anno = new Date().getFullYear();
   }
 
   .piede__social a:hover {
-    background: var(--verde);
+    background: var(--accento);
     color: var(--blu-900);
   }
 
@@ -178,7 +181,7 @@ const anno = new Date().getFullYear();
   .piede__contatti svg {
     flex-shrink: 0;
     margin-top: 4px;
-    color: var(--verde);
+    color: var(--accento);
   }
 
   .piede__fondo {

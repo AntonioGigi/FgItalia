@@ -58,7 +58,7 @@ const marchi = (await marchiOrdinati()).filter((m) => marchiUsati.has(m.id));
       {prodotti.length} {prodotti.length === 1 ? 'prodotto' : 'prodotti'}
     </p>
 
-    <div class="griglia" data-griglia>
+    <div class="griglia griglia--prodotti" data-griglia>
       {prodotti.map((p) => <CardProdotto prodotto={p} />)}
     </div>
 
@@ -162,7 +162,7 @@ const marchi = (await marchiOrdinati()).filter((m) => marchiUsati.has(m.id));
   }
 
   .filtri__cerca:focus-within {
-    outline: 3px solid var(--verde);
+    outline: 3px solid var(--accento);
     outline-offset: 2px;
   }
 
