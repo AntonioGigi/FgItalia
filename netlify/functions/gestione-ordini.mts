@@ -1,7 +1,7 @@
 import type { Config } from '@netlify/functions';
 import { errore, json, variabile } from '../lib/ambiente';
 import { creaGettone, gettoneDaRichiesta, gettoneValido, passwordCorretta } from '../lib/accesso';
-import { emailAggiornamentoRichiesta, emailAggiornamentoStato, emailFatturaDisponibile, inviaEmail } from '../lib/email';
+import { emailAggiornamentoRichiesta, emailAggiornamentoStato, emailFatturaDisponibile, emailNegozio, inviaEmail } from '../lib/email';
 import { archivioFatture, elencoOrdini, leggiOrdine, salvaOrdine, STATI, type StatoOrdine } from '../lib/ordini';
 import { elencoRichieste, leggiRichiesta, salvaRichiesta, STATI_ASSISTENZA, type StatoAssistenza } from '../lib/pratiche';
 
@@ -102,6 +102,17 @@ export default async (req: Request) => {
       delete ordine.fattura;
       await salvaOrdine(ordine);
       return json({ ordine });
+    }
+
+    case 'prova-email': {
+      // per controllare la configurazione di Brevo: manda un'email di prova e riporta l'errore esatto
+      const destinatario = emailNegozio();
+      try {
+        await inviaEmail({ email: destinatario }, { oggetto: 'Prova email dal sito', html: '<p>Se leggi questa email, l’invio dal sito funziona.</p>' });
+        return json({ inviata: true, destinatario });
+      } catch (e) {
+        return json({ inviata: false, destinatario, errore: e instanceof Error ? e.message : String(e) });
+      }
     }
 
     case 'assistenza-elenco':

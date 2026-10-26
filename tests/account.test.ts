@@ -360,11 +360,12 @@ describe('assistenza', () => {
     emailInviate.length = 0;
     expect((await chiama({ azione: 'assistenza', tipo: 'guasto', descrizione: 'corta' }, cookie)).status).toBe(400);
     const r = await chiama({ azione: 'assistenza', tipo: 'guasto', fermo: true, dispositivo: a.dispositivi[0].id, descrizione: 'Non si accende più <da stamattina>' }, cookie);
-    const { richiesta } = await r.json();
+    const { richiesta, emailInviata } = await r.json();
     expect(richiesta.dispositivo).toMatchObject({ titolo: 'Tecar', matricola: 'T-9' });
     expect(emailInviate[0].corpo.subject).toContain('PRIORITARIA');
     expect(emailInviate[0].corpo.htmlContent).toContain('&lt;da stamattina&gt;');
     expect(emailInviate[1].corpo.to[0].email).toBe('giulia@studio.it');
+    expect(emailInviata).toBe(true);
 
     const admin = await pannello();
     const elenco = await (await admin({ azione: 'assistenza-elenco' })).json();
@@ -465,6 +466,27 @@ describe('errori imprevisti', () => {
       expect(intestazioni[0]).toMatchObject({ cookie, authorization: 'Basic cHJvdmE6cHJvdmE=' });
     } finally {
       vi.stubGlobal('fetch', originale);
+    }
+  });
+});
+
+describe('email non configurate', () => {
+  it('la richiesta di assistenza resta registrata e non dice che l’email è partita', async () => {
+    const cookie = await registra();
+    const chiave = process.env.BREVO_API_KEY;
+    delete process.env.BREVO_API_KEY;
+    try {
+      const r = await chiama({ azione: 'assistenza', tipo: 'manutenzione', descrizione: 'Prove elettriche scadute' }, cookie);
+      expect(r.status).toBe(200);
+      expect((await r.json()).emailInviata).toBe(false);
+
+      // dal pannello si vede l'errore esatto
+      const admin = await pannello();
+      const prova = await (await admin({ azione: 'prova-email' })).json();
+      expect(prova).toMatchObject({ inviata: false, destinatario: 'papa@example.com' });
+      expect(prova.errore).toContain('BREVO_API_KEY');
+    } finally {
+      process.env.BREVO_API_KEY = chiave;
     }
   });
 });

@@ -55,12 +55,14 @@ const pausa = (ms: number) => new Promise((r) => setTimeout(r, ms));
 /** Testo pulito e di lunghezza ragionevole, oppure undefined se vuoto */
 const testo = (v: unknown, massimo = 200) => (typeof v === 'string' && v.trim() ? v.trim().slice(0, massimo) : undefined);
 
-/** Un'email non partita non deve far fallire l'operazione del cliente */
-async function notifica(invio: () => Promise<void>) {
+/** Un'email non partita non deve far fallire l'operazione del cliente: dice solo se è partita */
+async function notifica(invio: () => Promise<void>): Promise<boolean> {
   try {
     await invio();
+    return true;
   } catch (e) {
     console.error('Email non inviata', e);
+    return false;
   }
 }
 
@@ -356,8 +358,8 @@ async function gestisci(req: Request): Promise<Response> {
       await notifica(() =>
         inviaEmail({ email: emailNegozio() }, emailNuovaRichiestaNegozio(richiesta), [], { email: cliente.email, nome: cliente.nome }),
       );
-      await notifica(() => inviaEmail({ email: cliente.email, nome: cliente.nome }, emailConfermaRichiesta(richiesta)));
-      return json({ richiesta });
+      const emailInviata = await notifica(() => inviaEmail({ email: cliente.email, nome: cliente.nome }, emailConfermaRichiesta(richiesta)));
+      return json({ richiesta, emailInviata });
     }
 
     case 'rispondi-assistenza': {

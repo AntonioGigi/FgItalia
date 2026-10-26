@@ -36,8 +36,10 @@ import { sito } from '../lib/sito';
           <button type="button" data-filtro="spediti" aria-pressed="false">Spediti</button>
           <button type="button" data-filtro="tutti" aria-pressed="false">Tutti</button>
           <button type="button" data-filtro="assistenza" aria-pressed="false">Assistenza <span data-conta="assistenza"></span></button>
+          <button type="button" data-prova-email>Prova email</button>
           <button type="button" class="filtri__aggiorna" data-ricarica aria-label="Aggiorna">↻</button>
         </div>
+        <p class="esito esito--prova" role="status" data-esito-prova hidden></p>
         <ul class="ordini" data-ordini></ul>
         <p class="vuoto" data-vuoto hidden>Nessun ordine in questa sezione.</p>
       </section>
@@ -375,6 +377,19 @@ import { sito } from '../lib/sito';
           return disegnaElenco();
         }
         if (t.closest('[data-ricarica]')) return void caricaElenco();
+        if (t.closest('[data-prova-email]')) {
+          const esito = $('[data-esito-prova]');
+          esito.textContent = 'Invio in corso…';
+          esito.hidden = false;
+          return void api({ azione: 'prova-email' })
+            .then((r) => {
+              esito.textContent = r.inviata
+                ? `Email di prova inviata a ${r.destinatario}: controlla la posta (anche lo spam).`
+                : `Email NON inviata a ${r.destinatario}. Errore: ${r.errore}`;
+              esito.dataset.errore = String(!r.inviata);
+            })
+            .catch((err) => (esito.textContent = (err as Error).message));
+        }
         if (t.closest('[data-indietro]')) {
           history.replaceState(null, '', filtro === 'assistenza' ? '#assistenza' : location.pathname);
           disegnaElenco();
@@ -800,6 +815,15 @@ import { sito } from '../lib/sito';
         padding: 14px 16px;
         border-radius: 12px;
         background: var(--grigio-100);
+      }
+
+      .esito--prova {
+        margin-bottom: 16px;
+        overflow-wrap: anywhere;
+      }
+
+      .esito--prova[data-errore='true'] {
+        color: #b42318;
       }
 
       .aggiorna h2 {
