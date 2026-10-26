@@ -105,10 +105,10 @@ function controllaFatturazione(f: DatiFatturazione): string | undefined {
 }
 
 /** Tutto quello che serve alla pagina "Il mio account" */
-async function profilo(c: Cliente, base: string) {
+async function profilo(c: Cliente, req: Request) {
   const ordini = await ordiniCliente(c);
   try {
-    if (sincronizzaDispositivi(c, ordini, await leggiSchede(base))) await salvaCliente(c);
+    if (sincronizzaDispositivi(c, ordini, await leggiSchede(req))) await salvaCliente(c);
   } catch (e) {
     console.error('Dispositivi non aggiornati', e);
   }
@@ -243,7 +243,7 @@ async function gestisci(req: Request): Promise<Response> {
 
   switch (corpo.azione) {
     case 'profilo':
-      return json(await profilo(cliente, new URL(req.url).origin));
+      return json(await profilo(cliente, req));
 
     case 'salva-dati': {
       const nome = testo(corpo.nome, 120);
@@ -383,7 +383,7 @@ async function gestisci(req: Request): Promise<Response> {
 
     case 'preventivo': {
       if (cliente.preventivi.length >= 200) cliente.preventivi = cliente.preventivi.slice(-150);
-      const [catalogo, schede] = await Promise.all([leggiCatalogo(new URL(req.url).origin), leggiSchede(new URL(req.url).origin)]);
+      const [catalogo, schede] = await Promise.all([leggiCatalogo(req), leggiSchede(req)]);
       const codici = Object.fromEntries(Object.entries(schede).map(([id, s]) => [id, s.codice]));
       const preventivo = creaPreventivo(
         nuovoNumero('PV'),

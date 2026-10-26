@@ -442,17 +442,27 @@ describe('errori imprevisti', () => {
     }
   });
 
-  it('legge il catalogo dall’indirizzo da cui arriva la richiesta', async () => {
+  it('legge il catalogo dall’indirizzo e con le credenziali della richiesta', async () => {
     const cookie = await registra();
     const chiesti: string[] = [];
+    const intestazioni: Record<string, string>[] = [];
     const originale = globalThis.fetch;
-    vi.stubGlobal('fetch', async (url: string, opzioni?: RequestInit) => (chiesti.push(url), originale(url, opzioni)));
+    vi.stubGlobal('fetch', async (url: string, opzioni?: RequestInit) => {
+      chiesti.push(url);
+      intestazioni.push((opzioni?.headers ?? {}) as Record<string, string>);
+      return originale(url, opzioni);
+    });
     try {
       const r = await account(
-        new Request('https://anteprima.netlify.app/api/account', json({ azione: 'preventivo', carrello: [{ id: 'genesy', quantita: 1 }] }, { cookie })),
+        new Request(
+          'https://anteprima.netlify.app/api/account',
+          json({ azione: 'preventivo', carrello: [{ id: 'genesy', quantita: 1 }] }, { cookie, authorization: 'Basic cHJvdmE6cHJvdmE=' }),
+        ),
       );
       expect(r.status).toBe(200);
       expect(chiesti).toContain('https://anteprima.netlify.app/api/catalogo.json');
+      // sito protetto da password: cookie e credenziali del visitatore passano alla lettura del catalogo
+      expect(intestazioni[0]).toMatchObject({ cookie, authorization: 'Basic cHJvdmE6cHJvdmE=' });
     } finally {
       vi.stubGlobal('fetch', originale);
     }
