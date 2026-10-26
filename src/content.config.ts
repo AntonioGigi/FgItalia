@@ -70,6 +70,8 @@ const corsi = defineCollection({
     prezzo: z.preprocess((v) => (v === '' || v === null || v === 0 ? undefined : v), z.coerce.number().positive().optional()),
     immagine: vuotoComeAssente(z.string()),
     riassunto: z.string(),
+    /** alla pubblicazione invia un'email agli iscritti agli avvisi */
+    avvisa_iscritti: z.boolean().default(true),
     pubblicato: z.boolean().default(true),
   }),
 });

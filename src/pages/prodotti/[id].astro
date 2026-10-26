@@ -22,6 +22,7 @@ const { titolo, codice, descrizione_breve, immagini, specifiche, scheda_pdf, sot
 const prezzoTesto = prezzo(prodotto.data.prezzo);
 const { disponibilita } = prodotto.data;
 const esaurito = disponibilita === 'esaurito';
+const acquistabileOnline = sito.negozio_attivo && !!prodotto.data.prezzo && !esaurito;
 const haDescrizione = prodotto.body?.trim().length;
 const categoria = await getEntry(prodotto.data.categoria);
 const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefined;
@@ -126,10 +127,40 @@ const datiStrutturati = {
             }
           </div>
 
+          {
+            acquistabileOnline && (
+              <form class="acquisto" data-acquisto={prodotto.id} onsubmit="return false">
+                <div class="quantita" role="group" aria-label="Quantità">
+                  <button type="button" data-meno aria-label="Diminuisci la quantità">
+                    <Icona nome="meno" dimensione={18} />
+                  </button>
+                  <input type="number" name="quantita" value="1" min="1" max="99" inputmode="numeric" aria-label="Quantità" />
+                  <button type="button" data-piu aria-label="Aumenta la quantità">
+                    <Icona nome="piu" dimensione={18} />
+                  </button>
+                </div>
+                <button class="pulsante pulsante--primario acquisto__aggiungi" type="submit">
+                  <Icona nome="carrello" /> Aggiungi al carrello
+                </button>
+                <p class="acquisto__avviso" role="status" data-avviso hidden>
+                  <Icona nome="spunta" dimensione={18} /> Aggiunto al carrello · <a href="/carrello/">Vai al carrello</a>
+                </p>
+                <p class="acquisto__pagamenti">
+                  <Icona nome="lucchetto" dimensione={16} /> Pagamento sicuro con carta, PayPal, Apple Pay e Google Pay
+                </p>
+              </form>
+            )
+          }
+
           <div class="scheda__azioni">
             {
               whatsapp && (
-                <a class="pulsante pulsante--whatsapp" href={whatsapp} target="_blank" rel="noopener">
+                <a
+                  class:list={['pulsante', acquistabileOnline ? 'pulsante--contorno' : 'pulsante--whatsapp']}
+                  href={whatsapp}
+                  target="_blank"
+                  rel="noopener"
+                >
                   <Icona nome="whatsapp" /> {esaurito ? 'Avvisami su WhatsApp' : 'Ordina su WhatsApp'}
                 </a>
               )
@@ -220,6 +251,21 @@ const datiStrutturati = {
 </Base>
 
 <script>
+  import { aggiungi } from '../../lib/carrello';
+
+  document.querySelectorAll<HTMLFormElement>('[data-acquisto]').forEach((modulo) => {
+    const campo = modulo.querySelector<HTMLInputElement>('input[name="quantita"]')!;
+    const avviso = modulo.querySelector<HTMLElement>('[data-avviso]');
+    const leggi = () => Math.min(99, Math.max(1, Math.floor(Number(campo.value)) || 1));
+    modulo.querySelector('[data-meno]')?.addEventListener('click', () => (campo.value = String(Math.max(1, leggi() - 1))));
+    modulo.querySelector('[data-piu]')?.addEventListener('click', () => (campo.value = String(Math.min(99, leggi() + 1))));
+    modulo.addEventListener('submit', () => {
+      aggiungi(modulo.dataset.acquisto!, leggi());
+      campo.value = '1';
+      if (avviso) avviso.hidden = false;
+    });
+  });
+
   document.querySelectorAll<HTMLElement>('[data-galleria]').forEach((galleria) => {
     const principale = galleria.querySelector<HTMLImageElement>('[data-principale]');
     const miniature = galleria.querySelectorAll<HTMLButtonElement>('[data-miniatura]');
@@ -399,6 +445,68 @@ const datiStrutturati = {
   .scheda__prezzo .scheda__prezzo--richiesta {
     font-size: 1.4rem;
     color: var(--accento-testo);
+  }
+
+  .acquisto {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 16px;
+  }
+
+  .quantita {
+    display: inline-flex;
+    align-items: center;
+    border: 1px solid var(--grigio-300);
+    border-radius: 999px;
+    background: var(--bianco);
+  }
+
+  .quantita button {
+    display: inline-flex;
+    width: 46px;
+    height: 50px;
+    align-items: center;
+    justify-content: center;
+    border: 0;
+    background: none;
+    color: var(--blu-900);
+    cursor: pointer;
+  }
+
+  .quantita input {
+    width: 44px;
+    border: 0;
+    font: inherit;
+    font-weight: 700;
+    text-align: center;
+    background: none;
+    -moz-appearance: textfield;
+  }
+
+  .quantita input::-webkit-inner-spin-button,
+  .quantita input::-webkit-outer-spin-button {
+    -webkit-appearance: none;
+  }
+
+  .acquisto__aggiungi {
+    flex: 1 1 220px;
+  }
+
+  .acquisto__avviso,
+  .acquisto__pagamenti {
+    flex-basis: 100%;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--grigio-500);
+  }
+
+  .acquisto__avviso {
+    font-weight: 700;
+    color: #067647;
   }
 
   .scheda__azioni {

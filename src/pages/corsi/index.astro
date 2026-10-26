@@ -3,6 +3,7 @@ import { render } from 'astro:content';
 import Base from '../../layouts/Base.astro';
 import TestataPagina from '../../components/TestataPagina.astro';
 import Icona from '../../components/Icona.astro';
+import IscrizioneAvvisi from '../../components/IscrizioneAvvisi.astro';
 import { corsiPubblicati } from '../../lib/catalogo';
 import { formatoData, prezzo } from '../../lib/sito';
 
@@ -112,6 +113,10 @@ const conTesto = await Promise.all(prossimi.map(async (corso) => ({ corso, Conte
       <button class="pulsante pulsante--primario" type="submit">Invia <Icona nome="freccia" /></button>
     </form>
   </section>
+
+  <section class="contenitore avvisi-corsi">
+    <IscrizioneAvvisi titolo="Avvisami quando esce un nuovo corso" />
+  </section>
 </Base>
 
 <style>
@@ -120,7 +125,11 @@ const conTesto = await Promise.all(prossimi.map(async (corso) => ({ corso, Conte
     grid-template-columns: 1.5fr 1fr;
     gap: clamp(32px, 5vw, 64px);
     align-items: start;
-    padding-block: 24px clamp(56px, 9vw, 112px);
+    padding-block: 24px 56px;
+  }
+
+  .avvisi-corsi {
+    padding-bottom: clamp(56px, 9vw, 112px);
   }
 
   .corsi h2 {

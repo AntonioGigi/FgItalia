@@ -16,5 +16,8 @@
   "instagram": "fgitaliadifrancescogieri",
   "facebook": "https://www.facebook.com/info.fgitalia",
   "hero_titolo": "Prodotti per la fisioterapia, scelti da chi conosce il mestiere",
-  "hero_testo": "Apparecchiature per tecarterapia, laserterapia, elettroterapia e magnetoterapia, strumenti per la terapia manuale e materiali di consumo. Dal 2004 al fianco di fisioterapisti, studi e centri di riabilitazione, in Sicilia e in tutta Italia."
+  "hero_testo": "Apparecchiature per tecarterapia, laserterapia, elettroterapia e magnetoterapia, strumenti per la terapia manuale e materiali di consumo. Dal 2004 al fianco di fisioterapisti, studi e centri di riabilitazione, in Sicilia e in tutta Italia.",
+  "negozio_attivo": true,
+  "spedizione_costo": 9.9,
+  "spedizione_gratis_da": 150
 }

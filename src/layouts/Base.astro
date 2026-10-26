@@ -11,6 +11,8 @@ interface Props {
   immagine?: string;
   tipo?: 'website' | 'article' | 'product';
   datiStrutturati?: Record<string, unknown>;
+  /** nasconde il pulsante WhatsApp fisso (pagine che hanno già i loro pulsanti) */
+  senzaWhatsapp?: boolean;
 }
 
 const {
@@ -19,6 +21,7 @@ const {
   immagine = '/img/condivisione.png',
   tipo = 'website',
   datiStrutturati,
+  senzaWhatsapp = false,
 } = Astro.props;
 
 const titoloCompleto = titolo ? `${titolo} | ${sito.nome_breve}` : `${sito.nome_breve} – ${sito.slogan}`;
@@ -81,7 +84,7 @@ const azienda = {
     <Footer />
 
     {
-      whatsapp && (
+      whatsapp && !senzaWhatsapp && (
         <a class="whatsapp-fisso" href={whatsapp} target="_blank" rel="noopener" aria-label="Scrivici su WhatsApp">
           <Icona nome="whatsapp" dimensione={28} />
         </a>

@@ -5,6 +5,10 @@
 [build.environment]
   NODE_VERSION = "22"
 
+# Funzioni server del negozio (pagamenti, ordini, avvisi) in netlify/functions
+[functions]
+  node_bundler = "esbuild"
+
 # I reindirizzamenti dai vecchi indirizzi WordPress sono in public/_redirects
 
 [[headers]]

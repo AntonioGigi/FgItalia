@@ -1,0 +1,656 @@
+---
+import '../styles/global.css';
+import Icona from '../components/Icona.astro';
+import { sito } from '../lib/sito';
+---
+
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Ordini | {sito.nome_breve}</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+  </head>
+  <body>
+    <header class="barra">
+      <a href="/" class="barra__logo"><img src={sito.logo || '/favicon.svg'} alt={sito.nome_breve} height="36" /></a>
+      <strong>Ordini</strong>
+      <button class="barra__esci" type="button" data-esci hidden>Esci</button>
+    </header>
+
+    <main class="pannello">
+      <form class="accesso" data-accesso hidden>
+        <Icona nome="lucchetto" dimensione={32} />
+        <h1>Pannello ordini</h1>
+        <label><span>Password</span><input type="password" name="password" required autocomplete="current-password" /></label>
+        <button class="pulsante pulsante--primario" type="submit">Entra</button>
+        <p class="errore" role="alert" data-errore-accesso hidden></p>
+      </form>
+
+      <section data-elenco hidden>
+        <div class="filtri" role="tablist">
+          <button type="button" data-filtro="aperti" aria-pressed="true">Da gestire <span data-conta="aperti"></span></button>
+          <button type="button" data-filtro="spediti" aria-pressed="false">Spediti</button>
+          <button type="button" data-filtro="tutti" aria-pressed="false">Tutti</button>
+          <button type="button" class="filtri__aggiorna" data-ricarica aria-label="Aggiorna">↻</button>
+        </div>
+        <ul class="ordini" data-ordini></ul>
+        <p class="vuoto" data-vuoto hidden>Nessun ordine in questa sezione.</p>
+      </section>
+
+      <section class="scheda" data-scheda hidden>
+        <button class="indietro" type="button" data-indietro><Icona nome="frecciaSinistra" dimensione={18} /> Tutti gli ordini</button>
+        <div data-contenuto></div>
+
+        <form class="aggiorna" data-aggiorna>
+          <h2>Aggiorna lo stato</h2>
+          <div class="stati">
+            <label><input type="radio" name="stato" value="in_lavorazione" /> In lavorazione</label>
+            <label><input type="radio" name="stato" value="spedito" /> Spedito</label>
+            <label><input type="radio" name="stato" value="consegnato" /> Consegnato</label>
+            <label><input type="radio" name="stato" value="annullato" /> Annullato</label>
+          </div>
+          <div class="spedizione" data-campi-spedizione hidden>
+            <label><span>Corriere</span><input name="corriere" placeholder="Es. BRT, GLS, Poste" /></label>
+            <label><span>Codice di tracciamento</span><input name="tracking" /></label>
+            <label class="intero"><span>Link per tracciare (facoltativo)</span><input name="link" type="url" placeholder="https://" /></label>
+          </div>
+          <label class="intero"><span>Messaggio per il cliente (facoltativo)</span><textarea name="nota" rows="2"></textarea></label>
+          <label class="spunta"><input type="checkbox" name="avvisa" checked /> Invia un’email al cliente</label>
+          <button class="pulsante pulsante--primario" type="submit">Salva</button>
+          <p class="esito" role="status" data-esito hidden></p>
+        </form>
+      </section>
+    </main>
+
+    <script>
+      import { euro } from '../lib/negozio';
+
+      type Stato = 'in_attesa_pagamento' | 'ricevuto' | 'in_lavorazione' | 'spedito' | 'consegnato' | 'annullato';
+      interface Indirizzo {
+        nome?: string;
+        via?: string;
+        via2?: string;
+        cap?: string;
+        citta?: string;
+        provincia?: string;
+      }
+      interface Ordine {
+        numero: string;
+        creato: string;
+        stato: Stato;
+        pagato: boolean;
+        cliente: { nome: string; email: string; telefono?: string };
+        spedizione: Indirizzo;
+        fatturazione: Indirizzo & { partitaIva?: string; codiceSdiPec?: string; codiceFiscale?: string };
+        righe: { id?: string; titolo: string; quantita: number; totaleCent: number }[];
+        totali: { spedizioneCent: number; totaleCent: number };
+        consegna?: { corriere?: string; tracking?: string; link?: string };
+        storico: { stato: Stato; data: string; nota?: string }[];
+        stripe: { pagamento?: string };
+      }
+
+      const TESTI: Record<Stato, string> = {
+        in_attesa_pagamento: 'Attesa pagamento',
+        ricevuto: 'Nuovo',
+        in_lavorazione: 'In lavorazione',
+        spedito: 'Spedito',
+        consegnato: 'Consegnato',
+        annullato: 'Annullato',
+      };
+      const APERTI: Stato[] = ['in_attesa_pagamento', 'ricevuto', 'in_lavorazione'];
+      const CHIAVE = 'fgitalia-pannello';
+
+      const $ = <T extends HTMLElement>(sel: string) => document.querySelector<T>(sel)!;
+      const escape = (t: unknown) =>
+        String(t ?? '').replace(/[&<>"]/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[c]!);
+      const data = (iso: string) =>
+        new Intl.DateTimeFormat('it-IT', { day: '2-digit', month: '2-digit', year: '2-digit', hour: '2-digit', minute: '2-digit' }).format(new Date(iso));
+
+      let gettone = (() => {
+        try {
+          return localStorage.getItem(CHIAVE) ?? '';
+        } catch {
+          return '';
+        }
+      })();
+      let ordini: Ordine[] = [];
+      let filtro = 'aperti';
+      let aperto: Ordine | undefined;
+
+      async function api(corpo: Record<string, unknown>) {
+        const risposta = await fetch('/api/gestione-ordini', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${gettone}` },
+          body: JSON.stringify(corpo),
+        });
+        const dati = await risposta.json().catch(() => ({}));
+        if (risposta.status === 401 && corpo.azione !== 'accedi') esci();
+        if (!risposta.ok) throw new Error(dati.errore ?? 'Errore');
+        return dati;
+      }
+
+      function vista(nome: 'accesso' | 'elenco' | 'scheda') {
+        $('[data-accesso]').hidden = nome !== 'accesso';
+        $('[data-elenco]').hidden = nome !== 'elenco';
+        $('[data-scheda]').hidden = nome !== 'scheda';
+        $('[data-esci]').hidden = nome === 'accesso';
+        window.scrollTo(0, 0);
+      }
+
+      function esci() {
+        gettone = '';
+        try {
+          localStorage.removeItem(CHIAVE);
+        } catch {}
+        vista('accesso');
+      }
+
+      const indirizzo = (i: Indirizzo) =>
+        [i.nome, i.via, i.via2, [i.cap, i.citta, i.provincia && `(${i.provincia})`].filter(Boolean).join(' ')]
+          .filter(Boolean)
+          .map(escape)
+          .join('<br>');
+
+      function disegnaElenco() {
+        const scelti = ordini.filter((o) =>
+          filtro === 'aperti' ? APERTI.includes(o.stato) : filtro === 'spediti' ? ['spedito', 'consegnato'].includes(o.stato) : true,
+        );
+        $('[data-conta="aperti"]').textContent = String(ordini.filter((o) => APERTI.includes(o.stato)).length);
+        document.querySelectorAll<HTMLElement>('[data-filtro]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filtro === filtro)));
+        $('[data-vuoto]').hidden = scelti.length > 0;
+        $('[data-ordini]').innerHTML = scelti
+          .map(
+            (o) => `<li><button type="button" data-apri="${escape(o.numero)}">
+              <span class="ordini__riga"><strong>${escape(o.cliente.nome)}</strong><span class="etichetta-stato" data-stato="${o.stato}">${TESTI[o.stato]}</span></span>
+              <span class="ordini__riga"><span>${escape(o.numero)} · ${data(o.creato)}</span><strong>${euro(o.totali.totaleCent)}</strong></span>
+              <span class="ordini__prodotti">${o.righe.map((r) => `${r.quantita}× ${escape(r.titolo)}`).join(', ')}</span>
+            </button></li>`,
+          )
+          .join('');
+      }
+
+      async function caricaElenco() {
+        vista('elenco');
+        $('[data-ordini]').innerHTML = '<li class="caricamento">Caricamento…</li>';
+        ordini = await api({ azione: 'elenco' });
+        disegnaElenco();
+        const daLink = decodeURIComponent(location.hash.slice(1));
+        if (daLink) apri(daLink);
+      }
+
+      function apri(numero: string) {
+        aperto = ordini.find((o) => o.numero === numero);
+        if (!aperto) return;
+        history.replaceState(null, '', `#${numero}`);
+        const o = aperto;
+        const f = o.fatturazione;
+        const telefono = o.cliente.telefono?.replace(/[^\d+]/g, '');
+        $('[data-contenuto]').innerHTML = `
+          <div class="scheda__testa">
+            <div><h1>${escape(o.numero)}</h1><p>${data(o.creato)} · ${o.pagato ? 'Pagato' : '<strong class="rosso">Pagamento non ancora confermato</strong>'}</p></div>
+            <span class="etichetta-stato" data-stato="${o.stato}">${TESTI[o.stato]}</span>
+          </div>
+          <div class="blocchi">
+            <div class="blocco"><h2>Cliente</h2><p><strong>${escape(o.cliente.nome)}</strong><br>
+              <a href="mailto:${escape(o.cliente.email)}">${escape(o.cliente.email)}</a>
+              ${telefono ? `<br><a href="tel:${escape(telefono)}">${escape(o.cliente.telefono)}</a> · <a href="https://wa.me/${escape(telefono.replace('+', ''))}" target="_blank">WhatsApp</a>` : ''}</p></div>
+            <div class="blocco"><h2>Spedire a</h2><p>${indirizzo(o.spedizione)}</p></div>
+            <div class="blocco"><h2>Fatturazione</h2><p>${indirizzo(f)}
+              ${f.partitaIva ? `<br>P.IVA ${escape(f.partitaIva)}` : ''}${f.codiceFiscale ? `<br>C.F. ${escape(f.codiceFiscale)}` : ''}${f.codiceSdiPec ? `<br>SDI/PEC ${escape(f.codiceSdiPec)}` : ''}</p></div>
+          </div>
+          <table class="righe">
+            ${o.righe.map((r) => `<tr><td>${r.quantita} ×</td><td>${r.id ? `<a href="/prodotti/${escape(r.id)}/" target="_blank">${escape(r.titolo)}</a>` : escape(r.titolo)}</td><td>${euro(r.totaleCent)}</td></tr>`).join('')}
+            <tr><td></td><td>Spedizione</td><td>${o.totali.spedizioneCent ? euro(o.totali.spedizioneCent) : 'Gratuita'}</td></tr>
+            <tr class="totale"><td></td><td>Totale IVA inclusa</td><td>${euro(o.totali.totaleCent)}</td></tr>
+          </table>
+          ${o.stripe.pagamento ? `<p><a href="https://dashboard.stripe.com/payments/${escape(o.stripe.pagamento)}" target="_blank">Vedi il pagamento su Stripe (rimborsi, ricevute)</a></p>` : ''}
+          <h2>Storico</h2>
+          <ul class="storico">${[...o.storico].reverse().map((s) => `<li><time>${data(s.data)}</time> ${TESTI[s.stato]}${s.nota ? ` – ${escape(s.nota)}` : ''}</li>`).join('')}</ul>`;
+
+        const modulo = $<HTMLFormElement>('[data-aggiorna]');
+        modulo.reset();
+        const prossimo: Partial<Record<Stato, Stato>> = { ricevuto: 'in_lavorazione', in_lavorazione: 'spedito', spedito: 'consegnato' };
+        const scelta = modulo.querySelector<HTMLInputElement>(`input[value="${prossimo[o.stato] ?? o.stato}"]`);
+        if (scelta) scelta.checked = true;
+        (modulo.elements.namedItem('corriere') as HTMLInputElement).value = o.consegna?.corriere ?? '';
+        (modulo.elements.namedItem('tracking') as HTMLInputElement).value = o.consegna?.tracking ?? '';
+        (modulo.elements.namedItem('link') as HTMLInputElement).value = o.consegna?.link ?? '';
+        aggiornaCampi();
+        $('[data-esito]').hidden = true;
+        vista('scheda');
+      }
+
+      function aggiornaCampi() {
+        const stato = new FormData($<HTMLFormElement>('[data-aggiorna]')).get('stato');
+        $('[data-campi-spedizione]').hidden = stato !== 'spedito';
+      }
+
+      document.addEventListener('click', (e) => {
+        const t = e.target as HTMLElement;
+        const apriBtn = t.closest<HTMLElement>('[data-apri]');
+        if (apriBtn) return apri(apriBtn.dataset.apri!);
+        const filtroBtn = t.closest<HTMLElement>('[data-filtro]');
+        if (filtroBtn) {
+          filtro = filtroBtn.dataset.filtro!;
+          return disegnaElenco();
+        }
+        if (t.closest('[data-ricarica]')) return void caricaElenco();
+        if (t.closest('[data-indietro]')) {
+          history.replaceState(null, '', location.pathname);
+          disegnaElenco();
+          return vista('elenco');
+        }
+        if (t.closest('[data-esci]')) esci();
+      });
+
+      $('[data-aggiorna]').addEventListener('change', aggiornaCampi);
+
+      $<HTMLFormElement>('[data-aggiorna]').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!aperto) return;
+        const d = new FormData(e.target as HTMLFormElement);
+        const esito = $('[data-esito]');
+        const bottone = (e.target as HTMLFormElement).querySelector('button[type="submit"]') as HTMLButtonElement;
+        bottone.disabled = true;
+        try {
+          const { ordine, emailInviata } = await api({
+            azione: 'aggiorna',
+            numero: aperto.numero,
+            stato: d.get('stato'),
+            corriere: d.get('corriere'),
+            tracking: d.get('tracking'),
+            link: d.get('link'),
+            nota: d.get('nota'),
+            avvisaCliente: d.get('avvisa') === 'on',
+          });
+          ordini = ordini.map((o) => (o.numero === ordine.numero ? ordine : o));
+          apri(ordine.numero);
+          esito.textContent = `Salvato${d.get('avvisa') === 'on' ? (emailInviata ? ' · email inviata al cliente' : ' · ATTENZIONE: email non inviata') : ''}.`;
+        } catch (err) {
+          esito.textContent = (err as Error).message;
+        }
+        esito.hidden = false;
+        bottone.disabled = false;
+      });
+
+      $<HTMLFormElement>('[data-accesso]').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const errore = $('[data-errore-accesso]');
+        errore.hidden = true;
+        try {
+          const { gettone: nuovo } = await api({ azione: 'accedi', password: new FormData(e.target as HTMLFormElement).get('password') });
+          gettone = nuovo;
+          try {
+            localStorage.setItem(CHIAVE, gettone);
+          } catch {}
+          await caricaElenco();
+        } catch (err) {
+          errore.textContent = (err as Error).message;
+          errore.hidden = false;
+        }
+      });
+
+      if (gettone) caricaElenco().catch(() => vista('accesso'));
+      else vista('accesso');
+    </script>
+
+    <style>
+      body {
+        background: var(--grigio-100);
+      }
+
+      .barra {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        padding: 10px 16px;
+        background: var(--bianco);
+        border-bottom: 1px solid var(--grigio-200);
+      }
+
+      .barra__logo img {
+        height: 36px;
+        width: auto;
+      }
+
+      .barra__esci {
+        margin-left: auto;
+        padding: 8px 14px;
+        border: 1px solid var(--grigio-300);
+        border-radius: 999px;
+        background: none;
+        font: inherit;
+        font-size: 0.9rem;
+        cursor: pointer;
+      }
+
+      .pannello {
+        max-width: 860px;
+        margin: 0 auto;
+        padding: 20px 16px 60px;
+      }
+
+      .accesso {
+        display: grid;
+        gap: 16px;
+        max-width: 380px;
+        margin: 10vh auto 0;
+        padding: 32px;
+        border-radius: 20px;
+        background: var(--bianco);
+        box-shadow: var(--ombra);
+        color: var(--blu-700);
+      }
+
+      .accesso h1 {
+        margin: 0;
+        font-size: 1.5rem;
+      }
+
+      label > span {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--grigio-700);
+      }
+
+      input:not([type='radio'], [type='checkbox']),
+      textarea {
+        width: 100%;
+        padding: 12px 14px;
+        font: inherit;
+        border: 1px solid var(--grigio-300);
+        border-radius: 10px;
+        background: var(--bianco);
+      }
+
+      .errore {
+        margin: 0;
+        color: #b42318;
+        font-weight: 600;
+      }
+
+      .filtri {
+        display: flex;
+        gap: 8px;
+        overflow-x: auto;
+        margin-bottom: 16px;
+      }
+
+      .filtri button {
+        flex-shrink: 0;
+        padding: 9px 16px;
+        border: 1px solid var(--grigio-300);
+        border-radius: 999px;
+        background: var(--bianco);
+        font: inherit;
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .filtri button[aria-pressed='true'] {
+        background: var(--blu-900);
+        border-color: var(--blu-900);
+        color: var(--bianco);
+      }
+
+      .filtri__aggiorna {
+        margin-left: auto;
+      }
+
+      .ordini {
+        display: grid;
+        gap: 10px;
+        list-style: none;
+        margin: 0;
+        padding: 0;
+      }
+
+      .ordini :global(button) {
+        display: grid;
+        gap: 4px;
+        width: 100%;
+        padding: 16px;
+        border: 1px solid var(--grigio-200);
+        border-radius: 14px;
+        background: var(--bianco);
+        font: inherit;
+        text-align: left;
+        cursor: pointer;
+      }
+
+      .ordini :global(.ordini__riga) {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+      }
+
+      .ordini :global(.ordini__riga span) {
+        font-size: 0.88rem;
+        color: var(--grigio-500);
+      }
+
+      .ordini :global(.ordini__prodotti) {
+        font-size: 0.88rem;
+        color: var(--grigio-700);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .vuoto,
+      .ordini :global(.caricamento) {
+        padding: 32px;
+        text-align: center;
+        color: var(--grigio-500);
+      }
+
+      :global(.etichetta-stato) {
+        flex-shrink: 0;
+        padding: 2px 10px;
+        border-radius: 999px;
+        background: var(--blu-100);
+        color: var(--blu-700) !important;
+        font-size: 0.8rem !important;
+        font-weight: 800;
+      }
+
+      :global(.etichetta-stato[data-stato='ricevuto']) {
+        background: var(--accento);
+        color: var(--blu-900) !important;
+      }
+
+      :global(.etichetta-stato[data-stato='spedito']),
+      :global(.etichetta-stato[data-stato='consegnato']) {
+        background: #ecfdf3;
+        color: #067647 !important;
+      }
+
+      :global(.etichetta-stato[data-stato='annullato']),
+      :global(.etichetta-stato[data-stato='in_attesa_pagamento']) {
+        background: #fef3f2;
+        color: #b42318 !important;
+      }
+
+      .scheda {
+        padding: 20px;
+        border-radius: 20px;
+        background: var(--bianco);
+      }
+
+      .indietro {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        margin-bottom: 16px;
+        padding: 0;
+        border: 0;
+        background: none;
+        font: inherit;
+        font-weight: 600;
+        color: var(--blu-600);
+        cursor: pointer;
+      }
+
+      .scheda :global(.scheda__testa) {
+        display: flex;
+        justify-content: space-between;
+        gap: 12px;
+        align-items: flex-start;
+      }
+
+      .scheda :global(h1) {
+        margin: 0;
+        font-size: 1.4rem;
+      }
+
+      .scheda :global(h2) {
+        font-size: 1rem;
+        margin: 20px 0 8px;
+      }
+
+      .scheda :global(.rosso) {
+        color: #b42318;
+      }
+
+      .scheda :global(.blocchi) {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+        gap: 12px;
+      }
+
+      .scheda :global(.blocco) {
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: var(--grigio-100);
+      }
+
+      .scheda :global(.blocco h2) {
+        margin: 0 0 6px;
+        font-size: 0.8rem;
+        letter-spacing: 0.08em;
+        text-transform: uppercase;
+        color: var(--grigio-500);
+      }
+
+      .scheda :global(.blocco p) {
+        margin: 0;
+        font-size: 0.95rem;
+      }
+
+      .scheda :global(.righe) {
+        width: 100%;
+        margin: 20px 0 12px;
+        border-collapse: collapse;
+      }
+
+      .scheda :global(.righe td) {
+        padding: 8px 4px;
+        border-bottom: 1px solid var(--grigio-200);
+        vertical-align: top;
+      }
+
+      .scheda :global(.righe td:first-child) {
+        white-space: nowrap;
+      }
+
+      .scheda :global(.righe td:last-child) {
+        text-align: right;
+        white-space: nowrap;
+      }
+
+      .scheda :global(.righe .totale td) {
+        font-weight: 800;
+        border-bottom: 0;
+      }
+
+      .scheda :global(.storico) {
+        margin: 0;
+        padding-left: 18px;
+        font-size: 0.92rem;
+      }
+
+      .scheda :global(.storico time) {
+        color: var(--grigio-500);
+      }
+
+      .aggiorna {
+        display: grid;
+        gap: 14px;
+        margin-top: 28px;
+        padding: 20px;
+        border-radius: 16px;
+        background: var(--blu-50);
+      }
+
+      .aggiorna h2 {
+        margin: 0;
+        font-size: 1.1rem;
+      }
+
+      .stati {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 8px;
+      }
+
+      .stati label {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        padding: 12px 14px;
+        border: 1px solid var(--grigio-300);
+        border-radius: 12px;
+        background: var(--bianco);
+        font-weight: 600;
+        cursor: pointer;
+      }
+
+      .stati label:has(input:checked) {
+        border-color: var(--blu-700);
+        box-shadow: 0 0 0 2px var(--blu-700) inset;
+      }
+
+      .spedizione {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 12px;
+      }
+
+      .spedizione[hidden] {
+        display: none;
+      }
+
+      .intero {
+        grid-column: 1 / -1;
+      }
+
+      .spunta {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        font-weight: 600;
+      }
+
+      .esito {
+        margin: 0;
+        font-weight: 700;
+        color: #067647;
+      }
+
+      @media (max-width: 560px) {
+        .spedizione {
+          grid-template-columns: 1fr;
+        }
+      }
+    </style>
+  </body>
+</html>

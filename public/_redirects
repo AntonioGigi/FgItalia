@@ -7,15 +7,14 @@
 /prodotti-per-la-fisioterapia/*  /  301
 /cookie-policy/*  /privacy/  301
 /privacy-policy-3/*  /privacy/  301
-/note-legali/*  /privacy/  301
-/order-shipping/*  /contatti/  301
-/carrello/*  /prodotti/  301
-/cart/*  /prodotti/  301
-/checkout/*  /prodotti/  301
-/pagamento/*  /prodotti/  301
-/mio-account/*  /  301
-/my-account/*  /  301
-/order-tracking/*  /contatti/  301
+/note-legali/*  /condizioni-di-vendita/  301
+/order-shipping/*  /condizioni-di-vendita/  301
+/cart/*  /carrello/  301
+/checkout/*  /carrello/  301
+/pagamento/*  /carrello/  301
+/mio-account/*  /ordine/  301
+/my-account/*  /ordine/  301
+/order-tracking/*  /ordine/  301
 
 # Categorie
 /categoria-prodotto/apparecchiature/*  /categorie/apparecchiature/  301

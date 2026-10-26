@@ -1,4 +1,8 @@
 User-agent: *
 Disallow: /admin/
+Disallow: /gestione-ordini/
+Disallow: /carrello/
+Disallow: /ordine/
+Disallow: /api/
 
 Sitemap: https://www.fgitalia.it/sitemap.xml

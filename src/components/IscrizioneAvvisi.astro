@@ -1,0 +1,155 @@
+---
+import Icona from './Icona.astro';
+
+interface Props {
+  titolo?: string;
+  testo?: string;
+}
+
+const {
+  titolo = 'Ricevi gli avvisi di corsi e offerte',
+  testo = 'Ti scriviamo solo quando c’è un nuovo corso o un’offerta per i professionisti. Puoi cancellarti quando vuoi.',
+} = Astro.props;
+---
+
+<form class="avvisi" method="POST" action="/api/iscrizione" data-avvisi>
+  <div class="avvisi__testo">
+    <span class="avvisi__icona"><Icona nome="email" /></span>
+    <div>
+      <h2>{titolo}</h2>
+      <p>{testo}</p>
+    </div>
+  </div>
+  <div class="avvisi__campi">
+    <p hidden><label>Non compilare: <input name="sito-web" tabindex="-1" autocomplete="off" /></label></p>
+    <label class="solo-lettori" for="avvisi-nome">Nome</label>
+    <input id="avvisi-nome" name="nome" placeholder="Nome" autocomplete="given-name" />
+    <label class="solo-lettori" for="avvisi-email">Email</label>
+    <input id="avvisi-email" name="email" type="email" required placeholder="La tua email" autocomplete="email" />
+    <button class="pulsante pulsante--primario" type="submit">Iscriviti</button>
+    <label class="avvisi__consenso">
+      <input type="checkbox" name="privacy" required />
+      <span>Acconsento a ricevere email informative secondo l’<a href="/privacy/" target="_blank">informativa privacy</a>.</span>
+    </label>
+    <p class="avvisi__esito" role="status" data-esito hidden></p>
+  </div>
+</form>
+
+<script>
+  document.querySelectorAll<HTMLFormElement>('[data-avvisi]').forEach((modulo) => {
+    const esito = modulo.querySelector<HTMLElement>('[data-esito]')!;
+    modulo.addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const bottone = modulo.querySelector('button')!;
+      bottone.disabled = true;
+      try {
+        const risposta = await fetch(modulo.action, { method: 'POST', body: new FormData(modulo) });
+        const dati = await risposta.json().catch(() => ({}));
+        if (!risposta.ok) throw new Error(dati.errore);
+        modulo.reset();
+        esito.textContent = 'Fatto! Ti avviseremo dei prossimi corsi e delle offerte.';
+        esito.dataset.tipo = 'ok';
+      } catch (err) {
+        esito.textContent = (err as Error).message || 'Iscrizione non riuscita, riprova più tardi.';
+        esito.dataset.tipo = 'errore';
+      }
+      esito.hidden = false;
+      bottone.disabled = false;
+    });
+  });
+</script>
+
+<style>
+  .avvisi {
+    display: grid;
+    grid-template-columns: 1fr 1.1fr;
+    gap: 24px 40px;
+    align-items: center;
+    padding: clamp(24px, 4vw, 40px);
+    border-radius: 24px;
+    background: var(--accento-chiaro);
+  }
+
+  .avvisi__testo {
+    display: flex;
+    gap: 16px;
+  }
+
+  .avvisi__icona {
+    display: inline-flex;
+    flex-shrink: 0;
+    width: 52px;
+    height: 52px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: var(--blu-700);
+    color: var(--accento);
+  }
+
+  .avvisi h2 {
+    font-size: 1.35rem;
+    margin-bottom: 6px;
+  }
+
+  .avvisi__testo p {
+    margin: 0;
+    color: var(--grigio-700);
+  }
+
+  .avvisi__campi {
+    display: grid;
+    grid-template-columns: 0.8fr 1.2fr auto;
+    gap: 10px;
+  }
+
+  .avvisi__campi input:not([type='checkbox']) {
+    width: 100%;
+    min-width: 0;
+    padding: 13px 16px;
+    font: inherit;
+    border: 1px solid var(--grigio-300);
+    border-radius: 999px;
+    background: var(--bianco);
+  }
+
+  .avvisi__consenso {
+    grid-column: 1 / -1;
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 0.85rem;
+    color: var(--grigio-700);
+  }
+
+  .avvisi__consenso input {
+    width: 18px;
+    height: 18px;
+    margin-top: 1px;
+    flex-shrink: 0;
+    accent-color: var(--blu-700);
+  }
+
+  .avvisi__esito {
+    grid-column: 1 / -1;
+    margin: 0;
+    font-weight: 700;
+    color: #067647;
+  }
+
+  .avvisi__esito[data-tipo='errore'] {
+    color: #b42318;
+  }
+
+  @media (max-width: 900px) {
+    .avvisi {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .avvisi__campi {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>
