@@ -12,10 +12,11 @@ Nuovo sito di **FGItalia di Francesco Gieri** (apparecchiature elettromedicali, 
 | Cosa | Dove |
 | --- | --- |
 | Dati aziendali, telefono, WhatsApp, email, social | `src/data/impostazioni.json` |
-| Prodotti (uno per file) | `src/content/prodotti/*.md` |
+| Prodotti (uno per file, con prezzo IVA esclusa) | `src/content/prodotti/*.md` |
+| Corsi di formazione | `src/content/corsi/*.md` |
 | Categorie / Marchi | `src/content/categorie/*.json`, `src/content/marchi/*.json` |
 | Novità e offerte | `src/content/novita/*.md` |
-| Foto e PDF caricati dal pannello | `public/uploads/` |
+| Foto prodotti, schede tecniche PDF, foto dello showroom | `public/uploads/` |
 | Pagine | `src/pages/` |
 | Configurazione del pannello | `public/admin/config.yml` |
 
@@ -32,5 +33,5 @@ npm run build    # controllo dei tipi + sito in dist/
 1. Su [netlify.com](https://www.netlify.com), *Add new site → Import from GitHub* e scegli questo repository (ramo `main`). Le impostazioni di build sono già in `netlify.toml`.
 2. **Modulo preventivi:** in *Site configuration → Forms → Form notifications* aggiungi una notifica email verso l'indirizzo di FGItalia.
 3. **Pannello `/admin/`:** in *Site configuration → Access & security → OAuth* installa il provider **GitHub** (servono Client ID e Secret di una GitHub OAuth App con callback `https://api.netlify.com/auth/done`). Chi deve usare il pannello accede con un account GitHub che abbia accesso in scrittura al repository.
-4. **Dominio:** in *Domain management* aggiungi `fgitalia.it` e `www.fgitalia.it`, poi presso il registrar del dominio imposta i DNS indicati da Netlify. Il certificato HTTPS è automatico. I vecchi indirizzi WordPress noti sono reindirizzati in `netlify.toml`.
+4. **Dominio:** in *Domain management* aggiungi `fgitalia.it` e `www.fgitalia.it`, poi presso il registrar del dominio imposta i DNS indicati da Netlify. Il certificato HTTPS è automatico. Tutti i vecchi indirizzi WordPress (prodotti, categorie, pagine) sono reindirizzati alle nuove pagine in `public/_redirects`.
 5. **Instagram (facoltativo):** imposta la variabile d'ambiente `INSTAGRAM_TOKEN` (token della *Instagram API with Instagram Login* di un account Business/Creator) per mostrare gli ultimi post in home. Il token va rinnovato prima della scadenza (60 giorni). Il sito legge i post a ogni pubblicazione.

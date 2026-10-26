@@ -44,6 +44,11 @@ collections:
         value_field: '{{slug}}'
         search_fields: [titolo]
         display_fields: [titolo]
+      - label: Sottocategoria
+        name: sottocategoria
+        widget: string
+        required: false
+        hint: 'Es. Laserterapia, Tecarterapia, Creme conduttrici, IASTM. I prodotti con la stessa sottocategoria vengono raggruppati.'
       - label: Marca
         name: marca
         widget: relation
@@ -53,6 +58,14 @@ collections:
         display_fields: [nome]
         required: false
       - { label: Codice articolo, name: codice, widget: string, required: false }
+      - label: Prezzo (€, IVA esclusa)
+        name: prezzo
+        widget: number
+        value_type: float
+        step: 0.01
+        min: 0
+        required: false
+        hint: 'Lascia vuoto per mostrare "Prezzo su richiesta".'
       - label: Descrizione breve
         name: descrizione_breve
         widget: text
@@ -94,6 +107,28 @@ collections:
       - { label: Pubblicato, name: pubblicato, widget: boolean, default: true }
       - { label: Testo, name: body, widget: markdown }
 
+  - name: corsi
+    label: Corsi
+    label_singular: Corso
+    description: I corsi con data futura compaiono come "Prossimi corsi" e nel modulo di iscrizione; quelli passati finiscono da soli tra i "Corsi già svolti".
+    folder: src/content/corsi
+    create: true
+    extension: md
+    slug: '{{year}}-{{month}}-{{day}}-{{titolo}}'
+    summary: '{{titolo}} ({{data | date("DD/MM/YYYY")}})'
+    sortable_fields: [data, titolo]
+    fields:
+      - { label: Titolo, name: titolo, widget: string }
+      - { label: Data, name: data, widget: datetime, time_format: false, date_format: DD/MM/YYYY, format: YYYY-MM-DD }
+      - { label: Orario, name: orario, widget: string, required: false, hint: 'Es. 9:00–17:00' }
+      - { label: Luogo, name: luogo, widget: string, required: false }
+      - { label: Docente, name: docente, widget: string, required: false }
+      - { label: Quota (€), name: prezzo, widget: number, value_type: float, step: 0.01, min: 0, required: false }
+      - { label: Immagine, name: immagine, widget: image, required: false }
+      - { label: Riassunto, name: riassunto, widget: text }
+      - { label: Pubblicato, name: pubblicato, widget: boolean, default: true }
+      - { label: Programma, name: body, widget: markdown }
+
   - name: categorie
     label: Categorie
     label_singular: Categoria
@@ -110,12 +145,14 @@ collections:
         name: icona
         widget: select
         options:
+          - { label: Fulmine (apparecchiature), value: fisioterapia }
+          - { label: Scatola (consumabili), value: consumabili }
+          - { label: Mano (terapia manuale), value: strumenti }
+          - { label: Manubrio (palestra), value: palestra }
+          - { label: Persona in movimento, value: riabilitazione }
           - { label: Monitor parametri vitali, value: monitor }
           - { label: Stetoscopio (diagnostica), value: diagnostica }
-          - { label: Fulmine (elettroterapia), value: fisioterapia }
-          - { label: Persona in movimento, value: riabilitazione }
           - { label: Valigetta medica, value: medicale }
-          - { label: Scatola (consumabili), value: consumabili }
       - { label: Ordine di visualizzazione, name: ordine, widget: number, value_type: int, default: 99 }
 
   - name: marchi

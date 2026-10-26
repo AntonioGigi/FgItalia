@@ -2,13 +2,15 @@
 import { getEntry } from 'astro:content';
 import Icona from './Icona.astro';
 import type { Prodotto } from '../lib/catalogo';
+import { prezzo } from '../lib/sito';
 
 interface Props {
   prodotto: Prodotto;
 }
 
 const { prodotto } = Astro.props;
-const { titolo, immagini, descrizione_breve } = prodotto.data;
+const { titolo, immagini, descrizione_breve, sottocategoria } = prodotto.data;
+const prezzoTesto = prezzo(prodotto.data.prezzo);
 const categoria = await getEntry(prodotto.data.categoria);
 const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefined;
 ---
@@ -19,7 +21,7 @@ const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefi
   data-prodotto
   data-categoria={categoria?.id}
   data-marca={marca?.id ?? ''}
-  data-testo={`${titolo} ${marca?.data.nome ?? ''} ${prodotto.data.codice ?? ''} ${descrizione_breve}`.toLowerCase()}
+  data-testo={`${titolo} ${marca?.data.nome ?? ''} ${prodotto.data.codice ?? ''} ${sottocategoria ?? ''} ${categoria?.data.titolo ?? ''} ${descrizione_breve}`.toLowerCase()}
 >
   <div class="card-prodotto__foto">
     {
@@ -32,12 +34,23 @@ const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefi
     {marca && <span class="card-prodotto__marca">{marca.data.nome}</span>}
   </div>
   <div class="card-prodotto__corpo">
-    {categoria && <span class="card-prodotto__categoria">{categoria.data.titolo}</span>}
+    <span class="card-prodotto__categoria">{sottocategoria ?? categoria?.data.titolo}</span>
     <h3>{titolo}</h3>
     <p>{descrizione_breve}</p>
-    <span class="card-prodotto__link">
-      Scopri il prodotto <Icona nome="freccia" dimensione={18} />
-    </span>
+    <div class="card-prodotto__piede">
+      {
+        prezzoTesto ? (
+          <span class="card-prodotto__prezzo">
+            {prezzoTesto} <small>+ IVA</small>
+          </span>
+        ) : (
+          <span class="card-prodotto__prezzo card-prodotto__prezzo--richiesta">Prezzo su richiesta</span>
+        )
+      }
+      <span class="card-prodotto__link" aria-hidden="true">
+        <Icona nome="freccia" dimensione={18} />
+      </span>
+    </div>
   </div>
 </a>
 
@@ -65,9 +78,12 @@ const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefi
     position: relative;
     aspect-ratio: 4 / 3;
     background: var(--grigio-100);
+    overflow: hidden;
   }
 
   .card-prodotto__foto img {
+    position: absolute;
+    inset: 0;
     width: 100%;
     height: 100%;
     object-fit: contain;
@@ -125,14 +141,49 @@ const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefi
     overflow: hidden;
   }
 
+  .card-prodotto__piede {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 12px;
+    margin-top: auto;
+    padding-top: 14px;
+    border-top: 1px solid var(--grigio-200);
+  }
+
+  .card-prodotto__prezzo {
+    font-size: 1.2rem;
+    font-weight: 800;
+    color: var(--blu-900);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .card-prodotto__prezzo small {
+    font-size: 0.75rem;
+    font-weight: 600;
+    color: var(--grigio-500);
+  }
+
+  .card-prodotto__prezzo--richiesta {
+    font-size: 0.95rem;
+    color: var(--verde-scuro);
+  }
+
   .card-prodotto__link {
     display: inline-flex;
+    width: 38px;
+    height: 38px;
     align-items: center;
-    gap: 6px;
-    margin-top: auto;
-    font-weight: 700;
-    font-size: 0.95rem;
-    color: var(--blu-600);
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--blu-100);
+    color: var(--blu-700);
+    transition: background-color 0.2s ease, color 0.2s ease;
+  }
+
+  .card-prodotto:hover .card-prodotto__link {
+    background: var(--verde);
+    color: var(--blu-900);
   }
 
   .card-prodotto:hover .card-prodotto__link svg {
@@ -141,5 +192,58 @@ const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefi
 
   .card-prodotto__link svg {
     transition: transform 0.2s ease;
+  }
+
+  /* su smartphone le schede stanno in due colonne: versione compatta */
+  @media (max-width: 560px) {
+    .card-prodotto {
+      border-radius: 14px;
+    }
+
+    .card-prodotto__foto {
+      aspect-ratio: 1;
+    }
+
+    .card-prodotto__foto img {
+      padding: 8px;
+    }
+
+    .card-prodotto__marca {
+      top: 8px;
+      left: 8px;
+      padding: 2px 8px;
+      font-size: 0.68rem;
+    }
+
+    .card-prodotto__corpo {
+      padding: 12px;
+    }
+
+    .card-prodotto__categoria {
+      font-size: 0.72rem;
+      margin-bottom: 2px;
+    }
+
+    .card-prodotto h3 {
+      font-size: 0.95rem;
+      margin-bottom: 4px;
+    }
+
+    .card-prodotto p,
+    .card-prodotto__link {
+      display: none;
+    }
+
+    .card-prodotto__piede {
+      padding-top: 10px;
+    }
+
+    .card-prodotto__prezzo {
+      font-size: 1rem;
+    }
+
+    .card-prodotto__prezzo--richiesta {
+      font-size: 0.8rem;
+    }
   }
 </style>

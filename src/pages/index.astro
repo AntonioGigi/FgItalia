@@ -20,7 +20,7 @@ const punti = [
   {
     icona: 'scudo',
     titolo: 'Prodotti certificati',
-    testo: 'Solo dispositivi marcati CE e conformi alle normative, da produttori selezionati.',
+    testo: 'Apparecchiature dotate delle certificazioni necessarie, da produttori selezionati come Globus ed EME.',
   },
   {
     icona: 'persone',
@@ -29,13 +29,13 @@ const punti = [
   },
   {
     icona: 'camion',
-    titolo: 'Forniture complete',
-    testo: 'Dal singolo articolo all’allestimento completo di studi, ambulatori e strutture sanitarie.',
+    titolo: 'Spedizioni in tutta Italia',
+    testo: 'Dalla Sicilia a tutta Italia: dal singolo consumabile all’allestimento completo dello studio.',
   },
   {
     icona: 'chiave',
-    titolo: 'Assistenza',
-    testo: 'Supporto prima e dopo l’acquisto e materiale di consumo per le tue apparecchiature.',
+    titolo: 'Assistenza post-vendita',
+    testo: 'Supporto prima e dopo l’acquisto e tutti i materiali di consumo per le tue apparecchiature.',
   },
 ] as const;
 ---
@@ -44,7 +44,7 @@ const punti = [
   <section class="hero">
     <div class="contenitore hero__griglia">
       <div class="hero__testo">
-        <span class="hero__badge"><span></span> Dal {sito.anno_fondazione} ad {sito.citta}</span>
+        <span class="hero__badge"><span></span> Dal {sito.anno_fondazione} ad {sito.citta} · Spedizioni in tutta Italia</span>
         <h1>{sito.hero_titolo}</h1>
         <p>{sito.hero_testo}</p>
         <div class="hero__azioni">
@@ -63,25 +63,13 @@ const punti = [
         </div>
       </div>
 
-      <div class="hero__visuale" aria-hidden="true">
-        <div class="hero__schermo">
-          <div class="hero__schermo-testa">
-            <span></span><span></span><span></span>
-          </div>
-          <svg class="hero__ecg" viewBox="0 0 400 120" preserveAspectRatio="none">
-            <path
-              d="M0 70 H70 L85 70 L95 40 L105 95 L118 15 L132 100 L142 70 H210 L225 70 L235 40 L245 95 L258 15 L272 100 L282 70 H350 L365 70 L375 40 L385 95 L400 30"
-            ></path>
-          </svg>
-          <div class="hero__parametri">
-            <div><small>BPM</small><strong>72</strong></div>
-            <div><small>SpO₂</small><strong>98%</strong></div>
-            <div><small>PA</small><strong>120/80</strong></div>
-          </div>
-        </div>
+      <div class="hero__visuale">
+        <figure class="hero__foto">
+          <img src="/uploads/foto/showroom.webp" alt={`Lo showroom ${sito.nome_breve} ad ${sito.citta}`} width="700" height="1050" />
+        </figure>
         <div class="hero__carta hero__carta--1">
           <Icona nome="scudo" />
-          <div><strong>Certificati CE</strong><small>Dispositivi a norma</small></div>
+          <div><strong>Prodotti certificati</strong><small>Apparecchiature a norma CE</small></div>
         </div>
         <div class="hero__carta hero__carta--2">
           <strong>{anniAttivita}+</strong>
@@ -93,7 +81,7 @@ const punti = [
 
   <section class="marchi" aria-label="Marchi trattati">
     <div class="contenitore marchi__riga">
-      <span class="marchi__etichetta">Distributori dei marchi</span>
+      <span class="marchi__etichetta">Marchi trattati</span>
       <ul>
         {marchi.map((m) => <li>{m.data.logo ? <img src={m.data.logo} alt={m.data.nome} loading="lazy" /> : m.data.nome}</li>)}
       </ul>
@@ -106,11 +94,11 @@ const punti = [
         <span class="sopratitolo">Il nostro catalogo</span>
         <h2>Tutto ciò che serve al tuo studio, in un unico fornitore</h2>
         <p class="testo-intro">
-          Apparecchiature elettromedicali, articoli medicali e materiale di consumo per medici, fisioterapisti,
-          ambulatori, centri di riabilitazione e strutture sanitarie.
+          Apparecchiature elettromedicali, strumenti per la terapia manuale e materiali di consumo per
+          fisioterapisti, studi, centri di riabilitazione e strutture sanitarie.
         </p>
       </div>
-      <div class="griglia">
+      <div class="griglia griglia--categorie">
         {categorie.map((c) => <CardCategoria categoria={c} numero={contaPerCategoria(c.id)} />)}
       </div>
     </div>
@@ -129,7 +117,7 @@ const punti = [
               Vedi tutti <Icona nome="freccia" />
             </a>
           </div>
-          <div class="griglia">
+          <div class="griglia griglia--prodotti">
             {inEvidenza.map((p) => (
               <CardProdotto prodotto={p} />
             ))}
@@ -143,15 +131,15 @@ const punti = [
     <div class="contenitore perche">
       <div class="perche__intro appare">
         <span class="sopratitolo">Perché sceglierci</span>
-        <h2>Un partner affidabile, non un semplice magazzino</h2>
+        <h2>Un partner di fiducia, non un semplice fornitore</h2>
         <p class="testo-intro">
-          Dal {sito.anno_fondazione} accompagniamo professionisti e strutture sanitarie nella scelta delle attrezzature,
-          con un rapporto diretto e la serietà di un’azienda del territorio.
+          Dal {sito.anno_fondazione} accompagniamo fisioterapisti e strutture sanitarie nella scelta delle attrezzature,
+          con consulenza personalizzata e la serietà di un’azienda del territorio.
         </p>
         <dl class="numeri">
           <div><dt>Anni di attività</dt><dd>{anniAttivita}+</dd></div>
-          <div><dt>Categorie di prodotto</dt><dd>{categorie.length}</dd></div>
-          <div><dt>Marchi trattati</dt><dd>{marchi.length}+</dd></div>
+          <div><dt>Prodotti a catalogo</dt><dd>{prodotti.length}</dd></div>
+          <div><dt>Schede tecniche</dt><dd>{prodotti.filter((p) => p.data.scheda_pdf).length}</dd></div>
         </dl>
       </div>
       <ul class="perche__punti">
@@ -280,78 +268,19 @@ const punti = [
     padding: 40px 0 40px 24px;
   }
 
-  .hero__schermo {
-    border-radius: 24px;
-    padding: 20px;
-    background: linear-gradient(160deg, #0d3a50, #041d29);
-    border: 1px solid rgb(255 255 255 / 0.1);
+  .hero__foto {
+    margin: 0;
+    aspect-ratio: 4 / 5;
+    border-radius: 28px;
+    overflow: hidden;
+    border: 1px solid rgb(255 255 255 / 0.12);
     box-shadow: 0 30px 80px rgb(0 0 0 / 0.35);
   }
 
-  .hero__schermo-testa {
-    display: flex;
-    gap: 6px;
-    margin-bottom: 16px;
-  }
-
-  .hero__schermo-testa span {
-    width: 10px;
-    height: 10px;
-    border-radius: 50%;
-    background: rgb(255 255 255 / 0.15);
-  }
-
-  .hero__ecg {
+  .hero__foto img {
     width: 100%;
-    height: 140px;
-    border-radius: 14px;
-    background:
-      linear-gradient(rgb(18 179 163 / 0.07) 1px, transparent 1px) 0 0 / 20px 20px,
-      linear-gradient(90deg, rgb(18 179 163 / 0.07) 1px, transparent 1px) 0 0 / 20px 20px;
-  }
-
-  .hero__ecg path {
-    fill: none;
-    stroke: var(--verde);
-    stroke-width: 3;
-    stroke-linejoin: round;
-    vector-effect: non-scaling-stroke;
-    stroke-dasharray: 1200;
-    stroke-dashoffset: 1200;
-    filter: drop-shadow(0 0 6px rgb(18 179 163 / 0.8));
-    animation: traccia 3.2s linear infinite;
-  }
-
-  @keyframes traccia {
-    to {
-      stroke-dashoffset: 0;
-    }
-  }
-
-  .hero__parametri {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 12px;
-    margin-top: 16px;
-  }
-
-  .hero__parametri div {
-    padding: 12px 14px;
-    border-radius: 12px;
-    background: rgb(255 255 255 / 0.05);
-  }
-
-  .hero__parametri small {
-    display: block;
-    font-size: 0.72rem;
-    letter-spacing: 0.1em;
-    color: rgb(255 255 255 / 0.5);
-  }
-
-  .hero__parametri strong {
-    font-size: 1.4rem;
-    color: var(--bianco);
-    font-variant-numeric: tabular-nums;
+    height: 100%;
+    object-fit: cover;
   }
 
   .hero__carta {
@@ -446,6 +375,10 @@ const punti = [
     width: auto;
     filter: grayscale(1);
     opacity: 0.6;
+  }
+
+  .griglia--categorie {
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 240px), 1fr));
   }
 
   .riga-testa {
@@ -594,6 +527,10 @@ const punti = [
     .hero__visuale {
       padding: 32px 8px;
       max-width: 520px;
+    }
+
+    .hero__foto {
+      aspect-ratio: 4 / 3;
     }
 
     .perche__intro {

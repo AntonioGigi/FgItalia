@@ -41,3 +41,10 @@ export function urlFacebook(): string | undefined {
 }
 
 export const formatoData = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+
+const formatoEuro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', useGrouping: 'always' });
+
+/** "€ 1.475,41" — i prezzi del catalogo sono IVA esclusa */
+export function prezzo(valore: number | undefined): string | undefined {
+  return valore ? formatoEuro.format(valore) : undefined;
+}

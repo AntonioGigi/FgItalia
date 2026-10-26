@@ -8,6 +8,7 @@ export const GET: APIRoute = async ({ site }) => {
     '/prodotti/',
     '/chi-siamo/',
     '/novita/',
+    '/corsi/',
     '/contatti/',
     '/privacy/',
     ...(await getCollection('categorie')).map((c) => `/categorie/${c.id}/`),

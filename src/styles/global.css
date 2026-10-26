@@ -340,3 +340,10 @@ p {
 [hidden] {
   display: none !important;
 }
+
+@media (max-width: 560px) {
+  .griglia--prodotti {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 12px;
+  }
+}

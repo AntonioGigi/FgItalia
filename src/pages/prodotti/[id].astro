@@ -5,7 +5,7 @@ import Icona from '../../components/Icona.astro';
 import Condividi from '../../components/Condividi.astro';
 import CardProdotto from '../../components/CardProdotto.astro';
 import { prodottiPubblicati, type Prodotto } from '../../lib/catalogo';
-import { sito, soloCifre, linkWhatsApp } from '../../lib/sito';
+import { sito, soloCifre, linkWhatsApp, prezzo } from '../../lib/sito';
 
 export async function getStaticPaths() {
   const prodotti = await prodottiPubblicati();
@@ -18,7 +18,9 @@ interface Props {
 }
 
 const { prodotto, tutti } = Astro.props;
-const { titolo, codice, descrizione_breve, immagini, specifiche, scheda_pdf } = prodotto.data;
+const { titolo, codice, descrizione_breve, immagini, specifiche, scheda_pdf, sottocategoria } = prodotto.data;
+const prezzoTesto = prezzo(prodotto.data.prezzo);
+const haDescrizione = prodotto.body?.trim().length;
 const categoria = await getEntry(prodotto.data.categoria);
 const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefined;
 const { Content } = await render(prodotto);
@@ -27,7 +29,7 @@ const correlati = tutti
   .filter((p) => p.id !== prodotto.id && p.data.categoria.id === prodotto.data.categoria.id)
   .slice(0, 3);
 
-const richiesta = `Buongiorno, vorrei informazioni e un preventivo per: ${titolo}${codice ? ` (cod. ${codice})` : ''}.`;
+const richiesta = `Buongiorno, vorrei ordinare o ricevere informazioni su: ${titolo}${codice ? ` (cod. ${codice})` : ''}.`;
 const whatsapp = linkWhatsApp(richiesta);
 const linkPreventivo = `/contatti/?prodotto=${encodeURIComponent(titolo)}#preventivo`;
 
@@ -40,6 +42,15 @@ const datiStrutturati = {
   ...(immagini.length && { image: immagini.map((i) => new URL(i, Astro.site).toString()) }),
   ...(marca && { brand: { '@type': 'Brand', name: marca.data.nome } }),
   ...(categoria && { category: categoria.data.titolo }),
+  ...(prodotto.data.prezzo && {
+    offers: {
+      '@type': 'Offer',
+      price: prodotto.data.prezzo.toFixed(2),
+      priceCurrency: 'EUR',
+      availability: 'https://schema.org/InStock',
+      priceSpecification: { '@type': 'PriceSpecification', valueAddedTaxIncluded: false },
+    },
+  }),
 };
 ---
 
@@ -83,21 +94,35 @@ const datiStrutturati = {
         <div class="scheda__info">
           <div class="scheda__etichette">
             {categoria && <a class="etichetta" href={`/categorie/${categoria.id}/`}>{categoria.data.titolo}</a>}
+            {sottocategoria && <span class="etichetta">{sottocategoria}</span>}
             {marca && <span class="etichetta etichetta--verde">{marca.data.nome}</span>}
           </div>
           <h1>{titolo}</h1>
           {codice && <p class="scheda__codice">Codice: {codice}</p>}
           <p class="scheda__breve">{descrizione_breve}</p>
 
+          <div class="scheda__prezzo">
+            {
+              prezzoTesto ? (
+                <>
+                  <strong>{prezzoTesto}</strong>
+                  <span>+ IVA</span>
+                </>
+              ) : (
+                <strong class="scheda__prezzo--richiesta">Prezzo su richiesta</strong>
+              )
+            }
+          </div>
+
           <div class="scheda__azioni">
-            <a class="pulsante pulsante--primario" href={linkPreventivo}>Richiedi preventivo <Icona nome="freccia" /></a>
             {
               whatsapp && (
                 <a class="pulsante pulsante--whatsapp" href={whatsapp} target="_blank" rel="noopener">
-                  <Icona nome="whatsapp" /> Chiedi su WhatsApp
+                  <Icona nome="whatsapp" /> Ordina su WhatsApp
                 </a>
               )
             }
+            <a class="pulsante pulsante--contorno" href={linkPreventivo}>Richiedi informazioni</a>
             {
               !whatsapp && sito.telefono && (
                 <a class="pulsante pulsante--contorno" href={`tel:${soloCifre(sito.telefono)}`}>
@@ -130,38 +155,48 @@ const datiStrutturati = {
     </div>
   </section>
 
-  <section class="sezione dettagli">
-    <div class="contenitore dettagli__griglia">
-      <div>
-        <h2>Descrizione</h2>
-        <div class="prosa"><Content /></div>
-      </div>
-      {
-        specifiche.length > 0 && (
-          <div>
-            <h2>Specifiche tecniche</h2>
-            <table class="specifiche">
-              <tbody>
-                {specifiche.map((s) => (
-                  <tr>
-                    <th scope="row">{s.nome}</th>
-                    <td>{s.valore}</td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        )
-      }
-    </div>
-  </section>
+  {
+    (haDescrizione || specifiche.length > 0) && (
+      <section class="sezione dettagli">
+        <div class="contenitore dettagli__griglia">
+          {
+            haDescrizione ? (
+              <div>
+                <h2>Descrizione</h2>
+                <div class="prosa">
+                  <Content />
+                </div>
+              </div>
+            ) : null
+          }
+          {
+            specifiche.length > 0 && (
+              <div>
+                <h2>Specifiche tecniche</h2>
+                <table class="specifiche">
+                  <tbody>
+                    {specifiche.map((s) => (
+                      <tr>
+                        <th scope="row">{s.nome}</th>
+                        <td>{s.valore}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )
+          }
+        </div>
+      </section>
+    )
+  }
 
   {
     correlati.length > 0 && (
       <section class="sezione sezione--chiara">
         <div class="contenitore">
           <h2>Altri prodotti in {categoria?.data.titolo}</h2>
-          <div class="griglia correlati">
+          <div class="griglia griglia--prodotti correlati">
             {correlati.map((p) => (
               <CardProdotto prodotto={p} />
             ))}
@@ -304,6 +339,31 @@ const datiStrutturati = {
     margin-bottom: 28px;
   }
 
+  .scheda__prezzo {
+    display: flex;
+    align-items: baseline;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .scheda__prezzo strong {
+    font-size: 2.1rem;
+    font-weight: 800;
+    letter-spacing: -0.02em;
+    color: var(--blu-900);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .scheda__prezzo span {
+    font-weight: 600;
+    color: var(--grigio-500);
+  }
+
+  .scheda__prezzo .scheda__prezzo--richiesta {
+    font-size: 1.4rem;
+    color: var(--verde-scuro);
+  }
+
   .scheda__azioni {
     display: flex;
     flex-wrap: wrap;
@@ -366,7 +426,7 @@ const datiStrutturati = {
 
   .dettagli__griglia {
     display: grid;
-    grid-template-columns: 1.2fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 420px), 1fr));
     gap: clamp(32px, 5vw, 64px);
   }
 
