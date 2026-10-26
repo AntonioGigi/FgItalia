@@ -21,7 +21,7 @@ export default async (req: Request) => {
     return errore('Richiesta non valida');
   }
 
-  const catalogo = await leggiCatalogo(new URL(req.url).origin);
+  const catalogo = await leggiCatalogo(req);
   if (!catalogo.negozioAttivo) return errore('Il pagamento online non è attivo: ordina su WhatsApp o con il modulo contatti.', 503);
 
   const totali = calcolaTotali(Array.isArray(corpo.carrello) ? corpo.carrello : [], catalogo);
