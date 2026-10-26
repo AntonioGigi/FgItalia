@@ -1,0 +1,1614 @@
+---
+import Base from '../../layouts/Base.astro';
+import TestataPagina from '../../components/TestataPagina.astro';
+import Icona from '../../components/Icona.astro';
+import { sito } from '../../lib/sito';
+---
+
+<Base
+  titolo="Area clienti"
+  descrizione="Area riservata ai professionisti clienti di FGItalia: ordini, fatture, documenti dei dispositivi, riordino, preventivi e assistenza."
+  senzaWhatsapp
+  senzaAvvisoPro
+>
+  <TestataPagina sopratitolo="Area clienti" titolo="Il tuo spazio da professionista" briciole={[{ href: '/account/', testo: 'Area clienti' }]} />
+
+  <section class="contenitore account" data-account>
+    <p class="caricamento" data-vista="caricamento">Caricamento…</p>
+
+    <!-- ——— accesso e registrazione ——— -->
+    <div class="ingresso" data-vista="ingresso" hidden>
+      <div class="ingresso__vantaggi">
+        <h2>Tutto quello che ti serve per lo studio, in un posto solo</h2>
+        <ul>
+          <li><Icona nome="documento" /><span><strong>Fatture e dati fiscali</strong> Scarichi le fatture in PDF e salvi una volta partita IVA, codice SDI e PEC.</span></li>
+          <li><Icona nome="scudo" /><span><strong>Documenti dei dispositivi</strong> Manuali d’uso, schede tecniche e certificati CE di ciò che hai acquistato, pronti per le ispezioni.</span></li>
+          <li><Icona nome="ripeti" /><span><strong>Riordino rapido</strong> Creme, elettrodi, tape e consumabili di nuovo nel carrello con un clic.</span></li>
+          <li><Icona nome="euro" /><span><strong>Preventivi in PDF</strong> Dal carrello, intestati al tuo studio, per valutare l’investimento o chiedere un finanziamento.</span></li>
+          <li><Icona nome="chiave" /><span><strong>Manutenzione e assistenza</strong> Promemoria delle scadenze e assistenza tecnica prioritaria se lo studio è fermo.</span></li>
+        </ul>
+      </div>
+
+      <div class="ingresso__scheda">
+        <div class="schede-ingresso" role="tablist">
+          <button type="button" role="tab" aria-selected="true" data-modulo-ingresso="accedi">Accedi</button>
+          <button type="button" role="tab" aria-selected="false" data-modulo-ingresso="registra">Crea un account</button>
+        </div>
+
+        <form class="modulo" data-modulo="accedi">
+          <label><span>Email</span><input name="email" type="email" required autocomplete="email" /></label>
+          <label><span>Password</span><input name="password" type="password" required autocomplete="current-password" /></label>
+          <button class="pulsante pulsante--primario" type="submit">Accedi</button>
+          <button class="collegamento" type="button" data-modulo-ingresso="dimenticata">Password dimenticata?</button>
+          <p class="messaggio" role="alert" data-messaggio hidden></p>
+        </form>
+
+        <form class="modulo" data-modulo="registra" hidden>
+          <label><span>Nome e cognome</span><input name="nome" required autocomplete="name" maxlength="120" /></label>
+          <label><span>Email</span><input name="email" type="email" required autocomplete="email" /></label>
+          <label><span>Telefono <small>(facoltativo)</small></span><input name="telefono" type="tel" autocomplete="tel" /></label>
+          <label>
+            <span>Professione</span>
+            <select name="professione" required data-professioni>
+              <option value="">Scegli…</option>
+            </select>
+          </label>
+          <label><span>Password <small>(almeno 8 caratteri)</small></span><input name="password" type="password" required minlength="8" autocomplete="new-password" /></label>
+          <label class="spunta">
+            <input type="checkbox" name="professionista" required />
+            <span>Dichiaro di essere un operatore del settore sanitario (D.Lgs. 24 febbraio 1997, n. 46).</span>
+          </label>
+          <label class="spunta">
+            <input type="checkbox" name="privacy" required />
+            <span>Ho letto l’<a href="/privacy/" target="_blank">informativa sulla privacy</a>.</span>
+          </label>
+          <button class="pulsante pulsante--primario" type="submit">Crea l’account</button>
+          <p class="messaggio" role="alert" data-messaggio hidden></p>
+        </form>
+
+        <form class="modulo" data-modulo="dimenticata" hidden>
+          <p>Scrivi l’email del tuo account: ti mandiamo un link per scegliere una nuova password.</p>
+          <label><span>Email</span><input name="email" type="email" required autocomplete="email" /></label>
+          <button class="pulsante pulsante--primario" type="submit">Mandami il link</button>
+          <button class="collegamento" type="button" data-modulo-ingresso="accedi">Torna all’accesso</button>
+          <p class="messaggio" role="alert" data-messaggio hidden></p>
+        </form>
+      </div>
+    </div>
+
+    <!-- ——— area riservata ——— -->
+    <div class="area" data-vista="area" hidden>
+      <header class="area__testa">
+        <div>
+          <h2 data-saluto></h2>
+          <p data-professione></p>
+        </div>
+        <button class="pulsante pulsante--contorno" type="button" data-esci>Esci</button>
+      </header>
+
+      <nav class="sezioni" aria-label="Sezioni dell’area clienti">
+        <a href="#ordini" data-sezione="ordini"><Icona nome="pacco" dimensione={18} /> Ordini e fatture</a>
+        <a href="#riordino" data-sezione="riordino"><Icona nome="ripeti" dimensione={18} /> Riordino rapido</a>
+        <a href="#dispositivi" data-sezione="dispositivi"><Icona nome="scudo" dimensione={18} /> Dispositivi e documenti</a>
+        <a href="#assistenza" data-sezione="assistenza"><Icona nome="chiave" dimensione={18} /> Assistenza</a>
+        <a href="#preventivi" data-sezione="preventivi"><Icona nome="euro" dimensione={18} /> Preventivi</a>
+        <a href="#dati" data-sezione="dati"><Icona nome="utente" dimensione={18} /> I miei dati</a>
+      </nav>
+
+      <div class="avviso-dati" data-avviso-dati hidden>
+        <Icona nome="avviso" />
+        <p>Completa i <a href="#dati">dati di fatturazione</a> (partita IVA o codice fiscale, codice SDI o PEC): li useremo per le tue fatture e per i preventivi.</p>
+      </div>
+
+      <section class="pannello" data-pannello="ordini" hidden>
+        <h3>I tuoi ordini</h3>
+        <div data-ordini></div>
+      </section>
+
+      <section class="pannello" data-pannello="riordino" hidden>
+        <h3>Riordino rapido dei consumabili</h3>
+        <p class="pannello__intro">I materiali di consumo che hai già acquistato. Scegli le quantità e rimettili nel carrello con un clic.</p>
+        <div data-riordino></div>
+      </section>
+
+      <section class="pannello" data-pannello="dispositivi" hidden>
+        <h3>Le tue apparecchiature</h3>
+        <p class="pannello__intro">
+          Tieni sotto controllo le scadenze di manutenzione e verifica di sicurezza. Ti mandiamo un’email 30 giorni prima.
+        </p>
+        <div data-dispositivi></div>
+        <details class="aggiungi">
+          <summary><Icona nome="piu" dimensione={18} /> Aggiungi un’apparecchiatura acquistata in negozio o prima del sito</summary>
+          <form class="modulo modulo--griglia" data-aggiungi-dispositivo>
+            <label class="intero"><span>Nome del dispositivo</span><input name="titolo" required list="elenco-prodotti" maxlength="120" /></label>
+            <datalist id="elenco-prodotti" data-elenco-prodotti></datalist>
+            <label><span>Data di acquisto</span><input name="acquistato" type="date" required /></label>
+            <label><span>Matricola <small>(facoltativa)</small></span><input name="matricola" maxlength="60" /></label>
+            <label><span>Ultima manutenzione <small>(facoltativa)</small></span><input name="ultimaManutenzione" type="date" /></label>
+            <label><span>Manutenzione ogni (mesi)</span><input name="intervalloMesi" type="number" min="1" max="120" value="12" required /></label>
+            <button class="pulsante pulsante--primario" type="submit">Aggiungi</button>
+            <p class="messaggio" role="alert" data-messaggio hidden></p>
+          </form>
+        </details>
+
+        <h3 class="pannello__secondo">Documenti dei prodotti acquistati</h3>
+        <p class="pannello__intro">Manuali d’uso, schede tecniche e certificati di conformità CE, sempre a portata di mano.</p>
+        <div data-documenti></div>
+      </section>
+
+      <section class="pannello" data-pannello="assistenza" hidden>
+        <h3>Richiedi assistenza tecnica</h3>
+        <p class="pannello__intro">
+          Guasti, manutenzioni, calibrazioni, ricambi o domande sull’uso. Se lo studio è fermo la tua richiesta passa davanti alle altre.
+        </p>
+        <form class="modulo modulo--griglia" data-assistenza>
+          <label><span>Dispositivo</span><select name="dispositivo" data-scelta-dispositivo></select></label>
+          <label>
+            <span>Di cosa hai bisogno</span>
+            <select name="tipo" required>
+              <option value="guasto">Guasto o malfunzionamento</option>
+              <option value="manutenzione">Manutenzione o verifica di sicurezza</option>
+              <option value="calibrazione">Calibrazione</option>
+              <option value="ricambi">Ricambi e accessori</option>
+              <option value="uso">Domanda sull’uso</option>
+              <option value="altro">Altro</option>
+            </select>
+          </label>
+          <label class="intero"><span>Descrivi il problema</span><textarea name="descrizione" rows="4" required minlength="10" maxlength="3000"></textarea></label>
+          <label class="spunta intero urgente">
+            <input type="checkbox" name="fermo" />
+            <span><strong>Lo studio è fermo</strong>: il dispositivo non funziona e mi serve un intervento urgente.</span>
+          </label>
+          <button class="pulsante pulsante--primario" type="submit">Invia la richiesta</button>
+          <p class="messaggio" role="alert" data-messaggio hidden></p>
+        </form>
+        <h3 class="pannello__secondo">Le tue richieste</h3>
+        <div data-richieste></div>
+      </section>
+
+      <section class="pannello" data-pannello="preventivi" hidden>
+        <h3>I tuoi preventivi</h3>
+        <p class="pannello__intro">
+          Metti i prodotti nel carrello e premi <strong>Scarica il preventivo</strong>: ottieni un PDF intestato al tuo studio, con
+          prezzi netti e IVA, valido 30 giorni. Utile per valutare l’ammortamento o chiedere un finanziamento.
+        </p>
+        <p><a class="pulsante pulsante--primario" href="/carrello/"><Icona nome="carrello" /> Vai al carrello</a></p>
+        <div data-preventivi></div>
+      </section>
+
+      <section class="pannello" data-pannello="dati" hidden>
+        <h3>I miei dati</h3>
+        <form class="modulo modulo--griglia" data-dati>
+          <fieldset class="intero">
+            <legend>Contatto</legend>
+            <label><span>Nome e cognome</span><input name="nome" required maxlength="120" autocomplete="name" /></label>
+            <label><span>Telefono</span><input name="telefono" type="tel" autocomplete="tel" /></label>
+            <label><span>Professione</span><select name="professione" data-professioni></select></label>
+            <label><span>Email dell’account</span><input name="email" type="email" disabled /></label>
+          </fieldset>
+
+          <fieldset class="intero">
+            <legend>Fatturazione</legend>
+            <label class="intero"><span>Ragione sociale o nome dello studio <small>(facoltativo)</small></span><input name="f.ragioneSociale" maxlength="200" autocomplete="organization" /></label>
+            <label><span>Partita IVA</span><input name="f.partitaIva" inputmode="numeric" maxlength="13" placeholder="11 cifre" /></label>
+            <label><span>Codice fiscale</span><input name="f.codiceFiscale" maxlength="16" /></label>
+            <label><span>Codice destinatario SDI</span><input name="f.codiceSdi" maxlength="7" placeholder="7 caratteri" /></label>
+            <label><span>PEC</span><input name="f.pec" type="email" /></label>
+            <label class="intero"><span>Indirizzo</span><input name="f.via" autocomplete="address-line1" /></label>
+            <label><span>CAP</span><input name="f.cap" inputmode="numeric" maxlength="5" autocomplete="postal-code" /></label>
+            <label><span>Città</span><input name="f.citta" autocomplete="address-level2" /></label>
+            <label><span>Provincia</span><input name="f.provincia" maxlength="2" placeholder="CT" /></label>
+          </fieldset>
+
+          <fieldset class="intero">
+            <legend>Indirizzo di consegna <small>(se diverso)</small></legend>
+            <label class="intero"><span>Presso / destinatario</span><input name="s.nome" /></label>
+            <label class="intero"><span>Indirizzo</span><input name="s.via" autocomplete="shipping address-line1" /></label>
+            <label><span>CAP</span><input name="s.cap" inputmode="numeric" maxlength="5" autocomplete="shipping postal-code" /></label>
+            <label><span>Città</span><input name="s.citta" autocomplete="shipping address-level2" /></label>
+            <label><span>Provincia</span><input name="s.provincia" maxlength="2" /></label>
+          </fieldset>
+
+          <label class="spunta intero">
+            <input type="checkbox" name="avvisiManutenzione" />
+            <span>Mandami un promemoria via email prima delle scadenze di manutenzione.</span>
+          </label>
+          <p class="nota intero">Al pagamento troverai questi dati già compilati.</p>
+          <button class="pulsante pulsante--primario" type="submit">Salva i dati</button>
+          <p class="messaggio" role="status" data-messaggio hidden></p>
+        </form>
+
+        <details class="aggiungi">
+          <summary><Icona nome="lucchetto" dimensione={18} /> Cambia password</summary>
+          <form class="modulo modulo--griglia" data-password>
+            <label><span>Password attuale</span><input name="attuale" type="password" required autocomplete="current-password" /></label>
+            <label><span>Nuova password</span><input name="nuova" type="password" required minlength="8" autocomplete="new-password" /></label>
+            <button class="pulsante pulsante--primario" type="submit">Cambia password</button>
+            <p class="messaggio" role="status" data-messaggio hidden></p>
+          </form>
+        </details>
+
+        <details class="aggiungi aggiungi--pericolo">
+          <summary><Icona nome="cestino" dimensione={18} /> Elimina l’account</summary>
+          <form class="modulo modulo--griglia" data-elimina>
+            <p class="intero">
+              Cancelliamo account, dati salvati, dispositivi e promemoria. Gli ordini e le fatture restano nei nostri archivi
+              per gli obblighi di legge.
+            </p>
+            <label><span>Password</span><input name="password" type="password" required autocomplete="current-password" /></label>
+            <button class="pulsante pulsante--contorno" type="submit">Elimina definitivamente</button>
+            <p class="messaggio" role="alert" data-messaggio hidden></p>
+          </form>
+        </details>
+      </section>
+
+      <p class="aiuto">
+        Serve aiuto? Scrivici a <a href={`mailto:${sito.email}`}>{sito.email}</a>{sito.telefono && <> o chiama il <a href={`tel:${sito.telefono.replace(/[^\d+]/g, '')}`}>{sito.telefono}</a></>}.
+      </p>
+    </div>
+  </section>
+</Base>
+
+<script>
+  import { aggiungi, caricaCatalogo } from '../../lib/carrello';
+  import { acquistabile, euro, prezzoIvatoCent, type Catalogo } from '../../lib/negozio';
+  import { PROFESSIONI, api, escape, linkDocumento, segnaAccesso, segnaUscita } from '../../lib/account';
+
+  // ——— tipi delle risposte di /api/account ———
+  interface Riga {
+    id?: string;
+    titolo: string;
+    quantita: number;
+    totaleCent: number;
+  }
+  interface OrdineVista {
+    numero: string;
+    creato: string;
+    stato: string;
+    pagato: boolean;
+    righe: Riga[];
+    totali: { spedizioneCent: number; totaleCent: number };
+    consegna?: { corriere?: string; tracking?: string; link?: string };
+    fattura: boolean;
+    link: string;
+  }
+  interface Dispositivo {
+    id: string;
+    prodottoId?: string;
+    titolo: string;
+    ordine?: string;
+    acquistato: string;
+    matricola?: string;
+    ultimaManutenzione?: string;
+    intervalloMesi: number;
+    prossima: string;
+  }
+  interface Account {
+    email: string;
+    nome: string;
+    telefono?: string;
+    professione: string;
+    fatturazione: Record<string, string | undefined>;
+    spedizione: Record<string, string | undefined>;
+    dispositivi: Dispositivo[];
+    avvisiManutenzione: boolean;
+  }
+  interface Richiesta {
+    numero: string;
+    creato: string;
+    dispositivo?: { titolo: string; matricola?: string };
+    tipo: string;
+    fermo: boolean;
+    descrizione: string;
+    stato: string;
+    storico: { stato: string; data: string; nota?: string; autore: 'cliente' | 'fgitalia' }[];
+  }
+  interface PreventivoVista {
+    numero: string;
+    creato: string;
+    validoFino: string;
+    totaleCent: number;
+    righe: { id: string; titolo: string; quantita: number }[];
+  }
+  interface Profilo {
+    account: Account;
+    ordini: OrdineVista[];
+    preventivi: PreventivoVista[];
+    assistenza: Richiesta[];
+  }
+  interface Scheda {
+    titolo: string;
+    immagine?: string;
+    consumabile: boolean;
+    manutenzioneMesi?: number;
+    documenti: { titolo: string; file: string; tipo: string }[];
+  }
+
+  const STATI_ORDINE: Record<string, string> = {
+    in_attesa_pagamento: 'In attesa di pagamento',
+    ricevuto: 'Ricevuto',
+    in_lavorazione: 'In lavorazione',
+    spedito: 'Spedito',
+    consegnato: 'Consegnato',
+    annullato: 'Annullato',
+  };
+  const STATI_ASSISTENZA: Record<string, string> = {
+    aperta: 'Ricevuta',
+    in_lavorazione: 'In lavorazione',
+    in_attesa_cliente: 'Aspettiamo una tua risposta',
+    chiusa: 'Risolta',
+  };
+  const TIPI_ASSISTENZA: Record<string, string> = {
+    guasto: 'Guasto o malfunzionamento',
+    manutenzione: 'Manutenzione o verifica',
+    calibrazione: 'Calibrazione',
+    ricambi: 'Ricambi e accessori',
+    uso: 'Domanda sull’uso',
+    altro: 'Altro',
+  };
+  const TIPI_DOCUMENTO: Record<string, string> = {
+    manuale: 'Manuale d’uso',
+    certificato_ce: 'Certificato CE',
+    dichiarazione: 'Dichiarazione di conformità',
+    scheda: 'Scheda tecnica',
+    altro: 'Documento',
+  };
+  const SEZIONI = ['ordini', 'riordino', 'dispositivi', 'assistenza', 'preventivi', 'dati'];
+  const GIORNO = 86_400_000;
+
+  const radice = document.querySelector<HTMLElement>('[data-account]')!;
+  const $ = <T extends HTMLElement = HTMLElement>(sel: string, dentro: ParentNode = radice) => dentro.querySelector<T>(sel)!;
+  const vista = (nome: string) =>
+    radice.querySelectorAll<HTMLElement>('[data-vista]').forEach((el) => (el.hidden = el.dataset.vista !== nome));
+
+  const formatoData = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
+  const data = (iso: string) => formatoData.format(new Date(iso.length === 10 ? `${iso}T12:00:00` : iso));
+  const oggi = () => new Date().toISOString().slice(0, 10);
+  const giorniDa = (iso: string) => Math.round((Date.now() - Date.parse(iso)) / GIORNO);
+
+  let profilo: Profilo;
+  let schede: Record<string, Scheda> = {};
+  let catalogo: Catalogo | undefined;
+
+  // ——— messaggi nei moduli ———
+  function messaggio(modulo: HTMLElement, testo: string, tipo: 'errore' | 'ok' = 'errore') {
+    const el = $('[data-messaggio]', modulo);
+    el.textContent = testo;
+    el.dataset.tipo = tipo;
+    el.hidden = !testo;
+  }
+
+  /** Esegue l'invio di un modulo mostrando lo stato sul pulsante */
+  async function invia(modulo: HTMLFormElement, lavoro: (d: FormData) => Promise<string | void>) {
+    const bottone = modulo.querySelector<HTMLButtonElement>('button[type="submit"]')!;
+    messaggio(modulo, '');
+    bottone.disabled = true;
+    try {
+      const ok = await lavoro(new FormData(modulo));
+      if (ok) messaggio(modulo, ok, 'ok');
+    } catch (e) {
+      messaggio(modulo, (e as Error).message);
+    } finally {
+      bottone.disabled = false;
+    }
+  }
+
+  // ——— accesso ———
+  function mostraModuloIngresso(nome: string) {
+    radice.querySelectorAll<HTMLFormElement>('[data-modulo]').forEach((f) => (f.hidden = f.dataset.modulo !== nome));
+    radice.querySelectorAll<HTMLElement>('.schede-ingresso [data-modulo-ingresso]').forEach((b) =>
+      b.setAttribute('aria-selected', String(b.dataset.moduloIngresso === nome)),
+    );
+  }
+
+  function riempiProfessioni(elenco: string[], scelta = '') {
+    radice.querySelectorAll<HTMLSelectElement>('[data-professioni]').forEach((sel) => {
+      const prima = sel.querySelector('option[value=""]') ? '<option value="">Scegli…</option>' : '';
+      const voci = scelta && !elenco.includes(scelta) ? [...elenco, scelta] : elenco;
+      sel.innerHTML = prima + voci.map((p) => `<option${p === scelta ? ' selected' : ''}>${escape(p)}</option>`).join('');
+    });
+  }
+
+  async function entra(nome: string) {
+    segnaAccesso(nome);
+    const ritorno = new URLSearchParams(location.search).get('ritorno');
+    if (ritorno && ritorno.startsWith('/') && !ritorno.startsWith('//')) {
+      location.href = ritorno;
+      return;
+    }
+    await caricaArea();
+  }
+
+  // ——— area riservata ———
+  async function caricaArea() {
+    const [p, s, c] = await Promise.all([
+      api<Profilo>('profilo'),
+      fetch('/api/area-clienti.json').then((r) => (r.ok ? r.json() : {})).catch(() => ({})),
+      caricaCatalogo().catch(() => undefined),
+    ]);
+    profilo = p;
+    schede = s;
+    catalogo = c;
+    segnaAccesso(p.account.nome);
+    disegnaTutto();
+    vista('area');
+    mostraSezione();
+  }
+
+  function mostraSezione() {
+    const scelta = SEZIONI.includes(location.hash.slice(1)) ? location.hash.slice(1) : 'ordini';
+    radice.querySelectorAll<HTMLElement>('[data-pannello]').forEach((p) => (p.hidden = p.dataset.pannello !== scelta));
+    radice.querySelectorAll<HTMLElement>('[data-sezione]').forEach((a) =>
+      a.setAttribute('aria-current', a.dataset.sezione === scelta ? 'page' : 'false'),
+    );
+  }
+
+  function disegnaTutto() {
+    const a = profilo.account;
+    $('[data-saluto]').textContent = `Ciao, ${a.nome.split(' ')[0]}`;
+    $('[data-professione]').textContent = `${a.professione} · ${a.email}`;
+    const f = a.fatturazione;
+    $('[data-avviso-dati]').hidden = !!((f.partitaIva || f.codiceFiscale) && (f.codiceSdi || f.pec));
+    riempiProfessioni(PROFESSIONI, a.professione);
+    disegnaOrdini();
+    disegnaRiordino();
+    disegnaDispositivi();
+    disegnaDocumenti();
+    disegnaAssistenza();
+    disegnaPreventivi();
+    riempiDati();
+  }
+
+  const vuoto = (testo: string, azione = '') => `<div class="vuoto"><p>${testo}</p>${azione}</div>`;
+
+  function disegnaOrdini() {
+    const el = $('[data-ordini]');
+    if (!profilo.ordini.length) {
+      el.innerHTML = vuoto(
+        'Non hai ancora ordini con questa email. Gli acquisti fatti sul sito con la stessa email compaiono qui da soli.',
+        '<a class="pulsante pulsante--primario" href="/prodotti/">Vai al catalogo</a>',
+      );
+      return;
+    }
+    el.innerHTML = profilo.ordini
+      .map((o) => {
+        const riordinabili = o.righe.filter((r) => r.id && acquistabile(catalogo?.prodotti[r.id]));
+        return `<article class="ordine">
+          <header>
+            <div><strong>${escape(o.numero)}</strong><span>${data(o.creato)}</span></div>
+            <span class="etichetta" data-stato="${escape(o.stato)}">${STATI_ORDINE[o.stato] ?? escape(o.stato)}</span>
+          </header>
+          <ul class="ordine__righe">${o.righe
+            .map(
+              (r) =>
+                `<li><span>${r.quantita} × ${r.id ? `<a href="/prodotti/${escape(r.id)}/">${escape(r.titolo)}</a>` : escape(r.titolo)}</span><span>${euro(r.totaleCent)}</span></li>`,
+            )
+            .join('')}
+            <li class="ordine__totale"><span>Totale IVA inclusa${o.totali.spedizioneCent ? ` (spedizione ${euro(o.totali.spedizioneCent)})` : ''}</span><span>${euro(o.totali.totaleCent)}</span></li>
+          </ul>
+          ${o.consegna?.tracking ? `<p class="ordine__tracking"><strong>Tracciamento:</strong> ${escape(o.consegna.corriere ?? '')} ${escape(o.consegna.tracking)}</p>` : ''}
+          <div class="azioni">
+            <a class="pulsante pulsante--contorno piccolo" href="${escape(o.link)}">Segui l’ordine</a>
+            ${
+              o.fattura
+                ? `<a class="pulsante pulsante--scuro piccolo" href="${linkDocumento('fattura', o.numero)}" target="_blank"><span aria-hidden="true">⬇</span> Fattura PDF</a>`
+                : o.pagato && o.stato !== 'annullato'
+                  ? '<span class="nota">La fattura comparirà qui appena emessa</span>'
+                  : ''
+            }
+            <a class="pulsante pulsante--contorno piccolo" href="${linkDocumento('riepilogo', o.numero)}" target="_blank">Riepilogo PDF</a>
+            ${riordinabili.length ? `<button class="pulsante pulsante--primario piccolo" type="button" data-riordina-ordine="${escape(o.numero)}">Riordina</button>` : ''}
+          </div>
+        </article>`;
+      })
+      .join('');
+  }
+
+  /** Consumabili acquistati: quante volte, quando l'ultima, ogni quanto in media */
+  function consumabiliAcquistati() {
+    const voci = new Map<string, { id: string; titolo: string; volte: number; date: string[]; ultimaQuantita: number; totale: number }>();
+    for (const o of [...profilo.ordini].reverse()) {
+      if (!o.pagato || o.stato === 'annullato') continue;
+      for (const r of o.righe) {
+        if (!r.id || !schede[r.id]?.consumabile) continue;
+        const v = voci.get(r.id) ?? { id: r.id, titolo: schede[r.id].titolo, volte: 0, date: [], ultimaQuantita: 0, totale: 0 };
+        v.volte++;
+        v.date.push(o.creato);
+        v.ultimaQuantita = r.quantita;
+        v.totale += r.quantita;
+        voci.set(r.id, v);
+      }
+    }
+    return [...voci.values()].map((v) => {
+      const ultima = v.date[v.date.length - 1];
+      const intervallo = v.date.length > 1 ? (Date.parse(ultima) - Date.parse(v.date[0])) / GIORNO / (v.date.length - 1) : undefined;
+      const passati = giorniDa(ultima);
+      return { ...v, ultima, intervallo, daRiordinare: !!intervallo && intervallo >= 7 && passati >= intervallo * 0.9 };
+    });
+  }
+
+  function disegnaRiordino() {
+    const el = $('[data-riordino]');
+    const voci = consumabiliAcquistati().sort((a, b) => Number(b.daRiordinare) - Number(a.daRiordinare) || b.ultima.localeCompare(a.ultima));
+    if (!voci.length) {
+      el.innerHTML = vuoto(
+        'Qui troverai creme, gel, elettrodi, tape e gli altri materiali di consumo che acquisti, pronti da riordinare.',
+        '<a class="pulsante pulsante--primario" href="/categorie/materiali-di-consumo/">Vedi i materiali di consumo</a>',
+      );
+      return;
+    }
+    el.innerHTML = `<ul class="riordino">${voci
+      .map((v) => {
+        const p = catalogo?.prodotti[v.id];
+        const ok = acquistabile(p);
+        const immagine = schede[v.id]?.immagine;
+        return `<li class="riordino__voce${v.daRiordinare ? ' riordino__voce--evidenza' : ''}" data-voce="${escape(v.id)}">
+          <label class="riordino__scelta"><input type="checkbox" ${ok ? 'checked' : 'disabled'} data-scelto aria-label="Seleziona ${escape(v.titolo)}"></label>
+          <a class="riordino__foto" href="/prodotti/${escape(v.id)}/">${immagine ? `<img src="${escape(immagine)}" alt="" loading="lazy">` : ''}</a>
+          <div class="riordino__info">
+            <a href="/prodotti/${escape(v.id)}/"><strong>${escape(v.titolo)}</strong></a>
+            <span>Ultimo acquisto ${data(v.ultima)} · ${v.ultimaQuantita} pz${v.volte > 1 ? ` · acquistato ${v.volte} volte` : ''}${v.intervallo ? ` · di solito ogni ${Math.max(1, Math.round(v.intervallo))} giorni` : ''}</span>
+            ${v.daRiordinare ? '<span class="etichetta etichetta--gialla">Probabilmente sta per finire</span>' : ''}
+          </div>
+          ${
+            ok
+              ? `<div class="riordino__prezzo">${euro(prezzoIvatoCent(p.prezzo))}<small>cad. IVA incl.</small></div>
+                 <input class="riordino__quantita" type="number" min="1" max="99" value="${Math.min(99, v.ultimaQuantita)}" aria-label="Quantità" data-quantita>`
+              : '<span class="nota">Non disponibile al momento</span>'
+          }
+        </li>`;
+      })
+      .join('')}</ul>
+      <div class="azioni azioni--fondo">
+        <button class="pulsante pulsante--primario" type="button" data-riordina-selezionati><span aria-hidden="true">+</span> Aggiungi i selezionati al carrello</button>
+        <a class="pulsante pulsante--contorno" href="/carrello/">Vai al carrello</a>
+        <span class="messaggio" data-tipo="ok" role="status" data-esito-riordino hidden></span>
+      </div>`;
+  }
+
+  function statoScadenza(prossima: string) {
+    const giorni = Math.round((Date.parse(prossima) - Date.parse(oggi())) / GIORNO);
+    if (giorni < 0) return { classe: 'rossa', testo: `Manutenzione scaduta da ${-giorni} giorni` };
+    if (giorni <= 30) return { classe: 'gialla', testo: giorni === 0 ? 'Manutenzione in scadenza oggi' : `Manutenzione fra ${giorni} giorni` };
+    return { classe: 'verde', testo: `Prossima manutenzione: ${data(prossima)}` };
+  }
+
+  function disegnaDispositivi() {
+    const elenco = profilo.account.dispositivi;
+    const el = $('[data-dispositivi]');
+    el.innerHTML = elenco.length
+      ? `<ul class="dispositivi">${[...elenco]
+          .sort((a, b) => a.prossima.localeCompare(b.prossima))
+          .map((d) => {
+            const s = statoScadenza(d.prossima);
+            const immagine = d.prodottoId ? schede[d.prodottoId]?.immagine : undefined;
+            return `<li class="dispositivo">
+              <div class="dispositivo__testa">
+                <span class="dispositivo__foto">${immagine ? `<img src="${escape(immagine)}" alt="" loading="lazy">` : ''}</span>
+                <div>
+                  <strong>${escape(d.titolo)}</strong>
+                  <span>Acquistato il ${data(d.acquistato)}${d.ordine ? ` · ordine ${escape(d.ordine)}` : ''}${d.matricola ? ` · matricola ${escape(d.matricola)}` : ''}</span>
+                  <span class="etichetta etichetta--${s.classe}">${s.testo}</span>
+                </div>
+              </div>
+              <div class="azioni">
+                <button class="pulsante pulsante--primario piccolo" type="button" data-prenota="${escape(d.id)}">Prenota la manutenzione</button>
+                <button class="pulsante pulsante--contorno piccolo" type="button" data-guasto="${escape(d.id)}">Segnala un guasto</button>
+              </div>
+              <details>
+                <summary>Matricola e date di manutenzione</summary>
+                <form class="modulo modulo--griglia" data-modifica-dispositivo="${escape(d.id)}">
+                  <label><span>Matricola</span><input name="matricola" value="${escape(d.matricola ?? '')}" maxlength="60"></label>
+                  <label><span>Ultima manutenzione</span><input name="ultimaManutenzione" type="date" max="${oggi()}" value="${escape(d.ultimaManutenzione ?? '')}"></label>
+                  <label><span>Manutenzione ogni (mesi)</span><input name="intervalloMesi" type="number" min="1" max="120" value="${d.intervalloMesi}" required></label>
+                  <div class="azioni">
+                    <button class="pulsante pulsante--primario piccolo" type="submit">Salva</button>
+                    ${d.id.startsWith('manuale-') ? `<button class="pulsante pulsante--contorno piccolo" type="button" data-rimuovi-dispositivo="${escape(d.id)}">Togli dall’elenco</button>` : ''}
+                  </div>
+                  <p class="messaggio" role="status" data-messaggio hidden></p>
+                </form>
+              </details>
+            </li>`;
+          })
+          .join('')}</ul>`
+      : vuoto('Le apparecchiature che acquisti sul sito compaiono qui con la data della prossima manutenzione. Puoi aggiungere anche quelle comprate in negozio.');
+
+    $('[data-elenco-prodotti]').innerHTML = Object.values(schede)
+      .filter((s) => s.manutenzioneMesi)
+      .map((s) => `<option value="${escape(s.titolo)}">`)
+      .join('');
+    $<HTMLSelectElement>('[data-scelta-dispositivo]').innerHTML =
+      '<option value="">Nessuno in particolare</option>' +
+      elenco.map((d) => `<option value="${escape(d.id)}">${escape(d.titolo)}${d.matricola ? ` (${escape(d.matricola)})` : ''}</option>`).join('');
+  }
+
+  function disegnaDocumenti() {
+    const acquistati = new Map<string, string>();
+    for (const o of profilo.ordini) for (const r of o.righe) if (r.id && !acquistati.has(r.id)) acquistati.set(r.id, o.creato);
+    for (const d of profilo.account.dispositivi) if (d.prodottoId && !acquistati.has(d.prodottoId)) acquistati.set(d.prodottoId, d.acquistato);
+    const conDocumenti = [...acquistati.keys()].filter((id) => schede[id]?.documenti.length);
+    $('[data-documenti]').innerHTML = conDocumenti.length
+      ? `<ul class="documenti">${conDocumenti
+          .map(
+            (id) => `<li><strong><a href="/prodotti/${escape(id)}/">${escape(schede[id].titolo)}</a></strong>
+              <ul>${schede[id].documenti
+                .map(
+                  (doc) =>
+                    `<li><a href="${escape(doc.file)}" target="_blank" rel="noopener"><span class="documenti__tipo">${TIPI_DOCUMENTO[doc.tipo] ?? 'Documento'}</span>${escape(doc.titolo)}</a></li>`,
+                )
+                .join('')}</ul></li>`,
+          )
+          .join('')}</ul><p class="nota">Ti manca un documento? Chiedilo dalla sezione <a href="#assistenza">Assistenza</a> e te lo mandiamo.</p>`
+      : vuoto('Qui troverai manuali d’uso, schede tecniche e certificati CE dei prodotti che acquisti. Se te ne serve uno, chiedilo dalla sezione Assistenza.');
+  }
+
+  function disegnaAssistenza() {
+    const el = $('[data-richieste]');
+    el.innerHTML = profilo.assistenza.length
+      ? profilo.assistenza
+          .map(
+            (r) => `<article class="richiesta">
+              <header>
+                <div><strong>${escape(r.numero)} · ${TIPI_ASSISTENZA[r.tipo] ?? escape(r.tipo)}</strong>
+                <span>${data(r.creato)}${r.dispositivo ? ` · ${escape(r.dispositivo.titolo)}` : ''}${r.fermo ? ' · <strong class="rosso">studio fermo</strong>' : ''}</span></div>
+                <span class="etichetta" data-stato-assistenza="${escape(r.stato)}">${STATI_ASSISTENZA[r.stato] ?? escape(r.stato)}</span>
+              </header>
+              <ol class="messaggi">
+                <li class="messaggi__cliente"><p>${escape(r.descrizione)}</p></li>
+                ${r.storico
+                  .filter((s) => s.nota)
+                  .map(
+                    (s) =>
+                      `<li class="messaggi__${s.autore}"><time>${s.autore === 'fgitalia' ? 'FGItalia' : 'Tu'} · ${data(s.data)}</time><p>${escape(s.nota)}</p></li>`,
+                  )
+                  .join('')}
+              </ol>
+              <form class="modulo rispondi" data-rispondi="${escape(r.numero)}">
+                <label><span class="solo-lettori">Scrivi un messaggio</span><textarea name="nota" rows="2" required maxlength="3000" placeholder="${r.stato === 'chiusa' ? 'Il problema si è ripresentato? Scrivici qui' : 'Aggiungi un messaggio'}"></textarea></label>
+                <button class="pulsante pulsante--contorno piccolo" type="submit">Invia</button>
+                <p class="messaggio" role="alert" data-messaggio hidden></p>
+              </form>
+            </article>`,
+          )
+          .join('')
+      : vuoto('Non hai richieste di assistenza aperte.');
+  }
+
+  function disegnaPreventivi() {
+    $('[data-preventivi]').innerHTML = profilo.preventivi.length
+      ? `<ul class="preventivi">${profilo.preventivi
+          .map((p) => {
+            const scaduto = p.validoFino < oggi();
+            return `<li>
+              <div><strong>${escape(p.numero)}</strong><span>${data(p.creato)} · ${scaduto ? 'scaduto' : `valido fino al ${data(p.validoFino)}`}</span>
+              <span>${p.righe.map((r) => `${r.quantita} × ${escape(r.titolo)}`).join(', ')}</span></div>
+              <strong class="preventivi__totale">${euro(p.totaleCent)}</strong>
+              <div class="azioni">
+                <a class="pulsante pulsante--scuro piccolo" href="${linkDocumento('preventivo', p.numero)}" target="_blank"><span aria-hidden="true">⬇</span> PDF</a>
+                <button class="pulsante pulsante--contorno piccolo" type="button" data-preventivo-carrello="${escape(p.numero)}">Rimetti nel carrello</button>
+              </div>
+            </li>`;
+          })
+          .join('')}</ul>`
+      : '';
+  }
+
+  function riempiDati() {
+    const a = profilo.account;
+    const modulo = $<HTMLFormElement>('[data-dati]');
+    const imposta = (nome: string, valore: string | undefined) => {
+      const campo = modulo.elements.namedItem(nome) as HTMLInputElement | null;
+      if (campo) campo.value = valore ?? '';
+    };
+    imposta('nome', a.nome);
+    imposta('telefono', a.telefono);
+    imposta('email', a.email);
+    for (const [k, v] of Object.entries(a.fatturazione)) imposta(`f.${k}`, v);
+    for (const [k, v] of Object.entries(a.spedizione)) imposta(`s.${k}`, v);
+    (modulo.elements.namedItem('avvisiManutenzione') as HTMLInputElement).checked = a.avvisiManutenzione;
+  }
+
+  // ——— carrello ———
+  function mettiNelCarrello(righe: { id: string; quantita: number }[]) {
+    let messi = 0;
+    for (const r of righe) {
+      if (!acquistabile(catalogo?.prodotti[r.id])) continue;
+      aggiungi(r.id, r.quantita);
+      messi += r.quantita;
+    }
+    return messi;
+  }
+
+  // ——— eventi ———
+  radice.addEventListener('click', async (e) => {
+    const t = e.target as HTMLElement;
+
+    const ingresso = t.closest<HTMLElement>('[data-modulo-ingresso]');
+    if (ingresso) return mostraModuloIngresso(ingresso.dataset.moduloIngresso!);
+
+    if (t.closest('[data-esci]')) {
+      await api('esci').catch(() => {});
+      segnaUscita();
+      history.replaceState(null, '', location.pathname);
+      vista('ingresso');
+      return mostraModuloIngresso('accedi');
+    }
+
+    const ordine = t.closest<HTMLElement>('[data-riordina-ordine]');
+    if (ordine) {
+      const o = profilo.ordini.find((x) => x.numero === ordine.dataset.riordinaOrdine);
+      const messi = mettiNelCarrello((o?.righe ?? []).filter((r): r is Riga & { id: string } => !!r.id));
+      ordine.textContent = messi ? `✓ ${messi} nel carrello` : 'Non disponibili';
+      return;
+    }
+
+    if (t.closest('[data-riordina-selezionati]')) {
+      const righe = [...radice.querySelectorAll<HTMLElement>('[data-voce]')]
+        .filter((li) => li.querySelector<HTMLInputElement>('[data-scelto]')?.checked)
+        .map((li) => ({ id: li.dataset.voce!, quantita: Math.max(1, Math.min(99, Number(li.querySelector<HTMLInputElement>('[data-quantita]')?.value) || 1)) }));
+      const messi = mettiNelCarrello(righe);
+      const esito = $('[data-esito-riordino]');
+      esito.textContent = messi ? `Aggiunti ${messi} pezzi al carrello.` : 'Seleziona almeno un prodotto.';
+      esito.hidden = false;
+      return;
+    }
+
+    const preventivo = t.closest<HTMLElement>('[data-preventivo-carrello]');
+    if (preventivo) {
+      const p = profilo.preventivi.find((x) => x.numero === preventivo.dataset.preventivoCarrello);
+      const messi = mettiNelCarrello(p?.righe ?? []);
+      if (messi) location.href = '/carrello/';
+      else preventivo.textContent = 'Prodotti non più disponibili';
+      return;
+    }
+
+    const prenota = t.closest<HTMLElement>('[data-prenota], [data-guasto]');
+    if (prenota) {
+      const modulo = $<HTMLFormElement>('[data-assistenza]');
+      (modulo.elements.namedItem('dispositivo') as HTMLSelectElement).value = prenota.dataset.prenota ?? prenota.dataset.guasto!;
+      (modulo.elements.namedItem('tipo') as HTMLSelectElement).value = prenota.dataset.prenota ? 'manutenzione' : 'guasto';
+      location.hash = 'assistenza';
+      (modulo.elements.namedItem('descrizione') as HTMLTextAreaElement).focus();
+      return;
+    }
+
+    const rimuovi = t.closest<HTMLElement>('[data-rimuovi-dispositivo]');
+    if (rimuovi && confirm('Togliere questo dispositivo dall’elenco?')) {
+      const { account } = await api('rimuovi-dispositivo', { id: rimuovi.dataset.rimuoviDispositivo });
+      profilo.account = account;
+      disegnaDispositivi();
+    }
+  });
+
+  radice.addEventListener('submit', (e) => {
+    const modulo = e.target as HTMLFormElement;
+    e.preventDefault();
+
+    if (modulo.dataset.modulo === 'accedi')
+      return invia(modulo, async (d) => {
+        const { nome } = await api('accedi', { email: d.get('email'), password: d.get('password') });
+        await entra(nome);
+      });
+
+    if (modulo.dataset.modulo === 'registra')
+      return invia(modulo, async (d) => {
+        const { nome } = await api('registra', {
+          nome: d.get('nome'),
+          email: d.get('email'),
+          telefono: d.get('telefono'),
+          professione: d.get('professione'),
+          password: d.get('password'),
+          professionista: d.get('professionista') === 'on',
+        });
+        location.hash = 'dati';
+        await entra(nome);
+      });
+
+    if (modulo.dataset.modulo === 'dimenticata')
+      return invia(modulo, async (d) => {
+        await api('password-dimenticata', { email: d.get('email') });
+        return 'Se l’email corrisponde a un account, entro pochi minuti ricevi il link. Controlla anche lo spam.';
+      });
+
+    if ('dati' in modulo.dataset)
+      return invia(modulo, async (d) => {
+        const gruppo = (prefisso: string) =>
+          Object.fromEntries([...d.entries()].filter(([k]) => k.startsWith(prefisso)).map(([k, v]) => [k.slice(prefisso.length), v]));
+        const { account } = await api('salva-dati', {
+          nome: d.get('nome'),
+          telefono: d.get('telefono'),
+          professione: d.get('professione'),
+          fatturazione: gruppo('f.'),
+          spedizione: gruppo('s.'),
+          avvisiManutenzione: d.get('avvisiManutenzione') === 'on',
+        });
+        profilo.account = { ...profilo.account, ...account };
+        disegnaTutto();
+        return 'Dati salvati.';
+      });
+
+    if ('password' in modulo.dataset)
+      return invia(modulo, async (d) => {
+        await api('cambia-password', { attuale: d.get('attuale'), nuova: d.get('nuova') });
+        modulo.reset();
+        return 'Password cambiata. Sugli altri dispositivi dovrai accedere di nuovo.';
+      });
+
+    if ('elimina' in modulo.dataset) {
+      if (!confirm('Vuoi davvero eliminare il tuo account? L’operazione non si può annullare.')) return;
+      return invia(modulo, async (d) => {
+        await api('elimina-account', { password: d.get('password') });
+        segnaUscita();
+        vista('ingresso');
+        mostraModuloIngresso('registra');
+      });
+    }
+
+    if ('aggiungiDispositivo' in modulo.dataset)
+      return invia(modulo, async (d) => {
+        const { account } = await api('dispositivo', { dispositivo: Object.fromEntries(d) });
+        profilo.account = account;
+        modulo.reset();
+        disegnaDispositivi();
+        disegnaDocumenti();
+        return 'Dispositivo aggiunto.';
+      });
+
+    if (modulo.dataset.modificaDispositivo)
+      return invia(modulo, async (d) => {
+        const { account } = await api('dispositivo', { dispositivo: { id: modulo.dataset.modificaDispositivo, ...Object.fromEntries(d) } });
+        profilo.account = account;
+        disegnaDispositivi();
+      });
+
+    if ('assistenza' in modulo.dataset)
+      return invia(modulo, async (d) => {
+        const { richiesta } = await api('assistenza', {
+          dispositivo: d.get('dispositivo') || undefined,
+          tipo: d.get('tipo'),
+          descrizione: d.get('descrizione'),
+          fermo: d.get('fermo') === 'on',
+        });
+        profilo.assistenza.unshift(richiesta);
+        modulo.reset();
+        disegnaAssistenza();
+        return `Richiesta ${richiesta.numero} inviata: ti abbiamo mandato una conferma via email.`;
+      });
+
+    if (modulo.dataset.rispondi)
+      return invia(modulo, async (d) => {
+        const { richiesta } = await api('rispondi-assistenza', { numero: modulo.dataset.rispondi, nota: d.get('nota') });
+        profilo.assistenza = profilo.assistenza.map((r) => (r.numero === richiesta.numero ? richiesta : r));
+        disegnaAssistenza();
+      });
+  });
+
+  window.addEventListener('hashchange', () => {
+    if (!profilo) return;
+    mostraSezione();
+    $('.sezioni').scrollIntoView({ block: 'nearest' });
+  });
+
+  // ——— avvio ———
+  (async () => {
+    try {
+      await caricaArea();
+    } catch {
+      vista('ingresso');
+      const scelta = new URLSearchParams(location.search).get('modulo');
+      mostraModuloIngresso(scelta === 'registra' ? 'registra' : 'accedi');
+      riempiProfessioni(PROFESSIONI);
+    }
+  })();
+</script>
+
+<style>
+  .account {
+    padding-block: 8px clamp(56px, 9vw, 112px);
+  }
+
+  .caricamento {
+    padding: 48px 0;
+    color: var(--grigio-500);
+  }
+
+  [hidden] {
+    display: none !important;
+  }
+
+  /* ——— ingresso ——— */
+  .ingresso {
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    gap: clamp(28px, 5vw, 64px);
+    align-items: start;
+  }
+
+  .ingresso__vantaggi h2 {
+    margin: 0 0 20px;
+    font-size: clamp(1.3rem, 2.6vw, 1.7rem);
+    line-height: 1.25;
+  }
+
+  .ingresso__vantaggi ul {
+    display: grid;
+    gap: 16px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .ingresso__vantaggi li {
+    display: flex;
+    gap: 14px;
+    align-items: flex-start;
+  }
+
+  .ingresso__vantaggi li :global(svg) {
+    flex-shrink: 0;
+    padding: 9px;
+    width: 42px;
+    height: 42px;
+    border-radius: 12px;
+    background: var(--accento-chiaro);
+    color: var(--blu-900);
+  }
+
+  .ingresso__vantaggi strong {
+    display: block;
+    color: var(--blu-900);
+  }
+
+  .ingresso__vantaggi span {
+    color: var(--grigio-700);
+  }
+
+  .ingresso__scheda {
+    padding: clamp(20px, 4vw, 32px);
+    border-radius: 24px;
+    background: var(--bianco);
+    box-shadow: var(--ombra-forte);
+  }
+
+  .schede-ingresso {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 4px;
+    margin-bottom: 20px;
+    padding: 4px;
+    border-radius: 999px;
+    background: var(--grigio-100);
+  }
+
+  .schede-ingresso button {
+    padding: 10px;
+    border: 0;
+    border-radius: 999px;
+    background: none;
+    font: inherit;
+    font-weight: 700;
+    color: var(--grigio-700);
+    cursor: pointer;
+  }
+
+  .schede-ingresso button[aria-selected='true'] {
+    background: var(--bianco);
+    color: var(--blu-900);
+    box-shadow: var(--ombra);
+  }
+
+  /* ——— moduli ——— */
+  .modulo {
+    display: grid;
+    gap: 14px;
+  }
+
+  .modulo--griglia {
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  .modulo p {
+    margin: 0;
+  }
+
+  .modulo label > span,
+  .modulo legend {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--grigio-700);
+  }
+
+  .modulo small {
+    font-weight: 400;
+    color: var(--grigio-500);
+  }
+
+  .modulo input:not([type='checkbox']),
+  .modulo select,
+  .modulo textarea {
+    width: 100%;
+    padding: 12px 14px;
+    font: inherit;
+    border: 1px solid var(--grigio-300);
+    border-radius: 12px;
+    background: var(--bianco);
+  }
+
+  .modulo input:disabled {
+    background: var(--grigio-100);
+    color: var(--grigio-500);
+  }
+
+  .modulo fieldset {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+    gap: 14px;
+    margin: 0;
+    padding: 18px;
+    border: 1px solid var(--grigio-200);
+    border-radius: 16px;
+  }
+
+  .modulo legend {
+    padding: 0 6px;
+    font-size: 1rem;
+    color: var(--blu-900);
+  }
+
+  .intero {
+    grid-column: 1 / -1;
+  }
+
+  .spunta {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+    font-size: 0.92rem;
+  }
+
+  .spunta input {
+    margin-top: 4px;
+    width: 18px;
+    height: 18px;
+    flex-shrink: 0;
+  }
+
+  .urgente {
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: #fef3f2;
+  }
+
+  .collegamento {
+    justify-self: start;
+    padding: 0;
+    border: 0;
+    background: none;
+    font: inherit;
+    font-weight: 600;
+    color: var(--blu-600);
+    cursor: pointer;
+  }
+
+  .messaggio {
+    margin: 0;
+    font-weight: 600;
+    color: #b42318;
+  }
+
+  .messaggio[data-tipo='ok'] {
+    color: #067647;
+  }
+
+  .nota,
+  .pannello :global(.nota) {
+    font-size: 0.88rem;
+    color: var(--grigio-500);
+  }
+
+  .rosso {
+    color: #b42318;
+  }
+
+  /* ——— area ——— */
+  .area__testa {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 20px;
+  }
+
+  .area__testa h2 {
+    margin: 0;
+    font-size: 1.6rem;
+  }
+
+  .area__testa p {
+    margin: 2px 0 0;
+    color: var(--grigio-500);
+  }
+
+  .sezioni {
+    position: sticky;
+    top: 76px;
+    z-index: 5;
+    display: flex;
+    gap: 6px;
+    margin: 0 calc(var(--gutter) * -1) 20px;
+    padding: 10px var(--gutter);
+    overflow-x: auto;
+    background: rgb(255 255 255 / 0.94);
+    backdrop-filter: blur(10px);
+    scrollbar-width: none;
+  }
+
+  .sezioni a {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 6px;
+    padding: 9px 16px;
+    border: 1px solid var(--grigio-200);
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.93rem;
+    color: var(--grigio-700);
+    text-decoration: none;
+    background: var(--bianco);
+  }
+
+  .sezioni a[aria-current='page'] {
+    border-color: var(--blu-900);
+    background: var(--blu-900);
+    color: var(--bianco);
+  }
+
+  .avviso-dati {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    margin-bottom: 20px;
+    padding: 14px 18px;
+    border-radius: 14px;
+    background: var(--accento-chiaro);
+  }
+
+  .avviso-dati :global(svg) {
+    flex-shrink: 0;
+  }
+
+  .avviso-dati p {
+    margin: 0;
+  }
+
+  .pannello {
+    padding: clamp(18px, 4vw, 32px);
+    border-radius: 24px;
+    background: var(--bianco);
+    box-shadow: var(--ombra);
+  }
+
+  .pannello h3 {
+    margin: 0 0 6px;
+    font-size: 1.3rem;
+  }
+
+  .pannello__intro {
+    margin: 0 0 20px;
+    color: var(--grigio-700);
+  }
+
+  .pannello__secondo {
+    margin-top: 36px !important;
+  }
+
+  .pannello :global(.vuoto) {
+    padding: 28px;
+    border-radius: 16px;
+    background: var(--blu-50);
+    text-align: center;
+    color: var(--grigio-700);
+  }
+
+  .pannello :global(.vuoto p) {
+    margin: 0 0 12px;
+  }
+
+  .pannello :global(.azioni) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .pannello :global(.azioni--fondo) {
+    margin-top: 16px;
+  }
+
+  .pannello :global(.piccolo) {
+    padding: 8px 14px;
+    font-size: 0.88rem;
+  }
+
+  .pannello :global(.etichetta) {
+    display: inline-block;
+    flex-shrink: 0;
+    align-self: flex-start;
+    justify-self: start;
+    padding: 3px 12px;
+    border-radius: 999px;
+    background: var(--blu-100);
+    color: var(--blu-700);
+    font-size: 0.8rem;
+    font-weight: 800;
+  }
+
+  .pannello :global(.etichetta[data-stato='spedito']),
+  .pannello :global(.etichetta[data-stato='consegnato']),
+  .pannello :global(.etichetta[data-stato-assistenza='chiusa']),
+  .pannello :global(.etichetta--verde) {
+    background: #ecfdf3;
+    color: #067647;
+  }
+
+  .pannello :global(.etichetta[data-stato='annullato']),
+  .pannello :global(.etichetta[data-stato='in_attesa_pagamento']),
+  .pannello :global(.etichetta[data-stato-assistenza='in_attesa_cliente']),
+  .pannello :global(.etichetta--rossa) {
+    background: #fef3f2;
+    color: #b42318;
+  }
+
+  .pannello :global(.etichetta--gialla) {
+    background: var(--accento-chiaro);
+    color: #7a5d00;
+  }
+
+  /* ordini */
+  .pannello :global(.ordine),
+  .pannello :global(.richiesta) {
+    padding: 18px 0;
+    border-bottom: 1px solid var(--grigio-200);
+  }
+
+  .pannello :global(.ordine:last-child),
+  .pannello :global(.richiesta:last-child) {
+    border-bottom: 0;
+  }
+
+  .pannello :global(.ordine header),
+  .pannello :global(.richiesta header) {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    margin-bottom: 10px;
+  }
+
+  .pannello :global(.ordine header span),
+  .pannello :global(.richiesta header span:not(.etichetta)) {
+    display: block;
+    font-size: 0.88rem;
+    color: var(--grigio-500);
+  }
+
+  .pannello :global(.ordine__righe) {
+    margin: 0 0 12px;
+    padding: 0;
+    list-style: none;
+    font-size: 0.95rem;
+  }
+
+  .pannello :global(.ordine__righe li) {
+    display: flex;
+    justify-content: space-between;
+    gap: 12px;
+    padding: 4px 0;
+  }
+
+  .pannello :global(.ordine__righe li span:last-child) {
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .pannello :global(.ordine__totale) {
+    font-weight: 800;
+    border-top: 1px dashed var(--grigio-200);
+  }
+
+  .pannello :global(.ordine__tracking) {
+    margin: 0 0 12px;
+    font-size: 0.9rem;
+  }
+
+  /* riordino */
+  .pannello :global(.riordino),
+  .pannello :global(.dispositivi),
+  .pannello :global(.preventivi),
+  .pannello :global(.documenti) {
+    display: grid;
+    gap: 10px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pannello :global(.riordino__voce) {
+    display: grid;
+    grid-template-columns: auto 56px 1fr auto 72px;
+    gap: 14px;
+    align-items: center;
+    padding: 12px;
+    border: 1px solid var(--grigio-200);
+    border-radius: 16px;
+  }
+
+  .pannello :global(.riordino__voce--evidenza) {
+    border-color: var(--accento);
+    background: #fffbea;
+  }
+
+  .pannello :global(.riordino__scelta input) {
+    width: 20px;
+    height: 20px;
+  }
+
+  .pannello :global(.riordino__foto),
+  .pannello :global(.dispositivo__foto) {
+    display: block;
+    width: 56px;
+    height: 56px;
+    border-radius: 12px;
+    background: var(--grigio-100);
+    overflow: hidden;
+    flex-shrink: 0;
+  }
+
+  .pannello :global(.riordino__foto img),
+  .pannello :global(.dispositivo__foto img) {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .pannello :global(.riordino__info) {
+    display: grid;
+    gap: 2px;
+  }
+
+  .pannello :global(.riordino__info a) {
+    color: var(--blu-900);
+    text-decoration: none;
+  }
+
+  .pannello :global(.riordino__info span:not(.etichetta)) {
+    font-size: 0.85rem;
+    color: var(--grigio-500);
+  }
+
+  .pannello :global(.riordino__prezzo) {
+    text-align: right;
+    font-weight: 800;
+    white-space: nowrap;
+  }
+
+  .pannello :global(.riordino__prezzo small) {
+    display: block;
+    font-size: 0.72rem;
+    font-weight: 400;
+    color: var(--grigio-500);
+  }
+
+  .pannello :global(.riordino__quantita) {
+    width: 72px;
+    padding: 10px;
+    font: inherit;
+    text-align: center;
+    border: 1px solid var(--grigio-300);
+    border-radius: 10px;
+  }
+
+  /* dispositivi */
+  .pannello :global(.dispositivo) {
+    display: grid;
+    gap: 12px;
+    padding: 16px;
+    border: 1px solid var(--grigio-200);
+    border-radius: 16px;
+  }
+
+  .pannello :global(.dispositivo__testa) {
+    display: flex;
+    gap: 14px;
+  }
+
+  .pannello :global(.dispositivo__testa div) {
+    display: grid;
+    gap: 4px;
+  }
+
+  .pannello :global(.dispositivo__testa div > span:not(.etichetta)) {
+    font-size: 0.86rem;
+    color: var(--grigio-500);
+  }
+
+  .pannello :global(details summary) {
+    font-weight: 600;
+    color: var(--blu-600);
+    cursor: pointer;
+  }
+
+  .pannello :global(details[open] summary) {
+    margin-bottom: 12px;
+  }
+
+  .aggiungi {
+    margin-top: 18px;
+    padding: 16px 18px;
+    border-radius: 16px;
+    background: var(--blu-50);
+  }
+
+  .aggiungi summary {
+    display: flex;
+    gap: 8px;
+    align-items: center;
+  }
+
+  .aggiungi--pericolo summary {
+    color: #b42318 !important;
+  }
+
+  /* documenti */
+  .pannello :global(.documenti > li) {
+    padding: 14px 16px;
+    border: 1px solid var(--grigio-200);
+    border-radius: 16px;
+  }
+
+  .pannello :global(.documenti ul) {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin: 10px 0 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pannello :global(.documenti ul a) {
+    display: inline-flex;
+    flex-direction: column;
+    padding: 8px 14px;
+    border-radius: 12px;
+    background: var(--grigio-100);
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--blu-900);
+    text-decoration: none;
+  }
+
+  .pannello :global(.documenti__tipo) {
+    font-size: 0.72rem;
+    font-weight: 700;
+    letter-spacing: 0.04em;
+    text-transform: uppercase;
+    color: var(--grigio-500);
+  }
+
+  /* assistenza */
+  .pannello :global(.messaggi) {
+    display: grid;
+    gap: 8px;
+    margin: 0 0 12px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .pannello :global(.messaggi li) {
+    max-width: 85%;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: var(--grigio-100);
+  }
+
+  .pannello :global(.messaggi__fgitalia) {
+    justify-self: end;
+    background: var(--blu-100) !important;
+  }
+
+  .pannello :global(.messaggi p) {
+    margin: 0;
+    white-space: pre-line;
+  }
+
+  .pannello :global(.messaggi time) {
+    display: block;
+    font-size: 0.78rem;
+    color: var(--grigio-500);
+  }
+
+  .pannello :global(.rispondi) {
+    grid-template-columns: 1fr auto;
+    align-items: end;
+  }
+
+  .pannello :global(.rispondi .messaggio) {
+    grid-column: 1 / -1;
+  }
+
+  /* preventivi */
+  .pannello :global(.preventivi) {
+    margin-top: 20px;
+  }
+
+  .pannello :global(.preventivi li) {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    gap: 14px;
+    align-items: center;
+    padding: 14px 16px;
+    border: 1px solid var(--grigio-200);
+    border-radius: 16px;
+  }
+
+  .pannello :global(.preventivi li > div:first-child) {
+    display: grid;
+    gap: 2px;
+  }
+
+  .pannello :global(.preventivi li span) {
+    font-size: 0.86rem;
+    color: var(--grigio-500);
+  }
+
+  .aiuto {
+    margin: 24px 0 0;
+    font-size: 0.92rem;
+    color: var(--grigio-700);
+  }
+
+  @media (max-width: 860px) {
+    .ingresso {
+      grid-template-columns: 1fr;
+    }
+
+    .ingresso__scheda {
+      order: -1;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .pannello :global(.riordino__voce) {
+      grid-template-columns: auto 48px 1fr;
+    }
+
+    .pannello :global(.riordino__prezzo) {
+      grid-column: 2 / 4;
+      text-align: left;
+    }
+
+    .pannello :global(.riordino__prezzo small) {
+      display: inline;
+      margin-left: 6px;
+    }
+
+    .pannello :global(.riordino__quantita) {
+      grid-column: 1 / 3;
+    }
+
+    .pannello :global(.riordino__voce .nota) {
+      grid-column: 1 / -1;
+    }
+
+    .pannello :global(.preventivi li) {
+      grid-template-columns: 1fr;
+    }
+
+    .pannello :global(.rispondi) {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

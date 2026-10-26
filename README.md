@@ -6,6 +6,7 @@ Nuovo sito di **FGItalia di Francesco Gieri** (prodotti per la fisioterapia, Aci
 - **Pannello contenuti** su `/admin/` ([Decap CMS](https://decapcms.org)): prodotti, prezzi, disponibilità, corsi, novità, categorie, marchi, contatti, spedizione.
 - **Negozio:** carrello, pagamento sicuro con [Stripe](https://stripe.com) (carta, PayPal, Apple Pay, Google Pay), oppure ordine su WhatsApp.
 - **Ordini:** email a FGItalia per ogni ordine, email di conferma al cliente, pagina `/ordine/` dove il cliente segue lo stato, pannello `/gestione-ordini/` per segnare "in lavorazione", "spedito" (con tracking) e "consegnato": il cliente riceve un'email a ogni passaggio.
+- **Area clienti** (`/account/`, riservata ai professionisti): accesso con email e password, storico ordini con fatture in PDF, dati fiscali salvati (P.IVA, SDI, PEC) e già compilati al pagamento, manuali e certificati CE dei prodotti acquistati, riordino rapido dei consumabili, preventivi PDF dal carrello, promemoria di manutenzione delle apparecchiature e richieste di assistenza prioritarie.
 - **Avvisi:** iscrizione agli avvisi su corsi e offerte; quando si pubblica un nuovo corso parte da sola un'email a tutti gli iscritti ([Brevo](https://www.brevo.com), piano gratuito).
 - **Social e Google:** WhatsApp, Instagram, Facebook, anteprime per la condivisione, dati strutturati, sitemap, feed prodotti per Google Shopping (`/feed-google.xml`).
 
@@ -21,7 +22,8 @@ Nuovo sito di **FGItalia di Francesco Gieri** (prodotti per la fisioterapia, Aci
 | Foto prodotti, schede tecniche PDF, foto dello showroom | `public/uploads/` |
 | Pagine | `src/pages/` |
 | Conti del negozio (IVA, spedizione) | `src/lib/negozio.ts` |
-| Funzioni server (pagamento, ordini, email, avvisi) | `netlify/functions/`, `netlify/lib/` |
+| Funzioni server (pagamento, ordini, email, avvisi, area clienti) | `netlify/functions/`, `netlify/lib/` |
+| Area clienti | `src/pages/account/`, `netlify/functions/account*.mts`, `netlify/lib/clienti.ts` |
 | Test automatici | `tests/` (`npm test`) |
 | Configurazione del pannello | `public/admin/config.yml` |
 
@@ -65,7 +67,19 @@ Per provare senza soldi veri usa prima le chiavi "di test" di Stripe e la carta 
 | `EMAIL_MITTENTE` | indirizzo verificato su Brevo da cui partono le email |
 | `EMAIL_NOTIFICHE` | dove ricevere gli avvisi dei nuovi ordini (se vuota: l'email del sito) |
 | `ADMIN_PASSWORD` | password del pannello ordini `/gestione-ordini/` (lunga, almeno 12 caratteri) |
+| `SESSION_SECRET` | chiave segreta per l'area clienti: una frase lunga e casuale (almeno 32 caratteri). Se la cambi, tutti i clienti devono rifare l'accesso |
 | `INSTAGRAM_TOKEN` | facoltativo: mostra gli ultimi post Instagram in home |
+
+### Area clienti
+Gli account dei clienti, i preventivi e le richieste di assistenza sono salvati su Netlify (Blobs), come gli ordini: non servono altri servizi.
+
+1. Aggiungi la variabile `SESSION_SECRET` (vedi tabella sopra). Per generarla puoi usare un gestore di password o il comando `openssl rand -base64 48`.
+2. **Fatture:** dopo aver emesso la fattura elettronica, apri l'ordine in `/gestione-ordini/` e carica la copia PDF. Il cliente la riceve per email e la ritrova nel suo account.
+3. **Documenti dei prodotti:** nel pannello `/admin/`, in ogni prodotto, la lista "Manuali, certificati CE e altri documenti" accetta i PDF. I clienti che hanno acquistato il prodotto li vedono nell'area clienti (compaiono anche nella scheda del prodotto).
+4. **Riordino rapido:** i prodotti della categoria "Materiali di consumo" compaiono in automatico; per altri prodotti accendi "Materiale di consumo".
+5. **Manutenzione:** le apparecchiature hanno un promemoria ogni 12 mesi, modificabile per prodotto con "Manutenzione ogni (mesi)" (0 = nessuna). Ogni mattina il sito manda un'email ai clienti con una scadenza entro 30 giorni.
+6. **Assistenza:** le richieste arrivano via email a `EMAIL_NOTIFICHE` (quelle con lo studio fermo hanno 🔴 nell'oggetto) e si gestiscono in `/gestione-ordini/`, scheda "Assistenza". Rispondendo all'email si scrive direttamente al cliente.
+7. **Preventivi:** ogni preventivo scaricato da un cliente arriva anche via email a FGItalia, utile per richiamarlo.
 
 ### Google
 - [Google Search Console](https://search.google.com/search-console): aggiungi il sito e invia la sitemap `https://www.fgitalia.it/sitemap.xml`.

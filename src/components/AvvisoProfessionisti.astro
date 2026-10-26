@@ -2,7 +2,8 @@
 /**
  * Avviso obbligatorio al primo accesso: i contenuti sui dispositivi medici
  * sono riservati agli operatori del settore (D.Lgs. 24 febbraio 1997, n. 46).
- * La conferma resta salvata sul dispositivo del visitatore.
+ * La conferma resta salvata sul dispositivo del visitatore; chi accede all'area clienti
+ * l'ha già data alla registrazione e non vede più l'avviso.
  */
 ---
 
@@ -17,6 +18,7 @@
       <button class="pulsante pulsante--primario" type="button" data-sono-pro>Sono un professionista</button>
       <button class="pulsante pulsante--contorno" type="button" data-non-pro>Non sono un professionista</button>
     </div>
+    <p class="avviso-pro__account">Hai già un account? <a href="/account/">Accedi all’area clienti</a></p>
   </div>
 
   <div data-passo="bloccato" hidden>
@@ -103,6 +105,11 @@
   .avviso-pro p {
     margin: 0 0 24px;
     color: var(--grigio-700);
+  }
+
+  .avviso-pro .avviso-pro__account {
+    margin: 20px 0 0;
+    font-size: 0.92rem;
   }
 
   .avviso-pro__azioni {

@@ -2,6 +2,8 @@ import { euro } from '../../src/lib/negozio';
 import { sito } from '../../src/lib/sito';
 import { variabile, variabileFacoltativa, urlSito } from './ambiente';
 import { STATI, type Ordine } from './ordini';
+import { prossimaManutenzione, type Cliente, type Dispositivo } from './clienti';
+import { STATI_ASSISTENZA, TIPI_ASSISTENZA, type Preventivo, type RichiestaAssistenza } from './pratiche';
 
 /**
  * Email inviate con Brevo (piano gratuito: 300 email al giorno).
@@ -30,13 +32,27 @@ export interface Messaggio {
   html: string;
 }
 
-export async function inviaEmail(destinatario: { email: string; nome?: string }, { oggetto, html }: Messaggio) {
+export interface Allegato {
+  nome: string;
+  /** contenuto del file in base64 */
+  contenuto: string;
+}
+
+export async function inviaEmail(
+  destinatario: { email: string; nome?: string },
+  { oggetto, html }: Messaggio,
+  allegati: Allegato[] = [],
+  rispondiA?: { email: string; nome?: string },
+) {
   await chiamaBrevo('/smtp/email', {
     sender: mittente(),
     to: [{ email: destinatario.email, ...(destinatario.nome && { name: destinatario.nome }) }],
-    replyTo: { email: sito.email || variabile('EMAIL_MITTENTE'), name: sito.nome_breve },
+    replyTo: rispondiA
+      ? { email: rispondiA.email, ...(rispondiA.nome && { name: rispondiA.nome }) }
+      : { email: sito.email || variabile('EMAIL_MITTENTE'), name: sito.nome_breve },
     subject: oggetto,
     htmlContent: html,
+    ...(allegati.length && { attachment: allegati.map((a) => ({ name: a.nome, content: a.contenuto })) }),
   });
 }
 
@@ -193,6 +209,132 @@ export function emailNuovoCorso(corso: {
       `${corso.immagine ? `<img src="${urlSito()}${escape(corso.immagine)}" alt="" width="544" style="display:block;width:100%;border-radius:12px;margin-bottom:16px">` : ''}
 <p>${escape(corso.riassunto)}</p><p>${dettagli}</p>${pulsante('Scopri il corso e iscriviti', `${urlSito()}/corsi/#iscrizione`)}
 <p style="font-size:12px;color:#6b7b87">Ricevi questa email perché ti sei iscritto agli avvisi di ${escape(sito.nome_breve)}. <a href="{{ unsubscribe }}" style="color:#6b7b87">Non voglio più ricevere avvisi</a>.</p>`,
+    ),
+  };
+}
+
+// ——— Area clienti ———
+
+const dataBreve = (iso: string) =>
+  new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', year: 'numeric' }).format(new Date(iso.length === 10 ? `${iso}T12:00:00` : iso));
+const nomeProprio = (nome: string) => escape(nome.trim().split(' ')[0] || nome);
+const linkAccount = (sezione = '') => `${urlSito()}/account/${sezione ? `#${sezione}` : ''}`;
+
+export function emailBenvenuto(c: Cliente) {
+  return {
+    oggetto: `Benvenuto nell’area clienti ${sito.nome_breve}`,
+    html: pagina(
+      `Benvenuto, ${nomeProprio(c.nome)}!`,
+      `<p>Il tuo account è attivo. Nell’area clienti trovi:</p>
+<ul style="padding-left:18px;line-height:1.7">
+<li>lo storico degli ordini, con lo stato della spedizione e le fatture in PDF;</li>
+<li>i manuali, le schede tecniche e i certificati CE dei dispositivi che hai acquistato;</li>
+<li>il riordino rapido dei materiali di consumo;</li>
+<li>i preventivi in PDF da scaricare dal carrello;</li>
+<li>i promemoria per la manutenzione delle apparecchiature e l’assistenza tecnica prioritaria.</li>
+</ul>
+<p>Salva una volta i tuoi dati di fatturazione (partita IVA, codice SDI o PEC): li useremo per ogni ordine.</p>
+${pulsante('Vai al tuo account', linkAccount('dati'))}`,
+    ),
+  };
+}
+
+export function emailReimpostaPassword(c: Cliente, link: string) {
+  return {
+    oggetto: `Nuova password per il tuo account ${sito.nome_breve}`,
+    html: pagina(
+      'Imposta una nuova password',
+      `<p>Ciao ${nomeProprio(c.nome)}, abbiamo ricevuto una richiesta per cambiare la password del tuo account.</p>
+${pulsante('Scegli la nuova password', link)}
+<p style="font-size:13px;color:#6b7b87">Il link vale un’ora e si può usare una sola volta. Se non hai chiesto tu il cambio, ignora questa email: la password resta quella di prima.</p>`,
+    ),
+  };
+}
+
+export function emailFatturaDisponibile(o: Ordine) {
+  return {
+    oggetto: `Fattura dell’ordine ${o.numero} – ${sito.nome_breve}`,
+    html: pagina(
+      `Fattura dell’ordine ${o.numero}`,
+      `<p>Ciao ${nomeProprio(o.cliente.nome)}, in allegato trovi la copia in PDF della fattura del tuo ordine. La fattura elettronica ti arriva anche tramite il Sistema di Interscambio (SDI o PEC).</p>
+<p>Puoi scaricarla quando vuoi dalla tua area clienti, accedendo con questa email.</p>
+${pulsante('Vai ai tuoi ordini', linkAccount('ordini'))}`,
+    ),
+  };
+}
+
+const schedaRichiesta = (r: RichiestaAssistenza) =>
+  `<p style="padding:12px 16px;background:#f4f7fe;border-radius:10px;line-height:1.6"><strong>Pratica:</strong> ${escape(r.numero)}<br>
+<strong>Tipo:</strong> ${escape(TIPI_ASSISTENZA[r.tipo])}${r.fermo ? ' · <strong style="color:#b42318">studio fermo</strong>' : ''}<br>
+${r.dispositivo ? `<strong>Dispositivo:</strong> ${escape(r.dispositivo.titolo)}${r.dispositivo.matricola ? ` (matricola ${escape(r.dispositivo.matricola)})` : ''}<br>` : ''}
+<strong>Descrizione:</strong> ${escape(r.descrizione).replace(/\n/g, '<br>')}</p>`;
+
+export function emailNuovaRichiestaNegozio(r: RichiestaAssistenza) {
+  return {
+    oggetto: `${r.fermo ? '🔴 PRIORITARIA – ' : '🛠️ '}Assistenza ${r.numero}: ${r.dispositivo?.titolo ?? TIPI_ASSISTENZA[r.tipo]}`,
+    html: pagina(
+      `Nuova richiesta di assistenza ${r.numero}`,
+      `<p><strong>${escape(r.cliente.nome)}</strong> · ${escape(r.cliente.professione)}<br>${escape(r.cliente.email)}${r.cliente.telefono ? `<br>${escape(r.cliente.telefono)}` : ''}</p>
+${schedaRichiesta(r)}${pulsante('Apri le richieste di assistenza', `${urlSito()}/gestione-ordini/#assistenza`)}`,
+    ),
+  };
+}
+
+export function emailConfermaRichiesta(r: RichiestaAssistenza) {
+  return {
+    oggetto: `Richiesta di assistenza ${r.numero} ricevuta`,
+    html: pagina(
+      'Abbiamo ricevuto la tua richiesta',
+      `<p>Ciao ${nomeProprio(r.cliente.nome)}, la tua richiesta è arrivata al nostro servizio tecnico${r.fermo ? ' con <strong>priorità alta</strong>, perché ci hai segnalato che lo studio è fermo' : ''}. Ti risponderemo il prima possibile.</p>
+${schedaRichiesta(r)}${pulsante('Segui la richiesta', linkAccount('assistenza'))}`,
+    ),
+  };
+}
+
+export function emailAggiornamentoRichiesta(r: RichiestaAssistenza, nota?: string) {
+  return {
+    oggetto: `Assistenza ${r.numero}: ${STATI_ASSISTENZA[r.stato].toLowerCase()}`,
+    html: pagina(
+      `Assistenza ${r.numero}: ${STATI_ASSISTENZA[r.stato]}`,
+      `${nota ? `<p style="padding:12px 16px;background:#f4f7fe;border-radius:10px">${escape(nota).replace(/\n/g, '<br>')}</p>` : `<p>Lo stato della tua richiesta è ora: ${escape(STATI_ASSISTENZA[r.stato])}.</p>`}
+${pulsante('Vedi la richiesta', linkAccount('assistenza'))}`,
+    ),
+  };
+}
+
+export function emailNuovoPreventivoNegozio(p: Preventivo) {
+  const f = p.cliente.fatturazione;
+  return {
+    oggetto: `📄 Preventivo ${p.numero} scaricato da ${p.cliente.nome} – ${euro(p.totaleCent)}`,
+    html: pagina(
+      `Preventivo ${p.numero}`,
+      `<p>Un cliente ha scaricato un preventivo dal sito: può essere il momento giusto per un contatto.</p>
+<p><strong>${escape(f.ragioneSociale || p.cliente.nome)}</strong><br>${escape(p.cliente.email)}${p.cliente.telefono ? `<br>${escape(p.cliente.telefono)}` : ''}</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px">
+${p.righe.map((r) => `<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8ec">${r.quantita} × ${escape(r.titolo)}</td><td align="right" style="border-bottom:1px solid #e2e8ec">${euro(r.totaleNettoCent)} + IVA</td></tr>`).join('')}
+<tr><td style="padding:8px 0;font-weight:bold">Totale IVA inclusa</td><td align="right" style="font-weight:bold">${euro(p.totaleCent)}</td></tr></table>
+${p.note ? `<p><strong>Note del cliente:</strong> ${escape(p.note)}</p>` : ''}`,
+    ),
+  };
+}
+
+export function emailPromemoriaManutenzione(c: Cliente, dispositivi: Dispositivo[], oggi: string) {
+  const elenco = dispositivi
+    .map((d) => {
+      const scadenza = prossimaManutenzione(d);
+      const scaduta = scadenza < oggi;
+      return `<li style="margin-bottom:6px"><strong>${escape(d.titolo)}</strong>${d.matricola ? ` (matricola ${escape(d.matricola)})` : ''}: ${scaduta ? '<strong style="color:#b42318">scaduta il' : 'in scadenza il'} ${dataBreve(scadenza)}${scaduta ? '</strong>' : ''}</li>`;
+    })
+    .join('');
+  return {
+    oggetto: `Promemoria manutenzione: ${dispositivi.length === 1 ? dispositivi[0].titolo : `${dispositivi.length} apparecchiature`}`,
+    html: pagina(
+      'È ora della manutenzione',
+      `<p>Ciao ${nomeProprio(c.nome)}, ti ricordiamo le prossime scadenze di manutenzione e verifica delle tue apparecchiature:</p>
+<ul style="padding-left:18px;line-height:1.6">${elenco}</ul>
+<p>Le verifiche periodiche mantengono i dispositivi sicuri ed efficaci e sono richieste in caso di ispezione. Prenota l’intervento con un clic: ti richiamiamo noi.</p>
+${pulsante('Prenota la manutenzione', linkAccount('dispositivi'))}
+<p style="font-size:12px;color:#6b7b87">Ricevi questo promemoria perché l’hai attivato nella tua area clienti. Puoi disattivarlo in qualsiasi momento da “I miei dati”.</p>`,
     ),
   };
 }

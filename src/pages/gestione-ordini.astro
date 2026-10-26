@@ -10,7 +10,7 @@ import { sito } from '../lib/sito';
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex, nofollow" />
-    <title>Ordini | {sito.nome_breve}</title>
+    <title>Ordini e assistenza | {sito.nome_breve}</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   </head>
@@ -35,6 +35,7 @@ import { sito } from '../lib/sito';
           <button type="button" data-filtro="aperti" aria-pressed="true">Da gestire <span data-conta="aperti"></span></button>
           <button type="button" data-filtro="spediti" aria-pressed="false">Spediti</button>
           <button type="button" data-filtro="tutti" aria-pressed="false">Tutti</button>
+          <button type="button" data-filtro="assistenza" aria-pressed="false">Assistenza <span data-conta="assistenza"></span></button>
           <button type="button" class="filtri__aggiorna" data-ricarica aria-label="Aggiorna">↻</button>
         </div>
         <ul class="ordini" data-ordini></ul>
@@ -44,6 +45,18 @@ import { sito } from '../lib/sito';
       <section class="scheda" data-scheda hidden>
         <button class="indietro" type="button" data-indietro><Icona nome="frecciaSinistra" dimensione={18} /> Tutti gli ordini</button>
         <div data-contenuto></div>
+
+        <form class="aggiorna fattura" data-fattura>
+          <h2>Fattura</h2>
+          <p data-fattura-stato></p>
+          <div data-fattura-carica>
+            <label><span>PDF della fattura (copia di cortesia, massimo 4 MB)</span><input type="file" name="file" accept="application/pdf" required /></label>
+            <label class="spunta"><input type="checkbox" name="avvisa" checked /> Mandala al cliente per email</label>
+            <button class="pulsante pulsante--primario" type="submit">Carica la fattura</button>
+          </div>
+          <button class="pulsante pulsante--contorno" type="button" data-togli-fattura hidden>Togli la fattura</button>
+          <p class="esito" role="status" data-esito-fattura hidden></p>
+        </form>
 
         <form class="aggiorna" data-aggiorna>
           <h2>Aggiorna lo stato</h2>
@@ -62,6 +75,24 @@ import { sito } from '../lib/sito';
           <label class="spunta"><input type="checkbox" name="avvisa" checked /> Invia un’email al cliente</label>
           <button class="pulsante pulsante--primario" type="submit">Salva</button>
           <p class="esito" role="status" data-esito hidden></p>
+        </form>
+      </section>
+
+      <section class="scheda" data-richiesta hidden>
+        <button class="indietro" type="button" data-indietro><Icona nome="frecciaSinistra" dimensione={18} /> Tutte le richieste</button>
+        <div data-contenuto-richiesta></div>
+
+        <form class="aggiorna" data-aggiorna-richiesta>
+          <h2>Rispondi e aggiorna</h2>
+          <div class="stati">
+            <label><input type="radio" name="stato" value="in_lavorazione" checked /> In lavorazione</label>
+            <label><input type="radio" name="stato" value="in_attesa_cliente" /> Serve una risposta</label>
+            <label><input type="radio" name="stato" value="chiusa" /> Risolta</label>
+          </div>
+          <label class="intero"><span>Messaggio per il cliente</span><textarea name="nota" rows="3"></textarea></label>
+          <label class="spunta"><input type="checkbox" name="avvisa" checked /> Invia un’email al cliente</label>
+          <button class="pulsante pulsante--primario" type="submit">Salva</button>
+          <p class="esito" role="status" data-esito-richiesta hidden></p>
         </form>
       </section>
     </main>
@@ -91,7 +122,34 @@ import { sito } from '../lib/sito';
         consegna?: { corriere?: string; tracking?: string; link?: string };
         storico: { stato: Stato; data: string; nota?: string }[];
         stripe: { pagamento?: string };
+        fattura?: { nome: string; caricata: string };
       }
+      interface Richiesta {
+        numero: string;
+        creato: string;
+        aggiornato: string;
+        cliente: { nome: string; email: string; telefono?: string; professione: string };
+        dispositivo?: { titolo: string; matricola?: string; ordine?: string; acquistato?: string };
+        tipo: string;
+        fermo: boolean;
+        descrizione: string;
+        stato: 'aperta' | 'in_lavorazione' | 'in_attesa_cliente' | 'chiusa';
+        storico: { stato: string; data: string; nota?: string; autore: 'cliente' | 'fgitalia' }[];
+      }
+      const TESTI_ASSISTENZA: Record<string, string> = {
+        aperta: 'Nuova',
+        in_lavorazione: 'In lavorazione',
+        in_attesa_cliente: 'Attende il cliente',
+        chiusa: 'Risolta',
+      };
+      const TIPI_ASSISTENZA: Record<string, string> = {
+        guasto: 'Guasto',
+        manutenzione: 'Manutenzione / verifica',
+        calibrazione: 'Calibrazione',
+        ricambi: 'Ricambi',
+        uso: 'Domanda sull’uso',
+        altro: 'Altro',
+      };
 
       const TESTI: Record<Stato, string> = {
         in_attesa_pagamento: 'Attesa pagamento',
@@ -120,6 +178,8 @@ import { sito } from '../lib/sito';
       let ordini: Ordine[] = [];
       let filtro = 'aperti';
       let aperto: Ordine | undefined;
+      let richieste: Richiesta[] = [];
+      let richiestaAperta: Richiesta | undefined;
 
       async function api(corpo: Record<string, unknown>) {
         const risposta = await fetch('/api/gestione-ordini', {
@@ -133,10 +193,11 @@ import { sito } from '../lib/sito';
         return dati;
       }
 
-      function vista(nome: 'accesso' | 'elenco' | 'scheda') {
+      function vista(nome: 'accesso' | 'elenco' | 'scheda' | 'richiesta') {
         $('[data-accesso]').hidden = nome !== 'accesso';
         $('[data-elenco]').hidden = nome !== 'elenco';
         $('[data-scheda]').hidden = nome !== 'scheda';
+        $('[data-richiesta]').hidden = nome !== 'richiesta';
         $('[data-esci]').hidden = nome === 'accesso';
         window.scrollTo(0, 0);
       }
@@ -156,6 +217,8 @@ import { sito } from '../lib/sito';
           .join('<br>');
 
       function disegnaElenco() {
+        $('[data-conta="assistenza"]').textContent = String(richieste.filter((r) => r.stato !== 'chiusa').length || '');
+        if (filtro === 'assistenza') return disegnaRichieste();
         const scelti = ordini.filter((o) =>
           filtro === 'aperti' ? APERTI.includes(o.stato) : filtro === 'spediti' ? ['spedito', 'consegnato'].includes(o.stato) : true,
         );
@@ -173,13 +236,55 @@ import { sito } from '../lib/sito';
           .join('');
       }
 
+      function disegnaRichieste() {
+        document.querySelectorAll<HTMLElement>('[data-filtro]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filtro === filtro)));
+        $('[data-vuoto]').hidden = richieste.length > 0;
+        $('[data-ordini]').innerHTML = richieste
+          .map(
+            (r) => `<li><button type="button" data-apri-richiesta="${escape(r.numero)}">
+              <span class="ordini__riga"><strong>${r.fermo && r.stato !== 'chiusa' ? '🔴 ' : ''}${escape(r.cliente.nome)}</strong><span class="etichetta-stato" data-stato="${r.stato === 'aperta' ? 'ricevuto' : r.stato === 'chiusa' ? 'consegnato' : 'in_lavorazione'}">${TESTI_ASSISTENZA[r.stato]}</span></span>
+              <span class="ordini__riga"><span>${escape(r.numero)} · ${data(r.aggiornato)}</span><strong>${escape(TIPI_ASSISTENZA[r.tipo] ?? r.tipo)}</strong></span>
+              <span class="ordini__prodotti">${escape(r.dispositivo?.titolo ?? '')}${r.dispositivo ? ' – ' : ''}${escape(r.descrizione)}</span>
+            </button></li>`,
+          )
+          .join('');
+      }
+
       async function caricaElenco() {
         vista('elenco');
         $('[data-ordini]').innerHTML = '<li class="caricamento">Caricamento…</li>';
-        ordini = await api({ azione: 'elenco' });
-        disegnaElenco();
+        [ordini, richieste] = await Promise.all([api({ azione: 'elenco' }), api({ azione: 'assistenza-elenco' }).catch(() => [])]);
         const daLink = decodeURIComponent(location.hash.slice(1));
-        if (daLink) apri(daLink);
+        if (daLink === 'assistenza') filtro = 'assistenza';
+        disegnaElenco();
+        if (daLink.startsWith('AS-')) apriRichiesta(daLink);
+        else if (daLink && daLink !== 'assistenza') apri(daLink);
+      }
+
+      function apriRichiesta(numero: string) {
+        richiestaAperta = richieste.find((r) => r.numero === numero);
+        if (!richiestaAperta) return;
+        history.replaceState(null, '', `#${numero}`);
+        const r = richiestaAperta;
+        const telefono = r.cliente.telefono?.replace(/[^\d+]/g, '');
+        $('[data-contenuto-richiesta]').innerHTML = `
+          <div class="scheda__testa">
+            <div><h1>${escape(r.numero)}</h1><p>${data(r.creato)} · ${escape(TIPI_ASSISTENZA[r.tipo] ?? r.tipo)}${r.fermo ? ' · <strong class="rosso">STUDIO FERMO</strong>' : ''}</p></div>
+            <span class="etichetta-stato" data-stato="${r.stato === 'aperta' ? 'ricevuto' : r.stato === 'chiusa' ? 'consegnato' : 'in_lavorazione'}">${TESTI_ASSISTENZA[r.stato]}</span>
+          </div>
+          <div class="blocchi">
+            <div class="blocco"><h2>Cliente</h2><p><strong>${escape(r.cliente.nome)}</strong><br>${escape(r.cliente.professione)}<br>
+              <a href="mailto:${escape(r.cliente.email)}">${escape(r.cliente.email)}</a>
+              ${telefono ? `<br><a href="tel:${escape(telefono)}">${escape(r.cliente.telefono)}</a> · <a href="https://wa.me/${escape(telefono.replace('+', ''))}" target="_blank">WhatsApp</a>` : ''}</p></div>
+            ${r.dispositivo ? `<div class="blocco"><h2>Dispositivo</h2><p><strong>${escape(r.dispositivo.titolo)}</strong>${r.dispositivo.matricola ? `<br>Matricola ${escape(r.dispositivo.matricola)}` : ''}${r.dispositivo.acquistato ? `<br>Acquistato il ${escape(r.dispositivo.acquistato.split('-').reverse().join('/'))}` : ''}${r.dispositivo.ordine ? `<br>Ordine <a href="#${escape(r.dispositivo.ordine)}" data-apri="${escape(r.dispositivo.ordine)}">${escape(r.dispositivo.ordine)}</a>` : ''}</p></div>` : ''}
+          </div>
+          <h2>Richiesta</h2>
+          <p class="testo-richiesta">${escape(r.descrizione)}</p>
+          <h2>Messaggi</h2>
+          <ul class="storico">${r.storico.map((s) => `<li><time>${data(s.data)}</time> <strong>${s.autore === 'fgitalia' ? 'FGItalia' : 'Cliente'}</strong> · ${TESTI_ASSISTENZA[s.stato] ?? escape(s.stato)}${s.nota ? ` – ${escape(s.nota)}` : ''}</li>`).join('')}</ul>`;
+        $<HTMLFormElement>('[data-aggiorna-richiesta]').reset();
+        $('[data-esito-richiesta]').hidden = true;
+        vista('richiesta');
       }
 
       function apri(numero: string) {
@@ -221,8 +326,27 @@ import { sito } from '../lib/sito';
         (modulo.elements.namedItem('link') as HTMLInputElement).value = o.consegna?.link ?? '';
         aggiornaCampi();
         $('[data-esito]').hidden = true;
+        disegnaFattura(o);
         vista('scheda');
       }
+
+      function disegnaFattura(o: Ordine) {
+        $<HTMLFormElement>('[data-fattura]').reset();
+        $('[data-esito-fattura]').hidden = true;
+        $('[data-fattura-stato]').textContent = o.fattura
+          ? `Caricata il ${data(o.fattura.caricata)} (${o.fattura.nome}): il cliente la scarica dalla sua area clienti.`
+          : 'Quando emetti la fattura elettronica, carica qui la copia in PDF: il cliente la riceve per email e la ritrova nella sua area clienti.';
+        $('[data-togli-fattura]').hidden = !o.fattura;
+        $('[data-fattura-carica]').hidden = !!o.fattura;
+      }
+
+      const inBase64 = (file: File) =>
+        new Promise<string>((ok, ko) => {
+          const lettore = new FileReader();
+          lettore.onload = () => ok(String(lettore.result).split(',')[1] ?? '');
+          lettore.onerror = () => ko(new Error('File non leggibile'));
+          lettore.readAsDataURL(file);
+        });
 
       function aggiornaCampi() {
         const stato = new FormData($<HTMLFormElement>('[data-aggiorna]')).get('stato');
@@ -232,7 +356,19 @@ import { sito } from '../lib/sito';
       document.addEventListener('click', (e) => {
         const t = e.target as HTMLElement;
         const apriBtn = t.closest<HTMLElement>('[data-apri]');
-        if (apriBtn) return apri(apriBtn.dataset.apri!);
+        if (apriBtn) {
+          e.preventDefault();
+          return apri(apriBtn.dataset.apri!);
+        }
+        const richiestaBtn = t.closest<HTMLElement>('[data-apri-richiesta]');
+        if (richiestaBtn) return apriRichiesta(richiestaBtn.dataset.apriRichiesta!);
+        if (t.closest('[data-togli-fattura]') && aperto && confirm('Togliere la fattura da questo ordine?')) {
+          return void api({ azione: 'togli-fattura', numero: aperto.numero }).then(({ ordine }) => {
+            ordini = ordini.map((o) => (o.numero === ordine.numero ? ordine : o));
+            aperto = ordine;
+            disegnaFattura(ordine);
+          });
+        }
         const filtroBtn = t.closest<HTMLElement>('[data-filtro]');
         if (filtroBtn) {
           filtro = filtroBtn.dataset.filtro!;
@@ -240,7 +376,7 @@ import { sito } from '../lib/sito';
         }
         if (t.closest('[data-ricarica]')) return void caricaElenco();
         if (t.closest('[data-indietro]')) {
-          history.replaceState(null, '', location.pathname);
+          history.replaceState(null, '', filtro === 'assistenza' ? '#assistenza' : location.pathname);
           disegnaElenco();
           return vista('elenco');
         }
@@ -248,6 +384,57 @@ import { sito } from '../lib/sito';
       });
 
       $('[data-aggiorna]').addEventListener('change', aggiornaCampi);
+
+      $<HTMLFormElement>('[data-fattura]').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!aperto) return;
+        const modulo = e.target as HTMLFormElement;
+        const d = new FormData(modulo);
+        const file = d.get('file') as File;
+        const esito = $('[data-esito-fattura]');
+        const bottone = modulo.querySelector('button[type="submit"]') as HTMLButtonElement;
+        bottone.disabled = true;
+        try {
+          if (file.size > 4 * 1024 * 1024) throw new Error('Il PDF è troppo grande (massimo 4 MB).');
+          const { ordine, emailInviata } = await api({
+            azione: 'carica-fattura',
+            numero: aperto.numero,
+            nome: file.name,
+            contenuto: await inBase64(file),
+            avvisaCliente: d.get('avvisa') === 'on',
+          });
+          ordini = ordini.map((o) => (o.numero === ordine.numero ? ordine : o));
+          aperto = ordine;
+          disegnaFattura(ordine);
+          esito.textContent = `Fattura caricata${d.get('avvisa') === 'on' ? (emailInviata ? ' · inviata al cliente' : ' · ATTENZIONE: email non inviata') : ''}.`;
+        } catch (err) {
+          esito.textContent = (err as Error).message;
+        }
+        esito.hidden = false;
+        bottone.disabled = false;
+      });
+
+      $<HTMLFormElement>('[data-aggiorna-richiesta]').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        if (!richiestaAperta) return;
+        const d = new FormData(e.target as HTMLFormElement);
+        const esito = $('[data-esito-richiesta]');
+        try {
+          const { richiesta, emailInviata } = await api({
+            azione: 'assistenza-aggiorna',
+            numero: richiestaAperta.numero,
+            stato: d.get('stato'),
+            nota: d.get('nota'),
+            avvisaCliente: d.get('avvisa') === 'on',
+          });
+          richieste = richieste.map((r) => (r.numero === richiesta.numero ? richiesta : r));
+          apriRichiesta(richiesta.numero);
+          esito.textContent = `Salvato${d.get('avvisa') === 'on' ? (emailInviata ? ' · email inviata al cliente' : ' · ATTENZIONE: email non inviata') : ''}.`;
+        } catch (err) {
+          esito.textContent = (err as Error).message;
+        }
+        esito.hidden = false;
+      });
 
       $<HTMLFormElement>('[data-aggiorna]').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -589,6 +776,30 @@ import { sito } from '../lib/sito';
         padding: 20px;
         border-radius: 16px;
         background: var(--blu-50);
+      }
+
+      .fattura {
+        background: var(--grigio-100);
+      }
+
+      .fattura p {
+        margin: 0;
+      }
+
+      .fattura [data-fattura-carica] {
+        display: grid;
+        gap: 12px;
+      }
+
+      .fattura [hidden] {
+        display: none;
+      }
+
+      .scheda :global(.testo-richiesta) {
+        white-space: pre-line;
+        padding: 14px 16px;
+        border-radius: 12px;
+        background: var(--grigio-100);
       }
 
       .aggiorna h2 {

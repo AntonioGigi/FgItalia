@@ -61,9 +61,17 @@ import { sito } from '../lib/sito';
           )
         }
 
+        <div class="riepilogo__preventivo" id="preventivo">
+          <button class="pulsante pulsante--contorno riepilogo__paga" type="button" data-preventivo>
+            <Icona nome="documento" /> Scarica il preventivo PDF
+          </button>
+          <p class="riepilogo__metodi">Intestato al tuo studio, con prezzi netti e IVA, valido 30 giorni. Serve l’<a href="/account/">area clienti</a>.</p>
+          <p class="riepilogo__pronto" role="status" data-preventivo-pronto hidden></p>
+        </div>
+
         <p class="riepilogo__fattura">
-          <Icona nome="documento" dimensione={16} /> Ti serve la fattura? Inserisci partita IVA e codice SDI o PEC nella pagina
-          di pagamento.
+          <Icona nome="documento" dimensione={16} /> Ti serve la fattura? Salva partita IVA e codice SDI o PEC nella tua
+          <a href="/account/#dati">area clienti</a>: al pagamento li trovi già compilati.
         </p>
       </aside>
     </div>
@@ -73,6 +81,7 @@ import { sito } from '../lib/sito';
 <script>
   import { caricaCatalogo, impostaQuantita, leggiCarrello, EVENTO } from '../lib/carrello';
   import { calcolaTotali, euro, normalizzaCarrello, type Catalogo } from '../lib/negozio';
+  import { ErroreAccount, api, escape as escapeHtml, linkDocumento } from '../lib/account';
 
   const radice = document.querySelector<HTMLElement>('[data-carrello]')!;
   const $ = <T extends HTMLElement>(sel: string) => radice.querySelector<T>(sel)!;
@@ -140,6 +149,9 @@ import { sito } from '../lib/sito';
       return;
     }
 
+    const preventivo = bersaglio.closest<HTMLButtonElement>('[data-preventivo]');
+    if (preventivo) return creaPreventivo(preventivo);
+
     const paga = bersaglio.closest<HTMLButtonElement>('[data-paga]');
     if (paga) {
       const errore = $('[data-errore]');
@@ -170,11 +182,37 @@ import { sito } from '../lib/sito';
     }
   });
 
+  async function creaPreventivo(bottone: HTMLButtonElement) {
+    const pronto = $('[data-preventivo-pronto]');
+    bottone.disabled = true;
+    pronto.hidden = true;
+    try {
+      const { numero } = await api<{ numero: string }>('preventivo', { carrello: leggiCarrello() });
+      pronto.innerHTML = `Preventivo <strong>${escapeHtml(numero)}</strong> pronto. <a href="${linkDocumento('preventivo', numero)}" target="_blank">Apri il PDF</a> · lo ritrovi nella tua <a href="/account/#preventivi">area clienti</a>.`;
+      pronto.dataset.tipo = 'ok';
+    } catch (err) {
+      if (err instanceof ErroreAccount && err.stato === 401) {
+        location.href = `/account/?ritorno=${encodeURIComponent('/carrello/#preventivo')}`;
+        return;
+      }
+      pronto.textContent = (err as Error).message;
+      pronto.dataset.tipo = 'errore';
+    }
+    pronto.hidden = false;
+    bottone.disabled = false;
+  }
+
   caricaCatalogo()
     .then((c) => {
       catalogo = c;
       if (!c.negozioAttivo) radice.querySelectorAll<HTMLElement>('[data-paga], [data-paga] + .riepilogo__metodi').forEach((el) => (el.hidden = true));
       disegna();
+      // di ritorno dall'accesso all'area clienti: il preventivo parte da solo
+      if (location.hash === '#preventivo') {
+        history.replaceState(null, '', location.pathname);
+        const bottone = radice.querySelector<HTMLButtonElement>('[data-preventivo]');
+        if (bottone && leggiCarrello().length) creaPreventivo(bottone);
+      }
       window.addEventListener(EVENTO, disegna);
       window.addEventListener('storage', disegna);
     })
@@ -428,6 +466,23 @@ import { sito } from '../lib/sito';
     flex: 1;
     height: 1px;
     background: var(--grigio-200);
+  }
+
+  .riepilogo__preventivo {
+    margin-top: 20px;
+    padding-top: 16px;
+    border-top: 1px solid var(--grigio-200);
+  }
+
+  .riepilogo__pronto {
+    margin: 10px 0 0;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: #067647;
+  }
+
+  .riepilogo__pronto[data-tipo='errore'] {
+    color: #b42318;
   }
 
   .riepilogo__fattura {

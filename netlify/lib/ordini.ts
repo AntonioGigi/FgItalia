@@ -37,9 +37,14 @@ export interface Ordine {
   consegna?: { corriere?: string; tracking?: string; link?: string };
   storico: { stato: StatoOrdine; data: string; nota?: string }[];
   stripe: { sessione: string; pagamento?: string };
+  /** id dell'account del cliente, se era collegato al momento dell'acquisto */
+  account?: string;
+  /** fattura in PDF caricata dal pannello ordini (il file è nell'archivio "fatture") */
+  fattura?: { nome: string; caricata: string };
 }
 
 export const archivioOrdini = () => getStore({ name: 'ordini', consistency: 'strong' });
+export const archivioFatture = () => getStore({ name: 'fatture', consistency: 'strong' });
 
 /** Es. FG-261026-7KQ3: data + 4 caratteri casuali (senza lettere ambigue) */
 export function nuovoNumeroOrdine(data = new Date()): string {
@@ -80,5 +85,6 @@ export function vistaCliente(o: Ordine) {
     consegna: o.consegna,
     storico: o.storico,
     spedizione: { citta: o.spedizione.citta, provincia: o.spedizione.provincia },
+    fattura: !!o.fattura,
   };
 }

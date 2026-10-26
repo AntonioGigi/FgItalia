@@ -14,6 +14,8 @@ interface Props {
   datiStrutturati?: Record<string, unknown>;
   /** nasconde il pulsante WhatsApp fisso (pagine che hanno già i loro pulsanti) */
   senzaWhatsapp?: boolean;
+  /** pagine dell'area clienti: la dichiarazione di essere professionisti si fa alla registrazione */
+  senzaAvvisoPro?: boolean;
 }
 
 const {
@@ -23,6 +25,7 @@ const {
   tipo = 'website',
   datiStrutturati,
   senzaWhatsapp = false,
+  senzaAvvisoPro = false,
 } = Astro.props;
 
 const titoloCompleto = titolo ? `${titolo} | ${sito.nome_breve}` : `${sito.nome_breve} – ${sito.slogan}`;
@@ -83,7 +86,7 @@ const azienda = {
       <slot />
     </main>
     <Footer />
-    <AvvisoProfessionisti />
+    {!senzaAvvisoPro && <AvvisoProfessionisti />}
 
     {
       whatsapp && !senzaWhatsapp && (

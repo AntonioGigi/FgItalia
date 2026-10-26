@@ -53,6 +53,10 @@ const attiva = (href: string) => (href === '/' ? percorso === '/' : percorso.sta
         )
       }
       <a class="pulsante pulsante--primario testata__cta" href="/contatti/#preventivo">Preventivo</a>
+      <a class="testata__carrello" href="/account/" aria-label="Area clienti" title="Area clienti" data-link-account>
+        <Icona nome="utente" />
+        <span class="testata__collegato" data-collegato hidden></span>
+      </a>
       {
         sito.negozio_attivo && (
           <a class="testata__carrello" href="/carrello/" aria-label="Carrello">
@@ -84,6 +88,19 @@ const attiva = (href: string) => (href === '/' ? percorso === '/' : percorso.sta
   };
   aggiornaConta();
   window.addEventListener(EVENTO, aggiornaConta);
+
+  // pallino verde se il cliente ha già fatto l'accesso su questo dispositivo
+  try {
+    const nome = localStorage.getItem('fgitalia-cliente');
+    const link = document.querySelector<HTMLElement>('[data-link-account]');
+    if (nome && link) {
+      link.querySelector<HTMLElement>('[data-collegato]')!.hidden = false;
+      link.setAttribute('aria-label', `Il mio account (${nome})`);
+      link.title = 'Il mio account';
+    }
+  } catch {
+    /* navigazione privata */
+  }
   window.addEventListener('storage', aggiornaConta);
 
   const testata = document.querySelector<HTMLElement>('[data-testata]');
@@ -212,6 +229,17 @@ const attiva = (href: string) => (href === '/' ? percorso === '/' : percorso.sta
     text-align: center;
   }
 
+  .testata__collegato {
+    position: absolute;
+    top: 9px;
+    right: 9px;
+    width: 10px;
+    height: 10px;
+    border: 2px solid var(--bianco);
+    border-radius: 50%;
+    background: #12b76a;
+  }
+
   .testata__hamburger {
     display: none;
     width: 46px;
@@ -248,6 +276,10 @@ const attiva = (href: string) => (href === '/' ? percorso === '/' : percorso.sta
     .testata__telefono,
     .testata__cta {
       display: none;
+    }
+
+    .testata__azioni {
+      gap: 4px;
     }
 
     /* backdrop-filter renderebbe il menu "fixed" relativo alla testata */

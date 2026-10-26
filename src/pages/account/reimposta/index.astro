@@ -1,0 +1,103 @@
+---
+import Base from '../../../layouts/Base.astro';
+import TestataPagina from '../../../components/TestataPagina.astro';
+---
+
+<Base titolo="Nuova password" descrizione="Scegli una nuova password per l’area clienti FGItalia." senzaWhatsapp senzaAvvisoPro>
+  <TestataPagina sopratitolo="Area clienti" titolo="Scegli una nuova password" />
+
+  <section class="contenitore reimposta">
+    <form class="scheda" data-reimposta>
+      <label>
+        <span>Nuova password <small>(almeno 8 caratteri)</small></span>
+        <input name="password" type="password" required minlength="8" autocomplete="new-password" />
+      </label>
+      <label>
+        <span>Ripeti la password</span>
+        <input name="conferma" type="password" required minlength="8" autocomplete="new-password" />
+      </label>
+      <button class="pulsante pulsante--primario" type="submit">Salva e accedi</button>
+      <p class="messaggio" role="alert" data-messaggio hidden></p>
+      <p class="nota">Il link non funziona più? <a href="/account/">Chiedine uno nuovo</a> con “Password dimenticata?”.</p>
+    </form>
+  </section>
+</Base>
+
+<script>
+  import { api, segnaAccesso } from '../../../lib/account';
+
+  const modulo = document.querySelector<HTMLFormElement>('[data-reimposta]')!;
+  const messaggio = modulo.querySelector<HTMLElement>('[data-messaggio]')!;
+  const gettone = new URLSearchParams(location.search).get('t') ?? '';
+
+  modulo.addEventListener('submit', async (e) => {
+    e.preventDefault();
+    const d = new FormData(modulo);
+    messaggio.hidden = true;
+    if (d.get('password') !== d.get('conferma')) {
+      messaggio.textContent = 'Le due password non coincidono.';
+      messaggio.hidden = false;
+      return;
+    }
+    const bottone = modulo.querySelector<HTMLButtonElement>('button')!;
+    bottone.disabled = true;
+    try {
+      const { nome } = await api('reimposta', { gettone, password: d.get('password') });
+      segnaAccesso(nome);
+      location.href = '/account/';
+    } catch (err) {
+      messaggio.textContent = (err as Error).message;
+      messaggio.hidden = false;
+      bottone.disabled = false;
+    }
+  });
+</script>
+
+<style>
+  .reimposta {
+    padding-block: 8px clamp(56px, 9vw, 112px);
+  }
+
+  .scheda {
+    display: grid;
+    gap: 16px;
+    max-width: 440px;
+    padding: clamp(20px, 4vw, 32px);
+    border-radius: 24px;
+    background: var(--bianco);
+    box-shadow: var(--ombra-forte);
+  }
+
+  label span {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.9rem;
+    font-weight: 600;
+    color: var(--grigio-700);
+  }
+
+  small {
+    font-weight: 400;
+    color: var(--grigio-500);
+  }
+
+  input {
+    width: 100%;
+    padding: 12px 14px;
+    font: inherit;
+    border: 1px solid var(--grigio-300);
+    border-radius: 12px;
+  }
+
+  .messaggio {
+    margin: 0;
+    font-weight: 600;
+    color: #b42318;
+  }
+
+  .nota {
+    margin: 0;
+    font-size: 0.9rem;
+    color: var(--grigio-500);
+  }
+</style>
