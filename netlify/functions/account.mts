@@ -105,10 +105,10 @@ function controllaFatturazione(f: DatiFatturazione): string | undefined {
 }
 
 /** Tutto quello che serve alla pagina "Il mio account" */
-async function profilo(c: Cliente) {
+async function profilo(c: Cliente, base: string) {
   const ordini = await ordiniCliente(c);
   try {
-    if (sincronizzaDispositivi(c, ordini, await leggiSchede())) await salvaCliente(c);
+    if (sincronizzaDispositivi(c, ordini, await leggiSchede(base))) await salvaCliente(c);
   } catch (e) {
     console.error('Dispositivi non aggiornati', e);
   }
@@ -142,6 +142,19 @@ async function profilo(c: Cliente) {
  * preventivi e richieste di assistenza. La sessione è un cookie firmato (HttpOnly).
  */
 export default async (req: Request) => {
+  try {
+    return await gestisci(req);
+  } catch (e) {
+    // un errore imprevisto diventa un messaggio leggibile (e finisce nei log di Netlify)
+    console.error('Area clienti: errore', e);
+    const messaggio = e instanceof Error ? e.message : String(e);
+    if (messaggio.includes('SESSION_SECRET'))
+      return errore('Area clienti non ancora configurata: manca la variabile SESSION_SECRET su Netlify.', 500);
+    return errore(`Non è stato possibile completare l’operazione (${messaggio.slice(0, 120)}). Riprova o contattaci.`, 500);
+  }
+};
+
+async function gestisci(req: Request): Promise<Response> {
   if (req.method !== 'POST') return errore('Metodo non consentito', 405);
   // contro le richieste da altri siti: solo JSON e solo dalla stessa origine
   if (!(req.headers.get('content-type') ?? '').includes('application/json')) return errore('Richiesta non valida');
@@ -230,7 +243,7 @@ export default async (req: Request) => {
 
   switch (corpo.azione) {
     case 'profilo':
-      return json(await profilo(cliente));
+      return json(await profilo(cliente, new URL(req.url).origin));
 
     case 'salva-dati': {
       const nome = testo(corpo.nome, 120);
@@ -370,7 +383,7 @@ export default async (req: Request) => {
 
     case 'preventivo': {
       if (cliente.preventivi.length >= 200) cliente.preventivi = cliente.preventivi.slice(-150);
-      const [catalogo, schede] = await Promise.all([leggiCatalogo(), leggiSchede()]);
+      const [catalogo, schede] = await Promise.all([leggiCatalogo(new URL(req.url).origin), leggiSchede(new URL(req.url).origin)]);
       const codici = Object.fromEntries(Object.entries(schede).map(([id, s]) => [id, s.codice]));
       const preventivo = creaPreventivo(
         nuovoNumero('PV'),
@@ -393,6 +406,6 @@ export default async (req: Request) => {
     default:
       return errore('Azione sconosciuta');
   }
-};
+}
 
 export const config: Config = { path: '/api/account' };
