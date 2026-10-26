@@ -1,0 +1,98 @@
+---
+import type { CollectionEntry } from 'astro:content';
+import Icona from './Icona.astro';
+
+interface Props {
+  categoria: CollectionEntry<'categorie'>;
+  numero: number;
+}
+
+const { categoria, numero } = Astro.props;
+---
+
+<a class="card-categoria appare" href={`/categorie/${categoria.id}/`}>
+  <span class="card-categoria__icona"><Icona nome={categoria.data.icona} dimensione={30} /></span>
+  <h3>{categoria.data.titolo}</h3>
+  <p>{categoria.data.descrizione}</p>
+  <span class="card-categoria__piede">
+    {numero > 0 ? `${numero} ${numero === 1 ? 'prodotto' : 'prodotti'}` : 'Chiedi disponibilità'}
+    <Icona nome="freccia" dimensione={18} />
+  </span>
+</a>
+
+<style>
+  .card-categoria {
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    padding: 28px;
+    border-radius: var(--raggio);
+    background: var(--bianco);
+    border: 1px solid var(--grigio-200);
+    color: inherit;
+    text-decoration: none;
+    overflow: hidden;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .card-categoria::after {
+    content: '';
+    position: absolute;
+    inset: auto -40px -40px auto;
+    width: 140px;
+    height: 140px;
+    border-radius: 50%;
+    background: var(--verde-chiaro);
+    opacity: 0;
+    transition: opacity 0.25s ease, transform 0.25s ease;
+    transform: scale(0.6);
+  }
+
+  .card-categoria:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--ombra-forte);
+    border-color: transparent;
+    color: inherit;
+  }
+
+  .card-categoria:hover::after {
+    opacity: 0.7;
+    transform: scale(1);
+  }
+
+  .card-categoria > * {
+    position: relative;
+    z-index: 1;
+  }
+
+  .card-categoria__icona {
+    display: inline-flex;
+    width: 60px;
+    height: 60px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    background: var(--blu-800);
+    color: var(--verde);
+    margin-bottom: 22px;
+  }
+
+  .card-categoria h3 {
+    font-size: 1.3rem;
+  }
+
+  .card-categoria p {
+    font-size: 0.97rem;
+    color: var(--grigio-500);
+    flex: 1;
+  }
+
+  .card-categoria__piede {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    font-size: 0.93rem;
+    color: var(--blu-600);
+  }
+</style>

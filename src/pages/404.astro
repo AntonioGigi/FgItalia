@@ -1,0 +1,38 @@
+---
+import Base from '../layouts/Base.astro';
+---
+
+<Base titolo="Pagina non trovata">
+  <section class="contenitore nf">
+    <p class="nf__codice">404</p>
+    <h1>Pagina non trovata</h1>
+    <p class="testo-intro">La pagina che cerchi potrebbe essere stata spostata dal nostro nuovo sito.</p>
+    <div class="nf__azioni">
+      <a class="pulsante pulsante--primario" href="/prodotti/">Vai al catalogo</a>
+      <a class="pulsante pulsante--contorno" href="/contatti/">Contattaci</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .nf {
+    text-align: center;
+    padding-block: clamp(64px, 12vw, 140px);
+  }
+
+  .nf__codice {
+    font-size: clamp(5rem, 16vw, 9rem);
+    font-weight: 800;
+    line-height: 1;
+    margin: 0;
+    color: var(--verde);
+  }
+
+  .nf__azioni {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 32px;
+  }
+</style>

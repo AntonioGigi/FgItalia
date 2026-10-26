@@ -1,0 +1,197 @@
+---
+import Base from '../layouts/Base.astro';
+import TestataPagina from '../components/TestataPagina.astro';
+import InvitoContatto from '../components/InvitoContatto.astro';
+import Icona from '../components/Icona.astro';
+import { marchiOrdinati } from '../lib/catalogo';
+import { sito, anniAttivita } from '../lib/sito';
+
+const marchi = await marchiOrdinati();
+
+const valori = [
+  { icona: 'scudo', titolo: 'Qualità certificata', testo: 'Trattiamo dispositivi conformi alle normative e dotati delle certificazioni previste.' },
+  { icona: 'persone', titolo: 'Rapporto diretto', testo: 'Ogni cliente ha un referente che conosce le sue esigenze e lo segue nel tempo.' },
+  { icona: 'chiave', titolo: 'Competenza tecnica', testo: 'Ti aiutiamo a scegliere l’apparecchiatura più adatta, senza vendere ciò che non serve.' },
+] as const;
+---
+
+<Base
+  titolo="Chi siamo"
+  descrizione={`${sito.ragione_sociale}: dal ${sito.anno_fondazione} grossista di apparecchiature elettromedicali, articoli medicali e materiale di consumo ad ${sito.citta}.`}
+>
+  <TestataPagina
+    sopratitolo="Chi siamo"
+    titolo={`Dal ${sito.anno_fondazione} al fianco dei professionisti della salute`}
+    briciole={[{ href: '/chi-siamo/', testo: 'Chi siamo' }]}
+  />
+
+  <section class="sezione storia">
+    <div class="contenitore storia__griglia">
+      <div class="prosa appare">
+        <p class="testo-intro">
+          {sito.ragione_sociale} opera dal {sito.anno_fondazione} come grossista di apparecchiature elettromedicali,
+          articoli medicali e materiale di consumo.
+        </p>
+        <p>
+          Forniamo medici, fisioterapisti, studi, ambulatori, centri di riabilitazione e strutture sanitarie con
+          strumenti per il monitoraggio, la diagnostica, la fisioterapia e la riabilitazione, selezionati tra i
+          principali produttori del settore.
+        </p>
+        <p>
+          In oltre {anniAttivita} anni di attività abbiamo costruito rapporti di fiducia basati sulla serietà, sulla
+          conoscenza dei prodotti e sulla disponibilità: per noi ogni fornitura è l’inizio di una collaborazione, non
+          una semplice vendita.
+        </p>
+      </div>
+      <aside class="storia__box appare">
+        <strong>{anniAttivita}+</strong>
+        <span>anni di esperienza nel settore elettromedicale</span>
+        <hr />
+        <p>Sede: {sito.indirizzo}, {sito.citta}</p>
+        <p>P.IVA {sito.piva}</p>
+      </aside>
+    </div>
+  </section>
+
+  <section class="sezione sezione--chiara">
+    <div class="contenitore">
+      <div class="sezione__testa sezione__testa--centro appare">
+        <span class="sopratitolo">I nostri valori</span>
+        <h2>Come lavoriamo</h2>
+      </div>
+      <ul class="valori">
+        {
+          valori.map((v) => (
+            <li class="appare">
+              <span><Icona nome={v.icona} /></span>
+              <h3>{v.titolo}</h3>
+              <p>{v.testo}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <section class="sezione">
+    <div class="contenitore">
+      <div class="sezione__testa sezione__testa--centro appare">
+        <span class="sopratitolo">Partner</span>
+        <h2>Marchi trattati</h2>
+        <p class="testo-intro">Collaboriamo con produttori affermati per offrire affidabilità e assistenza nel tempo.</p>
+      </div>
+      <ul class="marchi">
+        {marchi.map((m) => <li class="appare">{m.data.logo ? <img src={m.data.logo} alt={m.data.nome} /> : m.data.nome}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <InvitoContatto titolo="Parliamo del tuo progetto" testo="Che tu stia aprendo un nuovo studio o rinnovando le attrezzature, siamo pronti ad aiutarti." />
+</Base>
+
+<style>
+  .storia__griglia {
+    display: grid;
+    grid-template-columns: 1.6fr 1fr;
+    gap: clamp(32px, 6vw, 80px);
+    align-items: start;
+  }
+
+  .storia__box {
+    padding: 32px;
+    border-radius: 24px;
+    background: var(--blu-900);
+    color: rgb(255 255 255 / 0.75);
+  }
+
+  .storia__box strong {
+    display: block;
+    font-size: 4rem;
+    line-height: 1;
+    color: var(--verde);
+  }
+
+  .storia__box span {
+    display: block;
+    margin-top: 8px;
+    font-size: 1.1rem;
+    color: var(--bianco);
+  }
+
+  .storia__box hr {
+    border: 0;
+    border-top: 1px solid rgb(255 255 255 / 0.12);
+    margin: 24px 0;
+  }
+
+  .storia__box p {
+    margin: 0 0 4px;
+    font-size: 0.95rem;
+  }
+
+  .valori {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 260px), 1fr));
+    gap: 24px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .valori li {
+    padding: 32px;
+    border-radius: var(--raggio);
+    background: var(--bianco);
+    box-shadow: var(--ombra);
+  }
+
+  .valori span {
+    display: inline-flex;
+    width: 52px;
+    height: 52px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: var(--verde-chiaro);
+    color: var(--verde-scuro);
+    margin-bottom: 18px;
+  }
+
+  .valori p {
+    margin: 0;
+    color: var(--grigio-700);
+  }
+
+  .marchi {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr));
+    gap: 16px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .marchi li {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    min-height: 110px;
+    padding: 20px;
+    border-radius: var(--raggio);
+    border: 1px solid var(--grigio-200);
+    font-size: 1.3rem;
+    font-weight: 800;
+    color: var(--blu-800);
+  }
+
+  .marchi img {
+    max-height: 56px;
+    width: auto;
+  }
+
+  @media (max-width: 860px) {
+    .storia__griglia {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

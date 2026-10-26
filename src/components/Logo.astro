@@ -1,0 +1,79 @@
+---
+import { sito } from '../lib/sito';
+
+interface Props {
+  chiaro?: boolean;
+}
+
+const { chiaro = false } = Astro.props;
+---
+
+<a href="/" class:list={['logo', { 'logo--chiaro': chiaro }]} aria-label={`${sito.nome_breve} – torna alla home`}>
+  {
+    sito.logo ? (
+      <img src={sito.logo} alt={sito.nome_breve} height="44" />
+    ) : (
+      <>
+        <span class="logo__segno" aria-hidden="true">
+          <svg viewBox="0 0 40 40" width="40" height="40">
+            <rect width="40" height="40" rx="11" fill="currentColor" />
+            <path
+              d="M7 21h6l3-7 5 13 3-8 2 2h7"
+              fill="none"
+              stroke="#12b3a3"
+              stroke-width="3"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+        </span>
+        <span class="logo__testo">
+          FG<span>Italia</span>
+        </span>
+      </>
+    )
+  }
+</a>
+
+<style>
+  .logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    text-decoration: none;
+    color: var(--blu-900);
+  }
+
+  .logo img {
+    height: 44px;
+    width: auto;
+  }
+
+  .logo__segno {
+    display: flex;
+    color: var(--blu-800);
+  }
+
+  .logo__testo {
+    font-size: 1.45rem;
+    font-weight: 800;
+    letter-spacing: -0.03em;
+    color: var(--blu-900);
+  }
+
+  .logo__testo span {
+    color: var(--verde-scuro);
+  }
+
+  .logo--chiaro .logo__segno {
+    color: rgb(255 255 255 / 0.12);
+  }
+
+  .logo--chiaro .logo__testo {
+    color: var(--bianco);
+  }
+
+  .logo--chiaro .logo__testo span {
+    color: var(--verde);
+  }
+</style>

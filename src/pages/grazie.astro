@@ -1,0 +1,43 @@
+---
+import Base from '../layouts/Base.astro';
+import Icona from '../components/Icona.astro';
+---
+
+<Base titolo="Richiesta inviata">
+  <section class="contenitore grazie">
+    <span class="grazie__icona"><Icona nome="spunta" dimensione={40} /></span>
+    <h1>Grazie, richiesta inviata!</h1>
+    <p class="testo-intro">Abbiamo ricevuto il tuo messaggio. Ti risponderemo il prima possibile.</p>
+    <div class="grazie__azioni">
+      <a class="pulsante pulsante--primario" href="/prodotti/">Torna al catalogo</a>
+      <a class="pulsante pulsante--contorno" href="/">Vai alla home</a>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .grazie {
+    text-align: center;
+    padding-block: clamp(64px, 12vw, 140px);
+  }
+
+  .grazie__icona {
+    display: inline-flex;
+    width: 88px;
+    height: 88px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    background: var(--verde-chiaro);
+    color: var(--verde-scuro);
+    margin-bottom: 24px;
+  }
+
+  .grazie__azioni {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+    margin-top: 32px;
+  }
+</style>

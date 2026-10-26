@@ -1,0 +1,145 @@
+---
+import { getEntry } from 'astro:content';
+import Icona from './Icona.astro';
+import type { Prodotto } from '../lib/catalogo';
+
+interface Props {
+  prodotto: Prodotto;
+}
+
+const { prodotto } = Astro.props;
+const { titolo, immagini, descrizione_breve } = prodotto.data;
+const categoria = await getEntry(prodotto.data.categoria);
+const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefined;
+---
+
+<a
+  class="card-prodotto"
+  href={`/prodotti/${prodotto.id}/`}
+  data-prodotto
+  data-categoria={categoria?.id}
+  data-marca={marca?.id ?? ''}
+  data-testo={`${titolo} ${marca?.data.nome ?? ''} ${prodotto.data.codice ?? ''} ${descrizione_breve}`.toLowerCase()}
+>
+  <div class="card-prodotto__foto">
+    {
+      immagini[0] ? (
+        <img src={immagini[0]} alt={titolo} loading="lazy" decoding="async" />
+      ) : (
+        <div class="card-prodotto__segnaposto">{categoria && <Icona nome={categoria.data.icona} dimensione={44} />}</div>
+      )
+    }
+    {marca && <span class="card-prodotto__marca">{marca.data.nome}</span>}
+  </div>
+  <div class="card-prodotto__corpo">
+    {categoria && <span class="card-prodotto__categoria">{categoria.data.titolo}</span>}
+    <h3>{titolo}</h3>
+    <p>{descrizione_breve}</p>
+    <span class="card-prodotto__link">
+      Scopri il prodotto <Icona nome="freccia" dimensione={18} />
+    </span>
+  </div>
+</a>
+
+<style>
+  .card-prodotto {
+    display: flex;
+    flex-direction: column;
+    background: var(--bianco);
+    border: 1px solid var(--grigio-200);
+    border-radius: var(--raggio);
+    overflow: hidden;
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease, border-color 0.2s ease;
+  }
+
+  .card-prodotto:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--ombra-forte);
+    border-color: transparent;
+    color: inherit;
+  }
+
+  .card-prodotto__foto {
+    position: relative;
+    aspect-ratio: 4 / 3;
+    background: var(--grigio-100);
+  }
+
+  .card-prodotto__foto img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: 16px;
+    mix-blend-mode: multiply;
+  }
+
+  .card-prodotto__segnaposto {
+    display: flex;
+    height: 100%;
+    align-items: center;
+    justify-content: center;
+    color: var(--blu-600);
+    background: linear-gradient(135deg, var(--blu-50), var(--verde-chiaro));
+  }
+
+  .card-prodotto__marca {
+    position: absolute;
+    top: 12px;
+    left: 12px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: var(--bianco);
+    font-size: 0.75rem;
+    font-weight: 800;
+    letter-spacing: 0.04em;
+    color: var(--blu-800);
+    box-shadow: var(--ombra);
+  }
+
+  .card-prodotto__corpo {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    padding: 20px 22px 22px;
+  }
+
+  .card-prodotto__categoria {
+    font-size: 0.8rem;
+    font-weight: 700;
+    color: var(--verde-scuro);
+    margin-bottom: 6px;
+  }
+
+  .card-prodotto h3 {
+    margin-bottom: 8px;
+  }
+
+  .card-prodotto p {
+    font-size: 0.95rem;
+    color: var(--grigio-500);
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .card-prodotto__link {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    margin-top: auto;
+    font-weight: 700;
+    font-size: 0.95rem;
+    color: var(--blu-600);
+  }
+
+  .card-prodotto:hover .card-prodotto__link svg {
+    transform: translateX(3px);
+  }
+
+  .card-prodotto__link svg {
+    transition: transform 0.2s ease;
+  }
+</style>

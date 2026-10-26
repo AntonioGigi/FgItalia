@@ -1,0 +1,213 @@
+---
+import Logo from './Logo.astro';
+import Icona from './Icona.astro';
+import { categorieOrdinate } from '../lib/catalogo';
+import { sito, indirizzoCompleto, linkMappa, soloCifre, urlInstagram, urlFacebook, linkWhatsApp } from '../lib/sito';
+
+const categorie = await categorieOrdinate();
+const instagram = urlInstagram();
+const facebook = urlFacebook();
+const whatsapp = linkWhatsApp();
+const anno = new Date().getFullYear();
+---
+
+<footer class="piede">
+  <div class="contenitore piede__griglia">
+    <div class="piede__marchio">
+      <Logo chiaro />
+      <p>{sito.slogan}. Al servizio di medici, fisioterapisti, studi e strutture sanitarie dal {sito.anno_fondazione}.</p>
+      {
+        (instagram || facebook || whatsapp) && (
+          <div class="piede__social">
+            {instagram && (
+              <a href={instagram} target="_blank" rel="noopener" aria-label="Instagram">
+                <Icona nome="instagram" />
+              </a>
+            )}
+            {facebook && (
+              <a href={facebook} target="_blank" rel="noopener" aria-label="Facebook">
+                <Icona nome="facebook" />
+              </a>
+            )}
+            {whatsapp && (
+              <a href={whatsapp} target="_blank" rel="noopener" aria-label="WhatsApp">
+                <Icona nome="whatsapp" />
+              </a>
+            )}
+          </div>
+        )
+      }
+    </div>
+
+    <div>
+      <h2 class="piede__titolo">Prodotti</h2>
+      <ul class="piede__lista">
+        {
+          categorie.map((c) => (
+            <li>
+              <a href={`/categorie/${c.id}/`}>{c.data.titolo}</a>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+
+    <div>
+      <h2 class="piede__titolo">Azienda</h2>
+      <ul class="piede__lista">
+        <li><a href="/chi-siamo/">Chi siamo</a></li>
+        <li><a href="/novita/">Novità e offerte</a></li>
+        <li><a href="/contatti/">Contatti</a></li>
+        <li><a href="/contatti/#preventivo">Richiedi un preventivo</a></li>
+      </ul>
+    </div>
+
+    <div>
+      <h2 class="piede__titolo">Contatti</h2>
+      <ul class="piede__lista piede__contatti">
+        <li>
+          <Icona nome="posizione" dimensione={18} />
+          <a href={linkMappa()} target="_blank" rel="noopener">{indirizzoCompleto}</a>
+        </li>
+        {
+          sito.telefono && (
+            <li>
+              <Icona nome="telefono" dimensione={18} />
+              <a href={`tel:${soloCifre(sito.telefono)}`}>{sito.telefono}</a>
+            </li>
+          )
+        }
+        {
+          sito.email && (
+            <li>
+              <Icona nome="email" dimensione={18} />
+              <a href={`mailto:${sito.email}`}>{sito.email}</a>
+            </li>
+          )
+        }
+        {
+          sito.orari && (
+            <li>
+              <Icona nome="orologio" dimensione={18} />
+              <span>{sito.orari}</span>
+            </li>
+          )
+        }
+      </ul>
+    </div>
+  </div>
+
+  <div class="contenitore piede__fondo">
+    <p>© {anno} {sito.ragione_sociale} · P.IVA {sito.piva}</p>
+    <p><a href="/privacy/">Privacy e cookie</a></p>
+  </div>
+</footer>
+
+<style>
+  .piede {
+    background: var(--blu-900);
+    color: rgb(255 255 255 / 0.72);
+    padding-top: clamp(56px, 8vw, 88px);
+    font-size: 0.97rem;
+  }
+
+  .piede a {
+    color: rgb(255 255 255 / 0.85);
+    text-decoration: none;
+  }
+
+  .piede a:hover {
+    color: var(--verde);
+  }
+
+  .piede__griglia {
+    display: grid;
+    grid-template-columns: 1.4fr 1fr 1fr 1.3fr;
+    gap: 40px;
+    padding-bottom: 56px;
+  }
+
+  .piede__marchio p {
+    margin-top: 20px;
+    max-width: 34ch;
+  }
+
+  .piede__social {
+    display: flex;
+    gap: 10px;
+  }
+
+  .piede__social a {
+    display: inline-flex;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: rgb(255 255 255 / 0.08);
+    transition: background-color 0.15s ease;
+  }
+
+  .piede__social a:hover {
+    background: var(--verde);
+    color: var(--blu-900);
+  }
+
+  .piede__titolo {
+    font-size: 0.85rem;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--bianco);
+    margin-bottom: 18px;
+  }
+
+  .piede__lista {
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    display: grid;
+    gap: 10px;
+  }
+
+  .piede__contatti li {
+    display: flex;
+    gap: 10px;
+    align-items: flex-start;
+  }
+
+  .piede__contatti svg {
+    flex-shrink: 0;
+    margin-top: 4px;
+    color: var(--verde);
+  }
+
+  .piede__fondo {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 8px 24px;
+    padding-block: 24px;
+    border-top: 1px solid rgb(255 255 255 / 0.1);
+    font-size: 0.88rem;
+  }
+
+  .piede__fondo p {
+    margin: 0;
+  }
+
+  @media (max-width: 900px) {
+    .piede__griglia {
+      grid-template-columns: 1fr 1fr;
+    }
+
+    .piede__marchio {
+      grid-column: 1 / -1;
+    }
+  }
+
+  @media (max-width: 520px) {
+    .piede__griglia {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

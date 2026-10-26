@@ -1,0 +1,118 @@
+---
+import Base from '../../layouts/Base.astro';
+import TestataPagina from '../../components/TestataPagina.astro';
+import SezioneSocial from '../../components/SezioneSocial.astro';
+import { novitaPubblicate } from '../../lib/catalogo';
+import { formatoData } from '../../lib/sito';
+
+const novita = await novitaPubblicate();
+---
+
+<Base titolo="Novità e offerte" descrizione="Nuovi arrivi, promozioni e notizie da FGItalia.">
+  <TestataPagina
+    sopratitolo="Novità"
+    titolo="Novità e offerte"
+    testo="Nuovi arrivi, promozioni e aggiornamenti dal nostro magazzino."
+    briciole={[{ href: '/novita/', testo: 'Novità' }]}
+  />
+
+  <section class="contenitore elenco">
+    {
+      novita.length === 0 ? (
+        <p>Al momento non ci sono novità pubblicate. Seguici sui social per restare aggiornato!</p>
+      ) : (
+        <ol>
+          {novita.map((n) => (
+            <li class="appare">
+              <a href={`/novita/${n.id}/`}>
+                {n.data.immagine && <img src={n.data.immagine} alt="" loading="lazy" />}
+                <div>
+                  <time datetime={n.data.data.toISOString()}>{formatoData.format(n.data.data)}</time>
+                  <h2>{n.data.titolo}</h2>
+                  <p>{n.data.riassunto}</p>
+                  <span>Leggi tutto →</span>
+                </div>
+              </a>
+            </li>
+          ))}
+        </ol>
+      )
+    }
+  </section>
+
+  <SezioneSocial />
+</Base>
+
+<style>
+  .elenco {
+    padding-block: 24px 64px;
+  }
+
+  ol {
+    display: grid;
+    gap: 20px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+    max-width: 880px;
+  }
+
+  a {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 24px;
+    padding: 24px;
+    border-radius: var(--raggio);
+    border: 1px solid var(--grigio-200);
+    color: inherit;
+    text-decoration: none;
+    transition: box-shadow 0.2s ease, transform 0.2s ease;
+  }
+
+  a:hover {
+    box-shadow: var(--ombra-forte);
+    transform: translateY(-2px);
+    color: inherit;
+  }
+
+  img {
+    width: 220px;
+    aspect-ratio: 4 / 3;
+    object-fit: cover;
+    border-radius: 12px;
+  }
+
+  a:not(:has(img)) {
+    grid-template-columns: 1fr;
+  }
+
+  time {
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--verde-scuro);
+  }
+
+  h2 {
+    font-size: 1.4rem;
+    margin: 6px 0 8px;
+  }
+
+  p {
+    color: var(--grigio-700);
+  }
+
+  span {
+    font-weight: 700;
+    color: var(--blu-600);
+  }
+
+  @media (max-width: 640px) {
+    a {
+      grid-template-columns: 1fr;
+    }
+
+    img {
+      width: 100%;
+    }
+  }
+</style>
