@@ -1,0 +1,331 @@
+---
+import Base from '../layouts/Base.astro';
+import TestataPagina from '../components/TestataPagina.astro';
+import Icona from '../components/Icona.astro';
+import { categorieOrdinate } from '../lib/catalogo';
+import { sito, indirizzoCompleto, linkMappa, soloCifre, linkWhatsApp, urlInstagram, urlFacebook } from '../lib/sito';
+
+const categorie = await categorieOrdinate();
+const whatsapp = linkWhatsApp('Buongiorno, vi contatto dal sito web.');
+const instagram = urlInstagram();
+const facebook = urlFacebook();
+---
+
+<Base titolo="Contatti e preventivi" descrizione={`Contatta ${sito.ragione_sociale} ad ${sito.citta}: richiedi un preventivo o informazioni sui prodotti.`}>
+  <TestataPagina
+    sopratitolo="Contatti"
+    titolo="Parliamo di ciò che ti serve"
+    testo="Compila il modulo per ricevere un preventivo senza impegno, oppure contattaci direttamente: ti rispondiamo il prima possibile."
+    briciole={[{ href: '/contatti/', testo: 'Contatti' }]}
+  />
+
+  <section class="contenitore contatti">
+    <aside class="recapiti">
+      <h2>Recapiti</h2>
+      <ul>
+        <li>
+          <span><Icona nome="posizione" /></span>
+          <div>
+            <strong>Sede</strong>
+            <a href={linkMappa()} target="_blank" rel="noopener">{indirizzoCompleto}</a>
+          </div>
+        </li>
+        {
+          sito.telefono && (
+            <li>
+              <span><Icona nome="telefono" /></span>
+              <div>
+                <strong>Telefono</strong>
+                <a href={`tel:${soloCifre(sito.telefono)}`}>{sito.telefono}</a>
+              </div>
+            </li>
+          )
+        }
+        {
+          sito.email && (
+            <li>
+              <span><Icona nome="email" /></span>
+              <div>
+                <strong>Email</strong>
+                <a href={`mailto:${sito.email}`}>{sito.email}</a>
+              </div>
+            </li>
+          )
+        }
+        {
+          sito.orari && (
+            <li>
+              <span><Icona nome="orologio" /></span>
+              <div>
+                <strong>Orari</strong>
+                <p>{sito.orari}</p>
+              </div>
+            </li>
+          )
+        }
+      </ul>
+
+      <div class="recapiti__azioni">
+        {
+          whatsapp && (
+            <a class="pulsante pulsante--whatsapp" href={whatsapp} target="_blank" rel="noopener">
+              <Icona nome="whatsapp" /> Scrivici su WhatsApp
+            </a>
+          )
+        }
+        <a class="pulsante pulsante--contorno" href={linkMappa()} target="_blank" rel="noopener">
+          <Icona nome="posizione" /> Indicazioni stradali
+        </a>
+      </div>
+
+      {
+        (instagram || facebook) && (
+          <div class="recapiti__social">
+            <strong>Seguici</strong>
+            {instagram && (
+              <a href={instagram} target="_blank" rel="noopener" aria-label="Instagram">
+                <Icona nome="instagram" />
+              </a>
+            )}
+            {facebook && (
+              <a href={facebook} target="_blank" rel="noopener" aria-label="Facebook">
+                <Icona nome="facebook" />
+              </a>
+            )}
+          </div>
+        )
+      }
+    </aside>
+
+    <form
+      class="modulo"
+      id="preventivo"
+      name="preventivo"
+      method="POST"
+      action="/grazie/"
+      data-netlify="true"
+      netlify-honeypot="sito-web"
+    >
+      <input type="hidden" name="form-name" value="preventivo" />
+      <p hidden>
+        <label>Non compilare questo campo: <input name="sito-web" /></label>
+      </p>
+
+      <h2>Richiedi un preventivo</h2>
+      <p class="modulo__nota">I campi con * sono obbligatori.</p>
+
+      <div class="modulo__griglia">
+        <label>
+          <span>Nome e cognome *</span>
+          <input name="nome" required autocomplete="name" />
+        </label>
+        <label>
+          <span>Studio / struttura</span>
+          <input name="struttura" autocomplete="organization" />
+        </label>
+        <label>
+          <span>Email *</span>
+          <input type="email" name="email" required autocomplete="email" />
+        </label>
+        <label>
+          <span>Telefono</span>
+          <input type="tel" name="telefono" autocomplete="tel" />
+        </label>
+        <label>
+          <span>Categoria di interesse</span>
+          <select name="categoria">
+            <option value="">Seleziona…</option>
+            {categorie.map((c) => <option>{c.data.titolo}</option>)}
+            <option>Altro</option>
+          </select>
+        </label>
+        <label>
+          <span>Prodotto</span>
+          <input name="prodotto" data-prodotto-richiesto placeholder="Es. elettrocardiografo, lettino…" />
+        </label>
+        <label class="modulo__intero">
+          <span>Messaggio *</span>
+          <textarea name="messaggio" rows="5" required placeholder="Descrivi di cosa hai bisogno, quantità, tempi…"></textarea>
+        </label>
+        <label class="modulo__privacy modulo__intero">
+          <input type="checkbox" name="privacy" required />
+          <span>Ho letto l’<a href="/privacy/" target="_blank">informativa privacy</a> e acconsento al trattamento dei dati per ricevere una risposta. *</span>
+        </label>
+      </div>
+
+      <button class="pulsante pulsante--primario" type="submit">Invia la richiesta <Icona nome="freccia" /></button>
+    </form>
+  </section>
+</Base>
+
+<script>
+  const prodotto = new URLSearchParams(location.search).get('prodotto');
+  const campo = document.querySelector<HTMLInputElement>('[data-prodotto-richiesto]');
+  if (prodotto && campo) campo.value = prodotto;
+</script>
+
+<style>
+  .contatti {
+    display: grid;
+    grid-template-columns: 1fr 1.5fr;
+    gap: clamp(32px, 5vw, 64px);
+    align-items: start;
+    padding-block: 24px clamp(56px, 9vw, 112px);
+  }
+
+  .recapiti h2,
+  .modulo h2 {
+    font-size: 1.5rem;
+  }
+
+  .recapiti ul {
+    display: grid;
+    gap: 20px;
+    list-style: none;
+    margin: 0 0 28px;
+    padding: 0;
+  }
+
+  .recapiti li {
+    display: flex;
+    gap: 16px;
+  }
+
+  .recapiti li > span {
+    display: inline-flex;
+    flex-shrink: 0;
+    width: 48px;
+    height: 48px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: var(--blu-100);
+    color: var(--blu-700);
+  }
+
+  .recapiti strong {
+    display: block;
+    font-size: 0.85rem;
+    color: var(--grigio-500);
+  }
+
+  .recapiti li a,
+  .recapiti li p {
+    margin: 0;
+    font-weight: 600;
+    color: var(--blu-900);
+    text-decoration: none;
+  }
+
+  .recapiti__azioni {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 28px;
+  }
+
+  .recapiti__social {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .recapiti__social a {
+    display: inline-flex;
+    width: 44px;
+    height: 44px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 12px;
+    background: var(--blu-800);
+    color: var(--bianco);
+  }
+
+  .modulo {
+    padding: clamp(24px, 4vw, 44px);
+    border-radius: 24px;
+    background: var(--bianco);
+    box-shadow: var(--ombra-forte);
+    scroll-margin-top: 100px;
+  }
+
+  .modulo__nota {
+    font-size: 0.9rem;
+    color: var(--grigio-500);
+  }
+
+  .modulo__griglia {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 18px;
+    margin-bottom: 24px;
+  }
+
+  .modulo__intero {
+    grid-column: 1 / -1;
+  }
+
+  .modulo label > span {
+    display: block;
+    margin-bottom: 6px;
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--grigio-700);
+  }
+
+  .modulo input:not([type='checkbox']),
+  .modulo select,
+  .modulo textarea {
+    width: 100%;
+    padding: 13px 16px;
+    font: inherit;
+    font-size: 1rem;
+    color: var(--grigio-900);
+    border: 1px solid var(--grigio-300);
+    border-radius: 12px;
+    background: var(--bianco);
+    transition: border-color 0.15s ease, box-shadow 0.15s ease;
+  }
+
+  .modulo input:focus,
+  .modulo select:focus,
+  .modulo textarea:focus {
+    outline: none;
+    border-color: var(--verde);
+    box-shadow: 0 0 0 4px rgb(18 179 163 / 0.2);
+  }
+
+  .modulo textarea {
+    resize: vertical;
+  }
+
+  .modulo__privacy {
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .modulo__privacy input {
+    width: 20px;
+    height: 20px;
+    margin-top: 2px;
+    accent-color: var(--verde-scuro);
+    flex-shrink: 0;
+  }
+
+  .modulo__privacy span {
+    font-weight: 400 !important;
+  }
+
+  @media (max-width: 900px) {
+    .contatti {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .modulo__griglia {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

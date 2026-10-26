@@ -1,0 +1,161 @@
+# Pannello di gestione del sito (Decap CMS) — si apre su https://www.fgitalia.it/admin/
+# Ogni salvataggio crea una modifica nel repository GitHub e il sito si aggiorna da solo in 1-2 minuti.
+backend:
+  name: github
+  repo: AntonioGigi/FgItalia
+  branch: main
+  commit_messages:
+    create: 'Pannello: aggiunto {{collection}} “{{slug}}”'
+    update: 'Pannello: modificato {{collection}} “{{slug}}”'
+    delete: 'Pannello: eliminato {{collection}} “{{slug}}”'
+    uploadMedia: 'Pannello: caricato “{{path}}”'
+    deleteMedia: 'Pannello: eliminato “{{path}}”'
+
+locale: it
+site_url: https://www.fgitalia.it
+display_url: https://www.fgitalia.it
+logo_url: /favicon.svg
+media_folder: public/uploads
+public_folder: /uploads
+slug:
+  encoding: ascii
+  clean_accents: true
+
+collections:
+  - name: prodotti
+    label: Prodotti
+    label_singular: Prodotto
+    description: Il catalogo. Aggiungi foto, specifiche tecniche e scheda PDF. Togli la spunta "Pubblicato" per nascondere un prodotto senza cancellarlo.
+    folder: src/content/prodotti
+    create: true
+    extension: md
+    slug: '{{titolo}}'
+    summary: '{{titolo}}{{codice | prefix(" · ")}}'
+    sortable_fields: [titolo, categoria, marca]
+    view_groups:
+      - label: Categoria
+        field: categoria
+    fields:
+      - { label: Nome del prodotto, name: titolo, widget: string }
+      - label: Categoria
+        name: categoria
+        widget: relation
+        collection: categorie
+        value_field: '{{slug}}'
+        search_fields: [titolo]
+        display_fields: [titolo]
+      - label: Marca
+        name: marca
+        widget: relation
+        collection: marchi
+        value_field: '{{slug}}'
+        search_fields: [nome]
+        display_fields: [nome]
+        required: false
+      - { label: Codice articolo, name: codice, widget: string, required: false }
+      - label: Descrizione breve
+        name: descrizione_breve
+        widget: text
+        hint: Due o tre frasi. Compare nel catalogo e nelle anteprime su WhatsApp/Facebook.
+      - label: Foto
+        name: immagini
+        widget: list
+        hint: La prima foto è quella principale. Meglio foto su sfondo bianco.
+        field: { label: Foto, name: foto, widget: image }
+        required: false
+      - label: Specifiche tecniche
+        name: specifiche
+        widget: list
+        summary: '{{fields.nome}}: {{fields.valore}}'
+        required: false
+        fields:
+          - { label: Voce, name: nome, widget: string, hint: 'Es. Alimentazione' }
+          - { label: Valore, name: valore, widget: string, hint: 'Es. 230 V – 50 Hz' }
+      - { label: Scheda tecnica (PDF), name: scheda_pdf, widget: file, required: false }
+      - { label: In evidenza nella home, name: in_evidenza, widget: boolean, default: false }
+      - { label: Pubblicato, name: pubblicato, widget: boolean, default: true }
+      - { label: Descrizione completa, name: body, widget: markdown, required: false }
+
+  - name: novita
+    label: Novità e offerte
+    label_singular: Novità
+    description: Notizie, offerte e nuovi arrivi. Ogni novità ha la sua pagina da condividere sui social.
+    folder: src/content/novita
+    create: true
+    extension: md
+    slug: '{{year}}-{{month}}-{{day}}-{{titolo}}'
+    summary: '{{titolo}} ({{data | date("DD/MM/YYYY")}})'
+    sortable_fields: [data, titolo]
+    fields:
+      - { label: Titolo, name: titolo, widget: string }
+      - { label: Data, name: data, widget: datetime, time_format: false, date_format: DD/MM/YYYY, format: YYYY-MM-DD }
+      - { label: Immagine, name: immagine, widget: image, required: false }
+      - { label: Riassunto, name: riassunto, widget: text }
+      - { label: Pubblicato, name: pubblicato, widget: boolean, default: true }
+      - { label: Testo, name: body, widget: markdown }
+
+  - name: categorie
+    label: Categorie
+    label_singular: Categoria
+    folder: src/content/categorie
+    create: true
+    extension: json
+    format: json
+    slug: '{{titolo}}'
+    summary: '{{titolo}}'
+    fields:
+      - { label: Nome, name: titolo, widget: string }
+      - { label: Descrizione, name: descrizione, widget: text }
+      - label: Icona
+        name: icona
+        widget: select
+        options:
+          - { label: Monitor parametri vitali, value: monitor }
+          - { label: Stetoscopio (diagnostica), value: diagnostica }
+          - { label: Fulmine (elettroterapia), value: fisioterapia }
+          - { label: Persona in movimento, value: riabilitazione }
+          - { label: Valigetta medica, value: medicale }
+          - { label: Scatola (consumabili), value: consumabili }
+      - { label: Ordine di visualizzazione, name: ordine, widget: number, value_type: int, default: 99 }
+
+  - name: marchi
+    label: Marchi
+    label_singular: Marchio
+    folder: src/content/marchi
+    create: true
+    extension: json
+    format: json
+    slug: '{{nome}}'
+    summary: '{{nome}}'
+    fields:
+      - { label: Nome, name: nome, widget: string }
+      - { label: Logo, name: logo, widget: image, required: false }
+      - { label: Sito del produttore, name: sito, widget: string, required: false }
+
+  - name: impostazioni
+    label: Impostazioni del sito
+    editor:
+      preview: false
+    files:
+      - name: generali
+        label: Dati aziendali, contatti e social
+        file: src/data/impostazioni.json
+        fields:
+          - { label: Ragione sociale, name: ragione_sociale, widget: string }
+          - { label: Nome breve, name: nome_breve, widget: string }
+          - { label: Slogan, name: slogan, widget: string }
+          - { label: Logo (facoltativo), name: logo, widget: image, required: false, hint: 'Se vuoto viene usato il logo grafico del sito.' }
+          - { label: Anno di fondazione, name: anno_fondazione, widget: number, value_type: int }
+          - { label: Indirizzo, name: indirizzo, widget: string }
+          - { label: CAP, name: cap, widget: string }
+          - { label: Città, name: citta, widget: string }
+          - { label: Provincia, name: provincia, widget: string }
+          - { label: Partita IVA, name: piva, widget: string }
+          - { label: Telefono, name: telefono, widget: string, required: false }
+          - { label: Numero WhatsApp, name: whatsapp, widget: string, required: false, hint: 'Es. 333 1234567. Attiva il pulsante verde WhatsApp su tutto il sito.' }
+          - { label: Email, name: email, widget: string, required: false }
+          - { label: Orari, name: orari, widget: string, required: false, hint: 'Es. Lun–Ven 9:00–13:00 / 15:30–19:00' }
+          - { label: Instagram, name: instagram, widget: string, required: false, hint: 'Nome utente (es. fgitalia) o link al profilo' }
+          - { label: Facebook, name: facebook, widget: string, required: false, hint: 'Link alla pagina Facebook' }
+          - { label: Titolo principale della home, name: hero_titolo, widget: string }
+          - { label: Testo della home, name: hero_testo, widget: text }

@@ -1,0 +1,219 @@
+---
+import Base from '../../layouts/Base.astro';
+import TestataPagina from '../../components/TestataPagina.astro';
+import CardProdotto from '../../components/CardProdotto.astro';
+import InvitoContatto from '../../components/InvitoContatto.astro';
+import Icona from '../../components/Icona.astro';
+import { categorieOrdinate, marchiOrdinati, prodottiPubblicati } from '../../lib/catalogo';
+
+const prodotti = await prodottiPubblicati();
+const categorie = await categorieOrdinate();
+const marchiUsati = new Set(prodotti.map((p) => p.data.marca?.id).filter(Boolean));
+const marchi = (await marchiOrdinati()).filter((m) => marchiUsati.has(m.id));
+---
+
+<Base
+  titolo="Catalogo prodotti"
+  descrizione="Catalogo di apparecchiature elettromedicali, articoli medicali e materiale di consumo: monitoraggio, diagnostica, fisioterapia e riabilitazione."
+>
+  <TestataPagina
+    sopratitolo="Catalogo"
+    titolo="I nostri prodotti"
+    testo="Cerca per nome o filtra per categoria e marchio. Non trovi quello che ti serve? Contattaci: trattiamo molti altri articoli oltre a quelli pubblicati."
+    briciole={[{ href: '/prodotti/', testo: 'Prodotti' }]}
+  />
+
+  <section class="contenitore catalogo">
+    <form class="filtri" role="search" data-filtri onsubmit="return false">
+      <label class="filtri__cerca">
+        <Icona nome="cerca" dimensione={20} />
+        <span class="solo-lettori">Cerca un prodotto</span>
+        <input type="search" name="q" placeholder="Cerca un prodotto, un marchio o un codice…" autocomplete="off" />
+      </label>
+      <div class="filtri__selezioni">
+        <label>
+          <span class="solo-lettori">Categoria</span>
+          <select name="categoria">
+            <option value="">Tutte le categorie</option>
+            {categorie.map((c) => <option value={c.id}>{c.data.titolo}</option>)}
+          </select>
+        </label>
+        {
+          marchi.length > 0 && (
+            <label>
+              <span class="solo-lettori">Marchio</span>
+              <select name="marca">
+                <option value="">Tutti i marchi</option>
+                {marchi.map((m) => (
+                  <option value={m.id}>{m.data.nome}</option>
+                ))}
+              </select>
+            </label>
+          )
+        }
+      </div>
+    </form>
+
+    <p class="catalogo__conteggio" aria-live="polite" data-conteggio>
+      {prodotti.length} {prodotti.length === 1 ? 'prodotto' : 'prodotti'}
+    </p>
+
+    <div class="griglia" data-griglia>
+      {prodotti.map((p) => <CardProdotto prodotto={p} />)}
+    </div>
+
+    <div class="catalogo__vuoto" data-vuoto hidden={prodotti.length > 0}>
+      <Icona nome="cerca" dimensione={40} />
+      <h2>Nessun prodotto trovato</h2>
+      <p>Prova a cambiare i filtri, oppure chiedici direttamente: il nostro catalogo è molto più ampio di quello pubblicato.</p>
+      <a class="pulsante pulsante--scuro" href="/contatti/#preventivo">Chiedi una disponibilità</a>
+    </div>
+  </section>
+
+  <InvitoContatto />
+</Base>
+
+<script>
+  const form = document.querySelector<HTMLFormElement>('[data-filtri]');
+  const schede = Array.from(document.querySelectorAll<HTMLElement>('[data-prodotto]'));
+  const conteggio = document.querySelector<HTMLElement>('[data-conteggio]');
+  const vuoto = document.querySelector<HTMLElement>('[data-vuoto]');
+
+  function filtra() {
+    if (!form) return;
+    const dati = new FormData(form);
+    const testo = String(dati.get('q') ?? '').trim().toLowerCase();
+    const categoria = String(dati.get('categoria') ?? '');
+    const marca = String(dati.get('marca') ?? '');
+
+    let visibili = 0;
+    for (const scheda of schede) {
+      const ok =
+        (!categoria || scheda.dataset.categoria === categoria) &&
+        (!marca || scheda.dataset.marca === marca) &&
+        (!testo || testo.split(/\s+/).every((parola) => scheda.dataset.testo?.includes(parola)));
+      scheda.hidden = !ok;
+      if (ok) visibili++;
+    }
+    if (conteggio) conteggio.textContent = `${visibili} ${visibili === 1 ? 'prodotto' : 'prodotti'}`;
+    if (vuoto) vuoto.hidden = visibili > 0;
+
+    const parametri = new URLSearchParams();
+    if (testo) parametri.set('q', testo);
+    if (categoria) parametri.set('categoria', categoria);
+    if (marca) parametri.set('marca', marca);
+    const query = parametri.toString();
+    history.replaceState(null, '', query ? `?${query}` : location.pathname);
+  }
+
+  // Ripristina i filtri dall'indirizzo (es. link condivisi)
+  const iniziali = new URLSearchParams(location.search);
+  for (const [chiave, valore] of iniziali) {
+    const campo = form?.elements.namedItem(chiave);
+    if (campo instanceof HTMLInputElement || campo instanceof HTMLSelectElement) campo.value = valore;
+  }
+
+  form?.addEventListener('input', filtra);
+  if (iniziali.size > 0) filtra();
+</script>
+
+<style>
+  .catalogo {
+    padding-top: 8px;
+  }
+
+  .filtri {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    padding: 12px;
+    margin-top: -28px;
+    position: relative;
+    border-radius: 20px;
+    background: var(--bianco);
+    box-shadow: var(--ombra-forte);
+  }
+
+  .filtri__cerca {
+    flex: 1 1 320px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 0 16px;
+    border-radius: 14px;
+    background: var(--grigio-100);
+    color: var(--grigio-500);
+  }
+
+  .filtri input,
+  .filtri select {
+    font: inherit;
+    font-size: 1rem;
+    color: var(--grigio-900);
+    border: 0;
+    background: transparent;
+  }
+
+  .filtri input {
+    flex: 1;
+    min-width: 0;
+    height: 52px;
+    outline: none;
+  }
+
+  .filtri__cerca:focus-within {
+    outline: 3px solid var(--verde);
+    outline-offset: 2px;
+  }
+
+  .filtri__selezioni {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    flex: 1 1 auto;
+  }
+
+  .filtri__selezioni label {
+    flex: 1 1 200px;
+  }
+
+  .filtri select {
+    width: 100%;
+    height: 52px;
+    padding: 0 40px 0 16px;
+    border-radius: 14px;
+    background: var(--grigio-100)
+      url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='20' viewBox='0 0 24 24' fill='none' stroke='%236b7b87' stroke-width='2' stroke-linecap='round'%3E%3Cpath d='m6 9 6 6 6-6'/%3E%3C/svg%3E")
+      no-repeat right 14px center;
+    appearance: none;
+    cursor: pointer;
+  }
+
+  .catalogo__conteggio {
+    margin: 28px 0 16px;
+    font-weight: 600;
+    color: var(--grigio-500);
+  }
+
+  .catalogo__vuoto {
+    text-align: center;
+    padding: 64px 24px;
+    border-radius: var(--raggio);
+    background: var(--blu-50);
+    color: var(--blu-600);
+  }
+
+  .catalogo__vuoto[hidden] {
+    display: none;
+  }
+
+  .catalogo__vuoto svg {
+    margin: 0 auto 12px;
+  }
+
+  .catalogo__vuoto p {
+    max-width: 52ch;
+    margin: 0 auto 24px;
+    color: var(--grigio-700);
+  }
+</style>

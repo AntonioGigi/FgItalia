@@ -1,0 +1,56 @@
+---
+import Base from '../layouts/Base.astro';
+import TestataPagina from '../components/TestataPagina.astro';
+import { sito, indirizzoCompleto } from '../lib/sito';
+---
+
+<Base titolo="Privacy e cookie" descrizione="Informativa sul trattamento dei dati personali e sull’uso dei cookie.">
+  <TestataPagina titolo="Privacy e cookie" briciole={[{ href: '/privacy/', testo: 'Privacy' }]} />
+
+  <section class="contenitore">
+    <div class="prosa testo">
+      <h2>Titolare del trattamento</h2>
+      <p>
+        {sito.ragione_sociale}, {indirizzoCompleto}, P.IVA {sito.piva}{sito.email && <>, email <a href={`mailto:${sito.email}`}>{sito.email}</a></>}.
+      </p>
+
+      <h2>Dati raccolti e finalità</h2>
+      <p>
+        Quando compili il modulo di contatto raccogliamo i dati che inserisci (nome, struttura, email, telefono e
+        contenuto del messaggio) al solo scopo di rispondere alla tua richiesta e inviarti eventuali preventivi. La
+        base giuridica è l’esecuzione di misure precontrattuali adottate su tua richiesta (art. 6.1.b GDPR).
+      </p>
+      <p>
+        I dati non vengono ceduti a terzi né usati per invii promozionali. Sono conservati per il tempo necessario a
+        gestire la richiesta e l’eventuale rapporto commerciale, nel rispetto degli obblighi di legge.
+      </p>
+
+      <h2>Fornitori tecnici</h2>
+      <p>
+        Il sito è ospitato da un fornitore di hosting che, in qualità di responsabile del trattamento, riceve i dati
+        del modulo e i log tecnici di navigazione necessari al funzionamento e alla sicurezza del servizio.
+      </p>
+
+      <h2>Cookie</h2>
+      <p>
+        Questo sito non utilizza cookie di profilazione né strumenti di statistica di terze parti. Possono essere
+        usati solo cookie tecnici strettamente necessari al funzionamento, per i quali non è richiesto il consenso.
+        I pulsanti verso Instagram, Facebook e WhatsApp sono semplici collegamenti: i rispettivi servizi trattano i
+        tuoi dati solo se scegli di aprirli.
+      </p>
+
+      <h2>I tuoi diritti</h2>
+      <p>
+        Puoi chiedere in qualsiasi momento l’accesso, la rettifica, la cancellazione o la limitazione dei tuoi dati,
+        opporti al trattamento e chiederne la portabilità, scrivendo al titolare. Hai inoltre diritto di proporre
+        reclamo al Garante per la protezione dei dati personali (<a href="https://www.garanteprivacy.it" target="_blank" rel="noopener">garanteprivacy.it</a>).
+      </p>
+    </div>
+  </section>
+</Base>
+
+<style>
+  .testo {
+    padding-block: 24px clamp(56px, 9vw, 112px);
+  }
+</style>

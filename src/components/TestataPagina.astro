@@ -1,0 +1,78 @@
+---
+interface Props {
+  sopratitolo?: string;
+  titolo: string;
+  testo?: string;
+  briciole?: { href: string; testo: string }[];
+}
+
+const { sopratitolo, titolo, testo, briciole = [] } = Astro.props;
+---
+
+<section class="testata-pagina">
+  <div class="contenitore">
+    {
+      briciole.length > 0 && (
+        <nav aria-label="Percorso" class="briciole">
+          <ol>
+            <li>
+              <a href="/">Home</a>
+            </li>
+            {briciole.map((b) => (
+              <li>
+                <a href={b.href}>{b.testo}</a>
+              </li>
+            ))}
+          </ol>
+        </nav>
+      )
+    }
+    {sopratitolo && <span class="sopratitolo">{sopratitolo}</span>}
+    <h1>{titolo}</h1>
+    {testo && <p class="testo-intro">{testo}</p>}
+    <slot />
+  </div>
+</section>
+
+<style>
+  .testata-pagina {
+    padding-block: clamp(40px, 7vw, 80px) clamp(32px, 5vw, 56px);
+    background:
+      radial-gradient(circle at 90% -20%, rgb(18 179 163 / 0.16), transparent 45%),
+      linear-gradient(180deg, var(--blu-50), var(--bianco));
+  }
+
+  .testata-pagina h1 {
+    max-width: 18ch;
+  }
+
+  .testata-pagina .testo-intro {
+    max-width: 62ch;
+    margin: 0;
+  }
+
+  .briciole ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 6px;
+    list-style: none;
+    margin: 0 0 20px;
+    padding: 0;
+    font-size: 0.9rem;
+  }
+
+  .briciole li + li::before {
+    content: '/';
+    margin-right: 6px;
+    color: var(--grigio-300);
+  }
+
+  .briciole a {
+    color: var(--grigio-500);
+    text-decoration: none;
+  }
+
+  .briciole a:hover {
+    color: var(--blu-700);
+  }
+</style>

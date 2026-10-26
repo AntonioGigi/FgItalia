@@ -1,0 +1,58 @@
+---
+import { render, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import TestataPagina from '../../components/TestataPagina.astro';
+import Condividi from '../../components/Condividi.astro';
+import InvitoContatto from '../../components/InvitoContatto.astro';
+import { novitaPubblicate } from '../../lib/catalogo';
+import { formatoData } from '../../lib/sito';
+
+export async function getStaticPaths() {
+  const novita = await novitaPubblicate();
+  return novita.map((articolo) => ({ params: { id: articolo.id }, props: { articolo } }));
+}
+
+interface Props {
+  articolo: CollectionEntry<'novita'>;
+}
+
+const { articolo } = Astro.props;
+const { titolo, data, immagine, riassunto } = articolo.data;
+const { Content } = await render(articolo);
+---
+
+<Base titolo={titolo} descrizione={riassunto} immagine={immagine || undefined} tipo="article">
+  <TestataPagina
+    sopratitolo={formatoData.format(data)}
+    titolo={titolo}
+    testo={riassunto}
+    briciole={[{ href: '/novita/', testo: 'Novità' }]}
+  />
+
+  <article class="contenitore articolo">
+    {immagine && <img class="articolo__immagine" src={immagine} alt="" />}
+    <div class="prosa">
+      <Content />
+    </div>
+    <Condividi titolo={titolo} />
+  </article>
+
+  <InvitoContatto />
+</Base>
+
+<style>
+  .articolo {
+    max-width: 840px;
+    padding-top: 16px;
+  }
+
+  .articolo__immagine {
+    width: 100%;
+    border-radius: 24px;
+    margin-bottom: 40px;
+  }
+
+  .articolo .prosa {
+    margin-bottom: 40px;
+  }
+</style>

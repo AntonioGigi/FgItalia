@@ -1,0 +1,111 @@
+---
+import { getCollection, type CollectionEntry } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import TestataPagina from '../../components/TestataPagina.astro';
+import CardProdotto from '../../components/CardProdotto.astro';
+import InvitoContatto from '../../components/InvitoContatto.astro';
+import Icona from '../../components/Icona.astro';
+import { prodottiPubblicati, categorieOrdinate } from '../../lib/catalogo';
+
+export async function getStaticPaths() {
+  const categorie = await getCollection('categorie');
+  return categorie.map((categoria) => ({ params: { id: categoria.id }, props: { categoria } }));
+}
+
+interface Props {
+  categoria: CollectionEntry<'categorie'>;
+}
+
+const { categoria } = Astro.props;
+const prodotti = (await prodottiPubblicati()).filter((p) => p.data.categoria.id === categoria.id);
+const altre = (await categorieOrdinate()).filter((c) => c.id !== categoria.id);
+---
+
+<Base titolo={categoria.data.titolo} descrizione={categoria.data.descrizione}>
+  <TestataPagina
+    sopratitolo="Categoria"
+    titolo={categoria.data.titolo}
+    testo={categoria.data.descrizione}
+    briciole={[
+      { href: '/prodotti/', testo: 'Prodotti' },
+      { href: `/categorie/${categoria.id}/`, testo: categoria.data.titolo },
+    ]}
+  >
+    <nav class="altre" aria-label="Altre categorie">
+      {altre.map((c) => <a href={`/categorie/${c.id}/`}>{c.data.titolo}</a>)}
+    </nav>
+  </TestataPagina>
+
+  <section class="contenitore elenco">
+    {
+      prodotti.length > 0 ? (
+        <div class="griglia">
+          {prodotti.map((p) => (
+            <CardProdotto prodotto={p} />
+          ))}
+        </div>
+      ) : (
+        <div class="vuoto">
+          <Icona nome={categoria.data.icona} dimensione={44} />
+          <h2>Catalogo in aggiornamento</h2>
+          <p>
+            Stiamo caricando online i prodotti di questa categoria. Nel frattempo contattaci: ti diciamo subito cosa
+            abbiamo disponibile e ti inviamo un preventivo.
+          </p>
+          <a class="pulsante pulsante--scuro" href="/contatti/#preventivo">
+            Chiedi una disponibilità
+          </a>
+        </div>
+      )
+    }
+  </section>
+
+  <InvitoContatto />
+</Base>
+
+<style>
+  .altre {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-top: 28px;
+  }
+
+  .altre a {
+    padding: 8px 16px;
+    border-radius: 999px;
+    border: 1px solid var(--grigio-200);
+    background: var(--bianco);
+    font-size: 0.92rem;
+    font-weight: 600;
+    color: var(--grigio-700);
+    text-decoration: none;
+  }
+
+  .altre a:hover {
+    border-color: var(--blu-600);
+    color: var(--blu-700);
+  }
+
+  .elenco {
+    padding-top: 24px;
+  }
+
+  .vuoto {
+    text-align: center;
+    padding: 64px 24px;
+    border-radius: var(--raggio);
+    background: var(--blu-50);
+    color: var(--blu-600);
+  }
+
+  .vuoto svg {
+    margin: 0 auto 12px;
+  }
+
+  .vuoto p {
+    max-width: 56ch;
+    margin: 0 auto 24px;
+    color: var(--grigio-700);
+  }
+</style>

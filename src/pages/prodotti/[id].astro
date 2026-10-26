@@ -1,0 +1,416 @@
+---
+import { getEntry, render } from 'astro:content';
+import Base from '../../layouts/Base.astro';
+import Icona from '../../components/Icona.astro';
+import Condividi from '../../components/Condividi.astro';
+import CardProdotto from '../../components/CardProdotto.astro';
+import { prodottiPubblicati, type Prodotto } from '../../lib/catalogo';
+import { sito, soloCifre, linkWhatsApp } from '../../lib/sito';
+
+export async function getStaticPaths() {
+  const prodotti = await prodottiPubblicati();
+  return prodotti.map((prodotto) => ({ params: { id: prodotto.id }, props: { prodotto, tutti: prodotti } }));
+}
+
+interface Props {
+  prodotto: Prodotto;
+  tutti: Prodotto[];
+}
+
+const { prodotto, tutti } = Astro.props;
+const { titolo, codice, descrizione_breve, immagini, specifiche, scheda_pdf } = prodotto.data;
+const categoria = await getEntry(prodotto.data.categoria);
+const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefined;
+const { Content } = await render(prodotto);
+
+const correlati = tutti
+  .filter((p) => p.id !== prodotto.id && p.data.categoria.id === prodotto.data.categoria.id)
+  .slice(0, 3);
+
+const richiesta = `Buongiorno, vorrei informazioni e un preventivo per: ${titolo}${codice ? ` (cod. ${codice})` : ''}.`;
+const whatsapp = linkWhatsApp(richiesta);
+const linkPreventivo = `/contatti/?prodotto=${encodeURIComponent(titolo)}#preventivo`;
+
+const datiStrutturati = {
+  '@context': 'https://schema.org',
+  '@type': 'Product',
+  name: titolo,
+  description: descrizione_breve,
+  ...(codice && { sku: codice }),
+  ...(immagini.length && { image: immagini.map((i) => new URL(i, Astro.site).toString()) }),
+  ...(marca && { brand: { '@type': 'Brand', name: marca.data.nome } }),
+  ...(categoria && { category: categoria.data.titolo }),
+};
+---
+
+<Base titolo={titolo} descrizione={descrizione_breve} immagine={immagini[0]} tipo="product" datiStrutturati={datiStrutturati}>
+  <section class="scheda">
+    <div class="contenitore">
+      <nav aria-label="Percorso" class="briciole">
+        <a href="/prodotti/"><Icona nome="frecciaSinistra" dimensione={16} /> Catalogo</a>
+        {categoria && <a href={`/categorie/${categoria.id}/`}>{categoria.data.titolo}</a>}
+      </nav>
+
+      <div class="scheda__griglia">
+        <div class="galleria" data-galleria>
+          <div class="galleria__principale">
+            {
+              immagini.length > 0 ? (
+                <img src={immagini[0]} alt={titolo} data-principale />
+              ) : (
+                <div class="galleria__segnaposto">
+                  <Icona nome={categoria?.data.icona ?? 'immagine'} dimensione={72} />
+                  <span>Immagine in arrivo</span>
+                </div>
+              )
+            }
+          </div>
+          {
+            immagini.length > 1 && (
+              <ul class="galleria__miniature">
+                {immagini.map((src, i) => (
+                  <li>
+                    <button type="button" data-miniatura={src} aria-current={i === 0 ? 'true' : undefined}>
+                      <img src={src} alt={`${titolo} – immagine ${i + 1}`} loading="lazy" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )
+          }
+        </div>
+
+        <div class="scheda__info">
+          <div class="scheda__etichette">
+            {categoria && <a class="etichetta" href={`/categorie/${categoria.id}/`}>{categoria.data.titolo}</a>}
+            {marca && <span class="etichetta etichetta--verde">{marca.data.nome}</span>}
+          </div>
+          <h1>{titolo}</h1>
+          {codice && <p class="scheda__codice">Codice: {codice}</p>}
+          <p class="scheda__breve">{descrizione_breve}</p>
+
+          <div class="scheda__azioni">
+            <a class="pulsante pulsante--primario" href={linkPreventivo}>Richiedi preventivo <Icona nome="freccia" /></a>
+            {
+              whatsapp && (
+                <a class="pulsante pulsante--whatsapp" href={whatsapp} target="_blank" rel="noopener">
+                  <Icona nome="whatsapp" /> Chiedi su WhatsApp
+                </a>
+              )
+            }
+            {
+              !whatsapp && sito.telefono && (
+                <a class="pulsante pulsante--contorno" href={`tel:${soloCifre(sito.telefono)}`}>
+                  <Icona nome="telefono" /> Chiama
+                </a>
+              )
+            }
+          </div>
+
+          {
+            scheda_pdf && (
+              <a class="scheda__pdf" href={scheda_pdf} target="_blank" rel="noopener">
+                <Icona nome="documento" />
+                <span>
+                  <strong>Scheda tecnica</strong>
+                  <small>Scarica il PDF</small>
+                </span>
+              </a>
+            )
+          }
+
+          <ul class="scheda__garanzie">
+            <li><Icona nome="scudo" dimensione={20} /> Dispositivo certificato</li>
+            <li><Icona nome="persone" dimensione={20} /> Consulenza prima dell’acquisto</li>
+          </ul>
+
+          <Condividi titolo={titolo} />
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="sezione dettagli">
+    <div class="contenitore dettagli__griglia">
+      <div>
+        <h2>Descrizione</h2>
+        <div class="prosa"><Content /></div>
+      </div>
+      {
+        specifiche.length > 0 && (
+          <div>
+            <h2>Specifiche tecniche</h2>
+            <table class="specifiche">
+              <tbody>
+                {specifiche.map((s) => (
+                  <tr>
+                    <th scope="row">{s.nome}</th>
+                    <td>{s.valore}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )
+      }
+    </div>
+  </section>
+
+  {
+    correlati.length > 0 && (
+      <section class="sezione sezione--chiara">
+        <div class="contenitore">
+          <h2>Altri prodotti in {categoria?.data.titolo}</h2>
+          <div class="griglia correlati">
+            {correlati.map((p) => (
+              <CardProdotto prodotto={p} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+</Base>
+
+<script>
+  document.querySelectorAll<HTMLElement>('[data-galleria]').forEach((galleria) => {
+    const principale = galleria.querySelector<HTMLImageElement>('[data-principale]');
+    const miniature = galleria.querySelectorAll<HTMLButtonElement>('[data-miniatura]');
+    miniature.forEach((bottone) =>
+      bottone.addEventListener('click', () => {
+        if (principale && bottone.dataset.miniatura) principale.src = bottone.dataset.miniatura;
+        miniature.forEach((b) => b.removeAttribute('aria-current'));
+        bottone.setAttribute('aria-current', 'true');
+      }),
+    );
+  });
+</script>
+
+<style>
+  .scheda {
+    padding-block: 32px clamp(40px, 6vw, 72px);
+    background: linear-gradient(180deg, var(--blu-50), var(--bianco) 70%);
+  }
+
+  .briciole {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px 20px;
+    margin-bottom: 28px;
+    font-size: 0.92rem;
+    font-weight: 600;
+  }
+
+  .briciole a {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    color: var(--grigio-500);
+    text-decoration: none;
+  }
+
+  .briciole a:hover {
+    color: var(--blu-700);
+  }
+
+  .scheda__griglia {
+    display: grid;
+    grid-template-columns: 1.05fr 1fr;
+    gap: clamp(32px, 5vw, 64px);
+    align-items: start;
+  }
+
+  .galleria__principale {
+    aspect-ratio: 1;
+    border-radius: 24px;
+    background: var(--bianco);
+    border: 1px solid var(--grigio-200);
+    overflow: hidden;
+  }
+
+  .galleria__principale img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+    padding: clamp(16px, 4vw, 40px);
+  }
+
+  .galleria__segnaposto {
+    display: flex;
+    height: 100%;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--blu-600);
+    background: linear-gradient(135deg, var(--blu-50), var(--verde-chiaro));
+    font-weight: 600;
+  }
+
+  .galleria__miniature {
+    display: flex;
+    gap: 10px;
+    margin: 12px 0 0;
+    padding: 0;
+    list-style: none;
+    overflow-x: auto;
+  }
+
+  .galleria__miniature button {
+    width: 80px;
+    height: 80px;
+    padding: 6px;
+    border-radius: 12px;
+    border: 2px solid var(--grigio-200);
+    background: var(--bianco);
+    cursor: pointer;
+  }
+
+  .galleria__miniature button[aria-current='true'] {
+    border-color: var(--verde);
+  }
+
+  .galleria__miniature img {
+    width: 100%;
+    height: 100%;
+    object-fit: contain;
+  }
+
+  .scheda__etichette {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 16px;
+  }
+
+  .scheda__etichette a {
+    text-decoration: none;
+  }
+
+  .scheda__info h1 {
+    font-size: clamp(1.9rem, 3.6vw, 2.7rem);
+    margin-bottom: 8px;
+  }
+
+  .scheda__codice {
+    font-size: 0.92rem;
+    color: var(--grigio-500);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .scheda__breve {
+    font-size: 1.12rem;
+    color: var(--grigio-700);
+    margin-bottom: 28px;
+  }
+
+  .scheda__azioni {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    margin-bottom: 24px;
+  }
+
+  .scheda__pdf {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 16px 20px;
+    margin-bottom: 24px;
+    border-radius: 16px;
+    border: 1px dashed var(--grigio-300);
+    color: var(--blu-800);
+    text-decoration: none;
+  }
+
+  .scheda__pdf:hover {
+    border-color: var(--blu-600);
+    background: var(--blu-50);
+  }
+
+  .scheda__pdf strong,
+  .scheda__pdf small {
+    display: block;
+  }
+
+  .scheda__pdf small {
+    color: var(--grigio-500);
+  }
+
+  .scheda__garanzie {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 24px;
+    list-style: none;
+    padding: 20px 0;
+    margin: 0 0 20px;
+    border-block: 1px solid var(--grigio-200);
+    font-size: 0.93rem;
+    font-weight: 600;
+    color: var(--grigio-700);
+  }
+
+  .scheda__garanzie li {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  .scheda__garanzie svg {
+    color: var(--verde-scuro);
+  }
+
+  .dettagli {
+    padding-top: 0;
+  }
+
+  .dettagli__griglia {
+    display: grid;
+    grid-template-columns: 1.2fr 1fr;
+    gap: clamp(32px, 5vw, 64px);
+  }
+
+  .dettagli h2 {
+    font-size: 1.6rem;
+  }
+
+  .specifiche {
+    width: 100%;
+    border-collapse: collapse;
+    font-size: 0.97rem;
+    border-radius: var(--raggio);
+    overflow: hidden;
+    border: 1px solid var(--grigio-200);
+  }
+
+  .specifiche th,
+  .specifiche td {
+    padding: 14px 18px;
+    text-align: left;
+    vertical-align: top;
+    border-bottom: 1px solid var(--grigio-200);
+  }
+
+  .specifiche tr:last-child th,
+  .specifiche tr:last-child td {
+    border-bottom: 0;
+  }
+
+  .specifiche th {
+    width: 42%;
+    font-weight: 600;
+    color: var(--grigio-700);
+    background: var(--grigio-100);
+  }
+
+  .correlati {
+    margin-top: 32px;
+  }
+
+  @media (max-width: 860px) {
+    .scheda__griglia,
+    .dettagli__griglia {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,264 @@
+---
+import Logo from './Logo.astro';
+import Icona from './Icona.astro';
+import { sito, soloCifre } from '../lib/sito';
+
+const voci = [
+  { href: '/', testo: 'Home' },
+  { href: '/prodotti/', testo: 'Prodotti' },
+  { href: '/chi-siamo/', testo: 'Chi siamo' },
+  { href: '/novita/', testo: 'Novità' },
+  { href: '/contatti/', testo: 'Contatti' },
+];
+
+const percorso = Astro.url.pathname;
+const attiva = (href: string) => (href === '/' ? percorso === '/' : percorso.startsWith(href.replace(/\/$/, '')));
+---
+
+<header class="testata" data-testata>
+  <div class="contenitore testata__barra">
+    <Logo />
+
+    <nav class="menu" id="menu-principale" aria-label="Menu principale">
+      <ul>
+        {
+          voci.map((v) => (
+            <li>
+              <a href={v.href} aria-current={attiva(v.href) ? 'page' : undefined}>
+                {v.testo}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+      <div class="menu__mobile-extra">
+        {
+          sito.telefono && (
+            <a class="pulsante pulsante--contorno" href={`tel:${soloCifre(sito.telefono)}`}>
+              <Icona nome="telefono" /> {sito.telefono}
+            </a>
+          )
+        }
+        <a class="pulsante pulsante--primario" href="/contatti/#preventivo">Richiedi preventivo</a>
+      </div>
+    </nav>
+
+    <div class="testata__azioni">
+      {
+        sito.telefono && (
+          <a class="testata__telefono" href={`tel:${soloCifre(sito.telefono)}`}>
+            <Icona nome="telefono" dimensione={18} />
+            <span>{sito.telefono}</span>
+          </a>
+        )
+      }
+      <a class="pulsante pulsante--primario testata__cta" href="/contatti/#preventivo">Preventivo</a>
+      <button class="testata__hamburger" type="button" aria-expanded="false" aria-controls="menu-principale" data-hamburger>
+        <span class="solo-lettori">Apri il menu</span>
+        <Icona nome="menu" class="icona-apri" />
+        <Icona nome="chiudi" class="icona-chiudi" />
+      </button>
+    </div>
+  </div>
+</header>
+
+<script>
+  const testata = document.querySelector<HTMLElement>('[data-testata]');
+  const bottone = document.querySelector<HTMLButtonElement>('[data-hamburger]');
+
+  const aggiorna = () => testata?.classList.toggle('testata--scorsa', window.scrollY > 8);
+  aggiorna();
+  window.addEventListener('scroll', aggiorna, { passive: true });
+
+  bottone?.addEventListener('click', () => {
+    const aperto = bottone.getAttribute('aria-expanded') === 'true';
+    bottone.setAttribute('aria-expanded', String(!aperto));
+    testata?.classList.toggle('testata--aperta', !aperto);
+    document.body.style.overflow = aperto ? '' : 'hidden';
+  });
+</script>
+
+<style>
+  .testata {
+    position: sticky;
+    top: 0;
+    z-index: 50;
+    background: rgb(255 255 255 / 0.88);
+    backdrop-filter: saturate(180%) blur(14px);
+    -webkit-backdrop-filter: saturate(180%) blur(14px);
+    border-bottom: 1px solid transparent;
+    transition: border-color 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .testata--scorsa {
+    border-bottom-color: var(--grigio-200);
+    box-shadow: 0 4px 20px rgb(6 42 58 / 0.05);
+  }
+
+  .testata__barra {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 24px;
+    height: 76px;
+  }
+
+  .menu ul {
+    display: flex;
+    gap: 4px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .menu a {
+    display: block;
+    padding: 8px 14px;
+    border-radius: 999px;
+    font-weight: 600;
+    font-size: 0.97rem;
+    color: var(--grigio-700);
+    text-decoration: none;
+    transition: background-color 0.15s ease, color 0.15s ease;
+  }
+
+  .menu a:hover {
+    background: var(--grigio-100);
+    color: var(--blu-900);
+  }
+
+  .menu a[aria-current='page'] {
+    color: var(--blu-900);
+    background: var(--blu-100);
+  }
+
+  .menu__mobile-extra {
+    display: none;
+  }
+
+  .testata__azioni {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+  }
+
+  .testata__telefono {
+    display: inline-flex;
+    align-items: center;
+    gap: 8px;
+    font-weight: 700;
+    color: var(--blu-900);
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .testata__cta {
+    padding: 11px 20px;
+  }
+
+  .testata__hamburger {
+    display: none;
+    width: 46px;
+    height: 46px;
+    align-items: center;
+    justify-content: center;
+    border: 1px solid var(--grigio-200);
+    border-radius: 12px;
+    background: var(--bianco);
+    color: var(--blu-900);
+    cursor: pointer;
+  }
+
+  .testata__hamburger :global(.icona-chiudi),
+  .testata--aperta .testata__hamburger :global(.icona-apri) {
+    display: none;
+  }
+
+  .testata--aperta .testata__hamburger :global(.icona-chiudi) {
+    display: block;
+  }
+
+  @media (max-width: 1080px) {
+    .testata__telefono span {
+      display: none;
+    }
+  }
+
+  @media (max-width: 900px) {
+    .testata__hamburger {
+      display: inline-flex;
+    }
+
+    .testata__telefono,
+    .testata__cta {
+      display: none;
+    }
+
+    /* backdrop-filter renderebbe il menu "fixed" relativo alla testata */
+    .testata--aperta {
+      backdrop-filter: none;
+      -webkit-backdrop-filter: none;
+      background: var(--bianco);
+    }
+
+    .menu {
+      position: fixed;
+      inset: 76px 0 0;
+      display: flex;
+      flex-direction: column;
+      gap: 24px;
+      padding: 24px var(--gutter) 40px;
+      background: var(--bianco);
+      overflow-y: auto;
+      visibility: hidden;
+      opacity: 0;
+      transform: translateY(-8px);
+      transition: opacity 0.2s ease, transform 0.2s ease, visibility 0.2s;
+    }
+
+    .testata--aperta .menu {
+      visibility: visible;
+      opacity: 1;
+      transform: none;
+    }
+
+    .menu ul {
+      flex-direction: column;
+      gap: 0;
+    }
+
+    .menu a {
+      padding: 16px 4px;
+      border-radius: 0;
+      font-size: 1.35rem;
+      font-weight: 700;
+      color: var(--blu-900);
+      border-bottom: 1px solid var(--grigio-200);
+    }
+
+    .menu a:hover,
+    .menu a[aria-current='page'] {
+      background: none;
+      color: var(--verde-scuro);
+    }
+
+    .menu__mobile-extra {
+      display: flex;
+      flex-direction: column;
+      gap: 12px;
+    }
+
+    .menu__mobile-extra a {
+      display: flex;
+      justify-content: center;
+      border-bottom: 2px solid transparent;
+      border-radius: 999px;
+      padding: 14px 24px;
+      font-size: 1rem;
+    }
+
+    .menu__mobile-extra .pulsante--contorno {
+      border-color: var(--grigio-300);
+    }
+  }
+</style>

@@ -1,0 +1,625 @@
+---
+import Base from '../layouts/Base.astro';
+import Icona from '../components/Icona.astro';
+import CardCategoria from '../components/CardCategoria.astro';
+import CardProdotto from '../components/CardProdotto.astro';
+import SezioneSocial from '../components/SezioneSocial.astro';
+import InvitoContatto from '../components/InvitoContatto.astro';
+import { categorieOrdinate, marchiOrdinati, prodottiPubblicati, novitaPubblicate } from '../lib/catalogo';
+import { sito, anniAttivita, formatoData, linkWhatsApp } from '../lib/sito';
+
+const categorie = await categorieOrdinate();
+const marchi = await marchiOrdinati();
+const prodotti = await prodottiPubblicati();
+const inEvidenza = prodotti.filter((p) => p.data.in_evidenza).slice(0, 6);
+const novita = (await novitaPubblicate()).slice(0, 3);
+const contaPerCategoria = (id: string) => prodotti.filter((p) => p.data.categoria.id === id).length;
+const whatsapp = linkWhatsApp('Buongiorno, vorrei informazioni sui vostri prodotti.');
+
+const punti = [
+  {
+    icona: 'scudo',
+    titolo: 'Prodotti certificati',
+    testo: 'Solo dispositivi marcati CE e conformi alle normative, da produttori selezionati.',
+  },
+  {
+    icona: 'persone',
+    titolo: 'Consulenza diretta',
+    testo: 'Parli con chi conosce davvero i prodotti: ti aiutiamo a scegliere in base al tuo lavoro.',
+  },
+  {
+    icona: 'camion',
+    titolo: 'Forniture complete',
+    testo: 'Dal singolo articolo all’allestimento completo di studi, ambulatori e strutture sanitarie.',
+  },
+  {
+    icona: 'chiave',
+    titolo: 'Assistenza',
+    testo: 'Supporto prima e dopo l’acquisto e materiale di consumo per le tue apparecchiature.',
+  },
+] as const;
+---
+
+<Base>
+  <section class="hero">
+    <div class="contenitore hero__griglia">
+      <div class="hero__testo">
+        <span class="hero__badge"><span></span> Dal {sito.anno_fondazione} ad {sito.citta}</span>
+        <h1>{sito.hero_titolo}</h1>
+        <p>{sito.hero_testo}</p>
+        <div class="hero__azioni">
+          <a class="pulsante pulsante--primario" href="/prodotti/">Scopri il catalogo <Icona nome="freccia" /></a>
+          {
+            whatsapp ? (
+              <a class="pulsante pulsante--whatsapp" href={whatsapp} target="_blank" rel="noopener">
+                <Icona nome="whatsapp" /> Scrivici su WhatsApp
+              </a>
+            ) : (
+              <a class="pulsante pulsante--chiaro" href="/contatti/#preventivo">
+                Richiedi un preventivo
+              </a>
+            )
+          }
+        </div>
+      </div>
+
+      <div class="hero__visuale" aria-hidden="true">
+        <div class="hero__schermo">
+          <div class="hero__schermo-testa">
+            <span></span><span></span><span></span>
+          </div>
+          <svg class="hero__ecg" viewBox="0 0 400 120" preserveAspectRatio="none">
+            <path
+              d="M0 70 H70 L85 70 L95 40 L105 95 L118 15 L132 100 L142 70 H210 L225 70 L235 40 L245 95 L258 15 L272 100 L282 70 H350 L365 70 L375 40 L385 95 L400 30"
+            ></path>
+          </svg>
+          <div class="hero__parametri">
+            <div><small>BPM</small><strong>72</strong></div>
+            <div><small>SpO₂</small><strong>98%</strong></div>
+            <div><small>PA</small><strong>120/80</strong></div>
+          </div>
+        </div>
+        <div class="hero__carta hero__carta--1">
+          <Icona nome="scudo" />
+          <div><strong>Certificati CE</strong><small>Dispositivi a norma</small></div>
+        </div>
+        <div class="hero__carta hero__carta--2">
+          <strong>{anniAttivita}+</strong>
+          <small>anni di esperienza</small>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <section class="marchi" aria-label="Marchi trattati">
+    <div class="contenitore marchi__riga">
+      <span class="marchi__etichetta">Distributori dei marchi</span>
+      <ul>
+        {marchi.map((m) => <li>{m.data.logo ? <img src={m.data.logo} alt={m.data.nome} loading="lazy" /> : m.data.nome}</li>)}
+      </ul>
+    </div>
+  </section>
+
+  <section class="sezione">
+    <div class="contenitore">
+      <div class="sezione__testa appare">
+        <span class="sopratitolo">Il nostro catalogo</span>
+        <h2>Tutto ciò che serve al tuo studio, in un unico fornitore</h2>
+        <p class="testo-intro">
+          Apparecchiature elettromedicali, articoli medicali e materiale di consumo per medici, fisioterapisti,
+          ambulatori, centri di riabilitazione e strutture sanitarie.
+        </p>
+      </div>
+      <div class="griglia">
+        {categorie.map((c) => <CardCategoria categoria={c} numero={contaPerCategoria(c.id)} />)}
+      </div>
+    </div>
+  </section>
+
+  {
+    inEvidenza.length > 0 && (
+      <section class="sezione sezione--chiara">
+        <div class="contenitore">
+          <div class="riga-testa appare">
+            <div>
+              <span class="sopratitolo">In evidenza</span>
+              <h2>Prodotti consigliati</h2>
+            </div>
+            <a class="pulsante pulsante--contorno" href="/prodotti/">
+              Vedi tutti <Icona nome="freccia" />
+            </a>
+          </div>
+          <div class="griglia">
+            {inEvidenza.map((p) => (
+              <CardProdotto prodotto={p} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <section class="sezione">
+    <div class="contenitore perche">
+      <div class="perche__intro appare">
+        <span class="sopratitolo">Perché sceglierci</span>
+        <h2>Un partner affidabile, non un semplice magazzino</h2>
+        <p class="testo-intro">
+          Dal {sito.anno_fondazione} accompagniamo professionisti e strutture sanitarie nella scelta delle attrezzature,
+          con un rapporto diretto e la serietà di un’azienda del territorio.
+        </p>
+        <dl class="numeri">
+          <div><dt>Anni di attività</dt><dd>{anniAttivita}+</dd></div>
+          <div><dt>Categorie di prodotto</dt><dd>{categorie.length}</dd></div>
+          <div><dt>Marchi trattati</dt><dd>{marchi.length}+</dd></div>
+        </dl>
+      </div>
+      <ul class="perche__punti">
+        {
+          punti.map((p) => (
+            <li class="appare">
+              <span>
+                <Icona nome={p.icona} />
+              </span>
+              <h3>{p.titolo}</h3>
+              <p>{p.testo}</p>
+            </li>
+          ))
+        }
+      </ul>
+    </div>
+  </section>
+
+  <SezioneSocial />
+
+  {
+    novita.length > 0 && (
+      <section class="sezione sezione--chiara">
+        <div class="contenitore">
+          <div class="riga-testa appare">
+            <div>
+              <span class="sopratitolo">Novità e offerte</span>
+              <h2>Dal nostro magazzino</h2>
+            </div>
+            <a class="pulsante pulsante--contorno" href="/novita/">
+              Tutte le novità <Icona nome="freccia" />
+            </a>
+          </div>
+          <div class="griglia">
+            {novita.map((n) => (
+              <a class="card-novita appare" href={`/novita/${n.id}/`}>
+                {n.data.immagine && <img src={n.data.immagine} alt="" loading="lazy" />}
+                <div>
+                  <time datetime={n.data.data.toISOString()}>{formatoData.format(n.data.data)}</time>
+                  <h3>{n.data.titolo}</h3>
+                  <p>{n.data.riassunto}</p>
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
+
+  <InvitoContatto />
+</Base>
+
+<style>
+  .hero {
+    position: relative;
+    overflow: hidden;
+    padding-block: clamp(48px, 8vw, 104px) clamp(56px, 9vw, 120px);
+    background:
+      radial-gradient(circle at 85% 20%, rgb(18 179 163 / 0.28), transparent 40%),
+      radial-gradient(circle at 10% 110%, rgb(15 111 149 / 0.5), transparent 45%),
+      var(--blu-900);
+    color: rgb(255 255 255 / 0.78);
+  }
+
+  .hero::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background-image:
+      linear-gradient(rgb(255 255 255 / 0.04) 1px, transparent 1px),
+      linear-gradient(90deg, rgb(255 255 255 / 0.04) 1px, transparent 1px);
+    background-size: 48px 48px;
+    mask-image: linear-gradient(180deg, black, transparent 85%);
+  }
+
+  .hero__griglia {
+    position: relative;
+    display: grid;
+    grid-template-columns: 1.1fr 1fr;
+    align-items: center;
+    gap: clamp(40px, 6vw, 80px);
+  }
+
+  .hero__badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    padding: 6px 16px 6px 10px;
+    margin-bottom: 24px;
+    border-radius: 999px;
+    border: 1px solid rgb(255 255 255 / 0.15);
+    background: rgb(255 255 255 / 0.06);
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--bianco);
+  }
+
+  .hero__badge span {
+    width: 8px;
+    height: 8px;
+    border-radius: 50%;
+    background: var(--verde);
+    box-shadow: 0 0 0 4px rgb(18 179 163 / 0.25);
+  }
+
+  .hero h1 {
+    color: var(--bianco);
+    margin-bottom: 20px;
+  }
+
+  .hero__testo p {
+    font-size: 1.15rem;
+    max-width: 54ch;
+    margin-bottom: 32px;
+  }
+
+  .hero__azioni {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .hero__visuale {
+    position: relative;
+    padding: 40px 0 40px 24px;
+  }
+
+  .hero__schermo {
+    border-radius: 24px;
+    padding: 20px;
+    background: linear-gradient(160deg, #0d3a50, #041d29);
+    border: 1px solid rgb(255 255 255 / 0.1);
+    box-shadow: 0 30px 80px rgb(0 0 0 / 0.35);
+  }
+
+  .hero__schermo-testa {
+    display: flex;
+    gap: 6px;
+    margin-bottom: 16px;
+  }
+
+  .hero__schermo-testa span {
+    width: 10px;
+    height: 10px;
+    border-radius: 50%;
+    background: rgb(255 255 255 / 0.15);
+  }
+
+  .hero__ecg {
+    width: 100%;
+    height: 140px;
+    border-radius: 14px;
+    background:
+      linear-gradient(rgb(18 179 163 / 0.07) 1px, transparent 1px) 0 0 / 20px 20px,
+      linear-gradient(90deg, rgb(18 179 163 / 0.07) 1px, transparent 1px) 0 0 / 20px 20px;
+  }
+
+  .hero__ecg path {
+    fill: none;
+    stroke: var(--verde);
+    stroke-width: 3;
+    stroke-linejoin: round;
+    vector-effect: non-scaling-stroke;
+    stroke-dasharray: 1200;
+    stroke-dashoffset: 1200;
+    filter: drop-shadow(0 0 6px rgb(18 179 163 / 0.8));
+    animation: traccia 3.2s linear infinite;
+  }
+
+  @keyframes traccia {
+    to {
+      stroke-dashoffset: 0;
+    }
+  }
+
+  .hero__parametri {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 12px;
+    margin-top: 16px;
+  }
+
+  .hero__parametri div {
+    padding: 12px 14px;
+    border-radius: 12px;
+    background: rgb(255 255 255 / 0.05);
+  }
+
+  .hero__parametri small {
+    display: block;
+    font-size: 0.72rem;
+    letter-spacing: 0.1em;
+    color: rgb(255 255 255 / 0.5);
+  }
+
+  .hero__parametri strong {
+    font-size: 1.4rem;
+    color: var(--bianco);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .hero__carta {
+    position: absolute;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 18px;
+    border-radius: 16px;
+    background: var(--bianco);
+    color: var(--blu-900);
+    box-shadow: var(--ombra-forte);
+    animation: fluttua 6s ease-in-out infinite;
+  }
+
+  .hero__carta svg {
+    color: var(--verde-scuro);
+  }
+
+  .hero__carta strong {
+    display: block;
+    line-height: 1.2;
+  }
+
+  .hero__carta small {
+    color: var(--grigio-500);
+  }
+
+  .hero__carta--1 {
+    left: -8px;
+    bottom: 0;
+  }
+
+  .hero__carta--2 {
+    right: -12px;
+    top: 0;
+    flex-direction: column;
+    gap: 0;
+    animation-delay: -3s;
+  }
+
+  .hero__carta--2 strong {
+    font-size: 2rem;
+    color: var(--verde-scuro);
+  }
+
+  @keyframes fluttua {
+    50% {
+      transform: translateY(-8px);
+    }
+  }
+
+  .marchi {
+    border-bottom: 1px solid var(--grigio-200);
+  }
+
+  .marchi__riga {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 16px 40px;
+    padding-block: 28px;
+  }
+
+  .marchi__etichetta {
+    font-size: 0.82rem;
+    font-weight: 700;
+    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    color: var(--grigio-500);
+  }
+
+  .marchi ul {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 12px 40px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .marchi li {
+    font-size: 1.25rem;
+    font-weight: 800;
+    letter-spacing: -0.01em;
+    color: var(--grigio-500);
+  }
+
+  .marchi img {
+    height: 32px;
+    width: auto;
+    filter: grayscale(1);
+    opacity: 0.6;
+  }
+
+  .riga-testa {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: flex-end;
+    justify-content: space-between;
+    gap: 16px 32px;
+    margin-bottom: 40px;
+  }
+
+  .riga-testa h2 {
+    margin: 0;
+  }
+
+  .perche {
+    display: grid;
+    grid-template-columns: 1fr 1.15fr;
+    gap: clamp(40px, 6vw, 80px);
+    align-items: start;
+  }
+
+  .perche__intro {
+    position: sticky;
+    top: 110px;
+  }
+
+  .numeri {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+    margin: 32px 0 0;
+  }
+
+  .numeri div {
+    display: flex;
+    flex-direction: column-reverse;
+    padding-top: 16px;
+    border-top: 2px solid var(--grigio-200);
+  }
+
+  .numeri dt {
+    font-size: 0.88rem;
+    color: var(--grigio-500);
+  }
+
+  .numeri dd {
+    margin: 0;
+    font-size: 2.2rem;
+    font-weight: 800;
+    color: var(--blu-900);
+  }
+
+  .perche__punti {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .perche__punti li {
+    padding: 28px;
+    border-radius: var(--raggio);
+    background: var(--blu-50);
+  }
+
+  .perche__punti li:nth-child(even) {
+    transform: translateY(32px);
+  }
+
+  .perche__punti li:nth-child(even).appare:not(.visibile) {
+    transform: translateY(50px);
+  }
+
+  .perche__punti span {
+    display: inline-flex;
+    width: 52px;
+    height: 52px;
+    align-items: center;
+    justify-content: center;
+    border-radius: 14px;
+    background: var(--bianco);
+    color: var(--verde-scuro);
+    box-shadow: var(--ombra);
+    margin-bottom: 18px;
+  }
+
+  .perche__punti p {
+    margin: 0;
+    font-size: 0.97rem;
+    color: var(--grigio-700);
+  }
+
+  .card-novita {
+    display: flex;
+    flex-direction: column;
+    border-radius: var(--raggio);
+    background: var(--bianco);
+    border: 1px solid var(--grigio-200);
+    overflow: hidden;
+    color: inherit;
+    text-decoration: none;
+    transition: transform 0.2s ease, box-shadow 0.2s ease;
+  }
+
+  .card-novita:hover {
+    transform: translateY(-4px);
+    box-shadow: var(--ombra-forte);
+    color: inherit;
+  }
+
+  .card-novita img {
+    aspect-ratio: 16 / 9;
+    object-fit: cover;
+    width: 100%;
+  }
+
+  .card-novita div {
+    padding: 24px;
+  }
+
+  .card-novita time {
+    font-size: 0.85rem;
+    font-weight: 600;
+    color: var(--verde-scuro);
+  }
+
+  .card-novita h3 {
+    margin-top: 6px;
+  }
+
+  .card-novita p {
+    margin: 0;
+    color: var(--grigio-500);
+    font-size: 0.97rem;
+  }
+
+  @media (max-width: 900px) {
+    .hero__griglia,
+    .perche {
+      grid-template-columns: 1fr;
+    }
+
+    .hero__visuale {
+      padding: 32px 8px;
+      max-width: 520px;
+    }
+
+    .perche__intro {
+      position: static;
+    }
+  }
+
+  @media (max-width: 560px) {
+    .perche__punti {
+      grid-template-columns: 1fr;
+    }
+
+    .perche__punti li:nth-child(even) {
+      transform: none;
+    }
+
+    .hero__carta--2 {
+      right: 0;
+    }
+
+    .hero__carta--1 {
+      left: 0;
+    }
+
+    .numeri dd {
+      font-size: 1.7rem;
+    }
+  }
+</style>

@@ -1,0 +1,174 @@
+---
+import Icona from './Icona.astro';
+import { ultimiPostInstagram } from '../lib/instagram';
+import { handleInstagram, urlInstagram, urlFacebook, linkWhatsApp } from '../lib/sito';
+
+const post = await ultimiPostInstagram(8);
+const handle = handleInstagram();
+const instagram = urlInstagram();
+const facebook = urlFacebook();
+const whatsapp = linkWhatsApp();
+const haSocial = instagram || facebook || whatsapp;
+---
+
+{
+  haSocial && (
+    <section class="sezione social">
+      <div class="contenitore">
+        <div class="social__testa appare">
+          <div>
+            <span class="sopratitolo">Seguici sui social</span>
+            <h2>Novità, offerte e nuovi arrivi</h2>
+            <p class="testo-intro">
+              Sui nostri profili pubblichiamo prodotti appena arrivati, promozioni riservate e consigli d’uso. Seguici per
+              restare aggiornato.
+            </p>
+          </div>
+          <div class="social__pulsanti">
+            {instagram && (
+              <a class="pulsante social__instagram" href={instagram} target="_blank" rel="noopener">
+                <Icona nome="instagram" /> {handle ? `@${handle}` : 'Instagram'}
+              </a>
+            )}
+            {facebook && (
+              <a class="pulsante social__facebook" href={facebook} target="_blank" rel="noopener">
+                <Icona nome="facebook" /> Facebook
+              </a>
+            )}
+            {whatsapp && (
+              <a class="pulsante pulsante--whatsapp" href={whatsapp} target="_blank" rel="noopener">
+                <Icona nome="whatsapp" /> WhatsApp
+              </a>
+            )}
+          </div>
+        </div>
+
+        {post.length > 0 && (
+          <ul class="social__griglia">
+            {post.map((p) => (
+              <li class="appare">
+                <a href={p.link} target="_blank" rel="noopener" aria-label={p.didascalia.slice(0, 80) || 'Post Instagram'}>
+                  <img src={p.immagine} alt="" loading="lazy" decoding="async" />
+                  {p.video && (
+                    <span class="social__video">
+                      <Icona nome="play" dimensione={16} />
+                    </span>
+                  )}
+                  <span class="social__velo">
+                    <Icona nome="instagram" dimensione={30} />
+                  </span>
+                </a>
+              </li>
+            ))}
+          </ul>
+        )}
+      </div>
+    </section>
+  )
+}
+
+<style>
+  .social__testa {
+    display: grid;
+    grid-template-columns: 1.3fr 1fr;
+    align-items: end;
+    gap: 32px;
+    margin-bottom: 40px;
+  }
+
+  .social__testa p {
+    margin: 0;
+  }
+
+  .social__pulsanti {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 12px;
+    justify-content: flex-end;
+  }
+
+  .social__instagram {
+    color: var(--bianco);
+    background: linear-gradient(45deg, #f9a03f, #e1306c 45%, #833ab4);
+  }
+
+  .social__facebook {
+    color: var(--bianco);
+    background: #1877f2;
+  }
+
+  .social__instagram:hover,
+  .social__facebook:hover {
+    color: var(--bianco);
+    filter: brightness(1.08);
+  }
+
+  .social__griglia {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 12px;
+    list-style: none;
+    margin: 0;
+    padding: 0;
+  }
+
+  .social__griglia a {
+    position: relative;
+    display: block;
+    aspect-ratio: 1;
+    border-radius: 14px;
+    overflow: hidden;
+    background: var(--grigio-100);
+  }
+
+  .social__griglia img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.4s ease;
+  }
+
+  .social__griglia a:hover img {
+    transform: scale(1.06);
+  }
+
+  .social__velo {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: rgb(6 42 58 / 0.45);
+    color: var(--bianco);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .social__griglia a:hover .social__velo,
+  .social__griglia a:focus-visible .social__velo {
+    opacity: 1;
+  }
+
+  .social__video {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    display: flex;
+    color: var(--bianco);
+    filter: drop-shadow(0 1px 3px rgb(0 0 0 / 0.5));
+  }
+
+  @media (max-width: 820px) {
+    .social__testa {
+      grid-template-columns: 1fr;
+    }
+
+    .social__pulsanti {
+      justify-content: flex-start;
+    }
+
+    .social__griglia {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  }
+</style>
