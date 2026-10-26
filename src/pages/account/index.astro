@@ -863,7 +863,7 @@ import { sito } from '../../lib/sito';
 
     if ('assistenza' in modulo.dataset)
       return invia(modulo, async (d) => {
-        const { richiesta } = await api('assistenza', {
+        const { richiesta, emailInviata } = await api('assistenza', {
           dispositivo: d.get('dispositivo') || undefined,
           tipo: d.get('tipo'),
           descrizione: d.get('descrizione'),
@@ -872,7 +872,9 @@ import { sito } from '../../lib/sito';
         profilo.assistenza.unshift(richiesta);
         modulo.reset();
         disegnaAssistenza();
-        return `Richiesta ${richiesta.numero} inviata: ti abbiamo mandato una conferma via email.`;
+        return emailInviata
+          ? `Richiesta ${richiesta.numero} inviata: ti abbiamo mandato una conferma via email.`
+          : `Richiesta ${richiesta.numero} registrata: la trovi qui sotto e la vediamo anche noi. Non è stato possibile mandarti l’email di conferma.`;
       });
 
     if (modulo.dataset.rispondi)
