@@ -1,0 +1,118 @@
+---
+/**
+ * Avviso obbligatorio al primo accesso: i contenuti sui dispositivi medici
+ * sono riservati agli operatori del settore (D.Lgs. 24 febbraio 1997, n. 46).
+ * La conferma resta salvata sul dispositivo del visitatore.
+ */
+---
+
+<dialog class="avviso-pro" aria-labelledby="avviso-pro-titolo" data-avviso-pro>
+  <div data-passo="domanda">
+    <h2 id="avviso-pro-titolo">Sei un professionista del settore?</h2>
+    <p>
+      L’accesso alla visualizzazione dei contenuti del sito www.fgitalia.it è riservato agli operatori del settore in
+      ottemperanza alla legislazione vigente (Decreto Legislativo 24 febbraio 1997, n. 46).
+    </p>
+    <div class="avviso-pro__azioni">
+      <button class="pulsante pulsante--primario" type="button" data-sono-pro>Sono un professionista</button>
+      <button class="pulsante pulsante--contorno" type="button" data-non-pro>Non sono un professionista</button>
+    </div>
+  </div>
+
+  <div data-passo="bloccato" hidden>
+    <h2>Accesso riservato</h2>
+    <p>
+      Ci dispiace, i contenuti di questo sito sono riservati agli operatori del settore sanitario, come previsto dal
+      Decreto Legislativo 24 febbraio 1997, n. 46.
+    </p>
+    <div class="avviso-pro__azioni">
+      <button class="pulsante pulsante--contorno" type="button" data-indietro>Ho sbagliato, sono un professionista</button>
+    </div>
+  </div>
+</dialog>
+
+<script>
+  const CHIAVE = 'fgitalia-professionista';
+  const finestra = document.querySelector<HTMLDialogElement>('[data-avviso-pro]');
+
+  function confermato(): boolean {
+    try {
+      return localStorage.getItem(CHIAVE) === 'si';
+    } catch {
+      return false;
+    }
+  }
+
+  if (finestra && !confermato()) {
+    const domanda = finestra.querySelector<HTMLElement>('[data-passo="domanda"]')!;
+    const bloccato = finestra.querySelector<HTMLElement>('[data-passo="bloccato"]')!;
+
+    // la finestra non si chiude con Esc: serve una scelta esplicita
+    finestra.addEventListener('cancel', (e) => e.preventDefault());
+
+    finestra.querySelector('[data-sono-pro]')!.addEventListener('click', () => {
+      try {
+        localStorage.setItem(CHIAVE, 'si');
+      } catch {
+        // senza memoria nel browser l'avviso ricomparirà alla prossima pagina
+      }
+      finestra.close();
+      document.documentElement.classList.remove('avviso-pro-aperto');
+    });
+
+    finestra.querySelector('[data-non-pro]')!.addEventListener('click', () => {
+      domanda.hidden = true;
+      bloccato.hidden = false;
+    });
+
+    finestra.querySelector('[data-indietro]')!.addEventListener('click', () => {
+      bloccato.hidden = true;
+      domanda.hidden = false;
+    });
+
+    document.documentElement.classList.add('avviso-pro-aperto');
+    finestra.showModal();
+  }
+</script>
+
+<style>
+  .avviso-pro {
+    width: min(640px, calc(100% - 32px));
+    max-height: calc(100% - 32px);
+    padding: clamp(24px, 5vw, 40px);
+    border: 0;
+    border-radius: var(--raggio);
+    background: var(--bianco);
+    color: var(--grigio-900);
+    box-shadow: var(--ombra-forte);
+    text-align: center;
+  }
+
+  .avviso-pro::backdrop {
+    background: rgb(8 22 63 / 0.75);
+    backdrop-filter: blur(6px);
+  }
+
+  .avviso-pro h2 {
+    margin: 0 0 12px;
+    font-size: clamp(1.3rem, 3vw, 1.6rem);
+    line-height: 1.25;
+    color: var(--blu-900);
+  }
+
+  .avviso-pro p {
+    margin: 0 0 24px;
+    color: var(--grigio-700);
+  }
+
+  .avviso-pro__azioni {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 12px;
+  }
+
+  :global(html.avviso-pro-aperto) {
+    overflow: hidden;
+  }
+</style>
