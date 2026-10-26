@@ -2,7 +2,7 @@
 import { getEntry } from 'astro:content';
 import Icona from './Icona.astro';
 import type { Prodotto } from '../lib/catalogo';
-import { prezzo } from '../lib/sito';
+import { prezzo, statiDisponibilita } from '../lib/sito';
 
 interface Props {
   prodotto: Prodotto;
@@ -11,6 +11,7 @@ interface Props {
 const { prodotto } = Astro.props;
 const { titolo, immagini, descrizione_breve, sottocategoria } = prodotto.data;
 const prezzoTesto = prezzo(prodotto.data.prezzo);
+const { disponibilita } = prodotto.data;
 const categoria = await getEntry(prodotto.data.categoria);
 const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefined;
 ---
@@ -32,6 +33,11 @@ const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefi
       )
     }
     {marca && <span class="card-prodotto__marca">{marca.data.nome}</span>}
+    {disponibilita !== 'disponibile' && (
+      <span class:list={['card-prodotto__stato', `card-prodotto__stato--${disponibilita}`]}>
+        {statiDisponibilita[disponibilita].etichetta}
+      </span>
+    )}
   </div>
   <div class="card-prodotto__corpo">
     <span class="card-prodotto__categoria">{sottocategoria ?? categoria?.data.titolo}</span>
@@ -97,7 +103,7 @@ const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefi
     align-items: center;
     justify-content: center;
     color: var(--blu-600);
-    background: linear-gradient(135deg, var(--blu-50), var(--verde-chiaro));
+    background: linear-gradient(135deg, var(--blu-50), var(--accento-chiaro));
   }
 
   .card-prodotto__marca {
@@ -114,6 +120,22 @@ const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefi
     box-shadow: var(--ombra);
   }
 
+  .card-prodotto__stato {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--bianco);
+    background: var(--blu-700);
+  }
+
+  .card-prodotto__stato--esaurito {
+    background: #b42318;
+  }
+
   .card-prodotto__corpo {
     display: flex;
     flex: 1;
@@ -124,7 +146,7 @@ const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefi
   .card-prodotto__categoria {
     font-size: 0.8rem;
     font-weight: 700;
-    color: var(--verde-scuro);
+    color: var(--accento-testo);
     margin-bottom: 6px;
   }
 
@@ -166,7 +188,7 @@ const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefi
 
   .card-prodotto__prezzo--richiesta {
     font-size: 0.95rem;
-    color: var(--verde-scuro);
+    color: var(--accento-testo);
   }
 
   .card-prodotto__link {
@@ -182,7 +204,7 @@ const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefi
   }
 
   .card-prodotto:hover .card-prodotto__link {
-    background: var(--verde);
+    background: var(--accento);
     color: var(--blu-900);
   }
 
@@ -215,7 +237,23 @@ const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefi
       font-size: 0.68rem;
     }
 
-    .card-prodotto__corpo {
+    .card-prodotto__stato {
+    position: absolute;
+    right: 12px;
+    bottom: 12px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    font-size: 0.75rem;
+    font-weight: 800;
+    color: var(--bianco);
+    background: var(--blu-700);
+  }
+
+  .card-prodotto__stato--esaurito {
+    background: #b42318;
+  }
+
+  .card-prodotto__corpo {
       padding: 12px;
     }
 

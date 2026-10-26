@@ -36,6 +36,10 @@ const prodotti = defineCollection({
     descrizione_breve: z.string(),
     /** Prezzo in euro IVA esclusa; se manca il sito mostra "Prezzo su richiesta" */
     prezzo: z.preprocess((v) => (v === '' || v === null || v === 0 ? undefined : v), z.coerce.number().positive().optional()),
+    disponibilita: z.preprocess(
+      (v) => v || undefined,
+      z.enum(['disponibile', 'su_ordinazione', 'esaurito']).default('disponibile'),
+    ),
     immagini: z.preprocess((v) => v ?? [], z.array(z.string())),
     specifiche: z.preprocess((v) => v ?? [], z.array(z.object({ nome: z.string(), valore: z.coerce.string() }))),
     scheda_pdf: vuotoComeAssente(z.string()),

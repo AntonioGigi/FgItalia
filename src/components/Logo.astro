@@ -8,7 +8,7 @@ interface Props {
 const { chiaro = false } = Astro.props;
 ---
 
-<a href="/" class:list={['logo', { 'logo--chiaro': chiaro }]} aria-label={`${sito.nome_breve} – torna alla home`}>
+<a href="/" class:list={['logo', { 'logo--chiaro': chiaro, 'logo--immagine': sito.logo }]} aria-label={`${sito.nome_breve} – torna alla home`}>
   {
     sito.logo ? (
       <img src={sito.logo} alt={sito.nome_breve} height="44" />
@@ -45,8 +45,15 @@ const { chiaro = false } = Astro.props;
   }
 
   .logo img {
-    height: 44px;
+    height: 46px;
     width: auto;
+  }
+
+  /* il logo originale è blu e giallo: su fondo scuro lo appoggio su una targhetta bianca */
+  .logo--chiaro.logo--immagine {
+    padding: 8px 14px;
+    border-radius: 14px;
+    background: var(--bianco);
   }
 
   .logo__segno {
@@ -62,7 +69,7 @@ const { chiaro = false } = Astro.props;
   }
 
   .logo__testo span {
-    color: var(--verde-scuro);
+    color: var(--accento-testo);
   }
 
   .logo--chiaro .logo__segno {
@@ -74,6 +81,6 @@ const { chiaro = false } = Astro.props;
   }
 
   .logo--chiaro .logo__testo span {
-    color: var(--verde);
+    color: var(--accento);
   }
 </style>

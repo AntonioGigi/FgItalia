@@ -70,6 +70,14 @@ collections:
         name: descrizione_breve
         widget: text
         hint: Due o tre frasi. Compare nel catalogo e nelle anteprime su WhatsApp/Facebook.
+      - label: Disponibilità
+        name: disponibilita
+        widget: select
+        default: disponibile
+        options:
+          - { label: Disponibile, value: disponibile }
+          - { label: Su ordinazione, value: su_ordinazione }
+          - { label: Esaurito (non ordinabile), value: esaurito }
       - label: Foto
         name: immagini
         widget: list

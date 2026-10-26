@@ -42,6 +42,12 @@ export function urlFacebook(): string | undefined {
 
 export const formatoData = new Intl.DateTimeFormat('it-IT', { day: 'numeric', month: 'long', year: 'numeric' });
 
+export const statiDisponibilita = {
+  disponibile: { etichetta: 'Disponibile', schema: 'https://schema.org/InStock' },
+  su_ordinazione: { etichetta: 'Su ordinazione', schema: 'https://schema.org/PreOrder' },
+  esaurito: { etichetta: 'Esaurito', schema: 'https://schema.org/OutOfStock' },
+} as const;
+
 const formatoEuro = new Intl.NumberFormat('it-IT', { style: 'currency', currency: 'EUR', useGrouping: 'always' });
 
 /** "€ 1.475,41" — i prezzi del catalogo sono IVA esclusa */

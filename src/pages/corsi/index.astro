@@ -1,10 +1,10 @@
 ---
 import { render } from 'astro:content';
-import Base from '../layouts/Base.astro';
-import TestataPagina from '../components/TestataPagina.astro';
-import Icona from '../components/Icona.astro';
-import { corsiPubblicati } from '../lib/catalogo';
-import { formatoData, prezzo } from '../lib/sito';
+import Base from '../../layouts/Base.astro';
+import TestataPagina from '../../components/TestataPagina.astro';
+import Icona from '../../components/Icona.astro';
+import { corsiPubblicati } from '../../lib/catalogo';
+import { formatoData, prezzo } from '../../lib/sito';
 
 const { prossimi, passati } = await corsiPubblicati();
 const conTesto = await Promise.all(prossimi.map(async (corso) => ({ corso, Content: (await render(corso)).Content })));
@@ -180,7 +180,7 @@ const conTesto = await Promise.all(prossimi.map(async (corso) => ({ corso, Conte
   .corso__data span {
     font-size: 0.8rem;
     font-weight: 700;
-    color: var(--verde);
+    color: var(--accento);
   }
 
   .corso__info {
@@ -263,8 +263,8 @@ const conTesto = await Promise.all(prossimi.map(async (corso) => ({ corso, Conte
   .modulo-corsi input:focus,
   .modulo-corsi select:focus {
     outline: none;
-    border-color: var(--verde);
-    box-shadow: 0 0 0 4px rgb(18 179 163 / 0.2);
+    border-color: var(--accento);
+    box-shadow: 0 0 0 4px rgb(248 200 0 / 0.2);
   }
 
   .modulo-corsi__privacy {
@@ -277,7 +277,7 @@ const conTesto = await Promise.all(prossimi.map(async (corso) => ({ corso, Conte
     width: 20px;
     height: 20px;
     margin-top: 2px;
-    accent-color: var(--verde-scuro);
+    accent-color: var(--accento-testo);
   }
 
   .modulo-corsi__privacy span {
