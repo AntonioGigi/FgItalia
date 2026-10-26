@@ -18,7 +18,7 @@ interface Props {
 }
 
 const { prodotto, tutti } = Astro.props;
-const { titolo, codice, descrizione_breve, immagini, specifiche, scheda_pdf, sottocategoria } = prodotto.data;
+const { titolo, codice, descrizione_breve, immagini, specifiche, scheda_pdf, documenti, sottocategoria } = prodotto.data;
 const prezzoTesto = prezzo(prodotto.data.prezzo);
 const { disponibilita } = prodotto.data;
 const esaurito = disponibilita === 'esaurito';
@@ -185,6 +185,17 @@ const datiStrutturati = {
                 </span>
               </a>
             )
+          }
+          {
+            documenti.map((d) => (
+              <a class="scheda__pdf" href={d.file} target="_blank" rel="noopener">
+                <Icona nome="documento" />
+                <span>
+                  <strong>{d.titolo}</strong>
+                  <small>Scarica il PDF</small>
+                </span>
+              </a>
+            ))
           }
 
           <ul class="scheda__garanzie">

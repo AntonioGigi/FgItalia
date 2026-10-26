@@ -2,6 +2,7 @@ import type { Config } from '@netlify/functions';
 import type Stripe from 'stripe';
 import { errore, json, variabile } from '../lib/ambiente';
 import { emailAggiornamentoStato, emailConfermaCliente, emailNegozio, emailNuovoOrdineNegozio, inviaEmail } from '../lib/email';
+import { clienteDaEmail, collegaOrdine, idCliente, leggiCliente } from '../lib/clienti';
 import { leggiOrdine, numeroValido, salvaOrdine, type Indirizzo, type Ordine } from '../lib/ordini';
 import { stripe } from '../lib/stripe';
 
@@ -33,7 +34,9 @@ export default async (req: Request) => {
     case 'checkout.session.completed': {
       if (await leggiOrdine(numero)) return json({ giaRegistrato: true });
       const ordine = await costruisciOrdine(sessione, numero);
+      await completaDaAccount(ordine);
       await salvaOrdine(ordine);
+      await collegaAccount(ordine);
       await notificaOrdine(ordine);
       break;
     }
@@ -59,6 +62,33 @@ export default async (req: Request) => {
   }
   return json({ ricevuto: true });
 };
+
+/** Se il cliente ha un account, i dati di fatturazione mancanti si prendono dal suo profilo */
+async function completaDaAccount(o: Ordine) {
+  try {
+    const cliente = (o.account && (await leggiCliente(o.account))) || (o.cliente.email && (await clienteDaEmail(o.cliente.email)));
+    if (!cliente) return;
+    o.account = cliente.id;
+    const f = cliente.fatturazione;
+    const ordine = o.fatturazione;
+    ordine.partitaIva ??= f.partitaIva;
+    ordine.codiceFiscale ??= f.codiceFiscale;
+    ordine.codiceSdiPec ??= f.codiceSdi ?? f.pec;
+    if (f.ragioneSociale && ordine.nome !== f.ragioneSociale) ordine.nome = [f.ragioneSociale, ordine.nome].filter(Boolean).join(' – ');
+  } catch (e) {
+    console.error('Dati dell’account non letti', e);
+  }
+}
+
+/** L'ordine compare nell'area clienti sia dell'account collegato sia di chi ha la stessa email */
+async function collegaAccount(o: Ordine) {
+  try {
+    const id = [o.account, o.cliente.email && idCliente(o.cliente.email)].filter((x): x is string => !!x);
+    for (const chi of new Set(id)) await collegaOrdine(chi, o.numero);
+  } catch (e) {
+    console.error('Ordine non collegato all’account', e);
+  }
+}
 
 const destinatario = (o: Ordine) => ({ email: o.cliente.email, nome: o.cliente.nome });
 
@@ -135,6 +165,7 @@ async function costruisciOrdine(s: Stripe.Checkout.Session, numero: string): Pro
       totaleCent: s.amount_total ?? 0,
     },
     storico: [{ stato, data: adesso }],
+    ...(s.metadata?.cliente && { account: s.metadata.cliente }),
     stripe: {
       sessione: s.id,
       pagamento: typeof s.payment_intent === 'string' ? s.payment_intent : s.payment_intent?.id,

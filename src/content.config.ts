@@ -43,6 +43,21 @@ const prodotti = defineCollection({
     immagini: z.preprocess((v) => v ?? [], z.array(z.string())),
     specifiche: z.preprocess((v) => v ?? [], z.array(z.object({ nome: z.string(), valore: z.coerce.string() }))),
     scheda_pdf: vuotoComeAssente(z.string()),
+    /** manuali, certificati CE e altri documenti: compaiono nella scheda e nell'area clienti di chi l'ha acquistato */
+    documenti: z.preprocess(
+      (v) => v ?? [],
+      z.array(
+        z.object({
+          titolo: z.string(),
+          file: z.string(),
+          tipo: z.preprocess((v) => v || undefined, z.enum(['manuale', 'certificato_ce', 'dichiarazione', 'scheda', 'altro']).default('altro')),
+        }),
+      ),
+    ),
+    /** prodotto che si riordina spesso (creme, elettrodi, tape…); se manca vale per la categoria "materiali di consumo" */
+    consumabile: z.preprocess((v) => (v === null || v === '' ? undefined : v), z.boolean().optional()),
+    /** ogni quanti mesi va fatta la manutenzione o la verifica di sicurezza; se manca vale 12 per le apparecchiature */
+    manutenzione_mesi: z.preprocess((v) => (v === '' || v === null ? undefined : v), z.coerce.number().int().min(0).max(120).optional()),
     in_evidenza: z.boolean().default(false),
     pubblicato: z.boolean().default(true),
   }),

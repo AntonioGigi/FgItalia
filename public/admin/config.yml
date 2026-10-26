@@ -93,6 +93,37 @@ collections:
           - { label: Voce, name: nome, widget: string, hint: 'Es. Alimentazione' }
           - { label: Valore, name: valore, widget: string, hint: 'Es. 230 V – 50 Hz' }
       - { label: Scheda tecnica (PDF), name: scheda_pdf, widget: file, required: false }
+      - label: Manuali, certificati CE e altri documenti
+        name: documenti
+        widget: list
+        required: false
+        summary: '{{fields.titolo}}'
+        hint: I clienti che hanno acquistato il prodotto li ritrovano nella loro area clienti.
+        fields:
+          - { label: Titolo, name: titolo, widget: string, hint: 'Es. Manuale d’uso, Certificato CE, Dichiarazione di conformità' }
+          - label: Tipo
+            name: tipo
+            widget: select
+            default: manuale
+            options:
+              - { label: Manuale d’uso, value: manuale }
+              - { label: Certificato CE, value: certificato_ce }
+              - { label: Dichiarazione di conformità, value: dichiarazione }
+              - { label: Scheda tecnica o di sicurezza, value: scheda }
+              - { label: Altro, value: altro }
+          - { label: File (PDF), name: file, widget: file }
+      - label: Materiale di consumo (riordino rapido)
+        name: consumabile
+        widget: boolean
+        required: false
+        hint: Se acceso, il prodotto compare nel "Riordino rapido" dell'area clienti. Per la categoria "Materiali di consumo" vale già in automatico.
+      - label: Manutenzione ogni (mesi)
+        name: manutenzione_mesi
+        widget: number
+        value_type: int
+        min: 0
+        required: false
+        hint: Per le apparecchiature. Il cliente riceve un promemoria prima della scadenza. Vuoto = 12 mesi per le apparecchiature; 0 = nessuna manutenzione.
       - { label: In evidenza nella home, name: in_evidenza, widget: boolean, default: false }
       - { label: Pubblicato, name: pubblicato, widget: boolean, default: true }
       - { label: Descrizione completa, name: body, widget: markdown, required: false }
