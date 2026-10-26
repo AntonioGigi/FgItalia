@@ -427,3 +427,34 @@ describe('eliminazione dell’account', () => {
     expect(archivi.get('ordini')!.has('FG-261022-CCCC')).toBe(true);
   }, 10_000);
 });
+
+describe('errori imprevisti', () => {
+  it('spiega cosa manca invece di un errore generico', async () => {
+    const cookie = await registra();
+    const segreto = process.env.SESSION_SECRET;
+    delete process.env.SESSION_SECRET;
+    try {
+      const r = await chiama({ azione: 'preventivo', carrello: [{ id: 'genesy', quantita: 1 }] }, cookie);
+      expect(r.status).toBe(500);
+      expect((await r.json()).errore).toContain('SESSION_SECRET');
+    } finally {
+      process.env.SESSION_SECRET = segreto;
+    }
+  });
+
+  it('legge il catalogo dall’indirizzo da cui arriva la richiesta', async () => {
+    const cookie = await registra();
+    const chiesti: string[] = [];
+    const originale = globalThis.fetch;
+    vi.stubGlobal('fetch', async (url: string, opzioni?: RequestInit) => (chiesti.push(url), originale(url, opzioni)));
+    try {
+      const r = await account(
+        new Request('https://anteprima.netlify.app/api/account', json({ azione: 'preventivo', carrello: [{ id: 'genesy', quantita: 1 }] }, { cookie })),
+      );
+      expect(r.status).toBe(200);
+      expect(chiesti).toContain('https://anteprima.netlify.app/api/catalogo.json');
+    } finally {
+      vi.stubGlobal('fetch', originale);
+    }
+  });
+});
