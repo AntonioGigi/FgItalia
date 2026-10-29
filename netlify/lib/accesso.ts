@@ -2,10 +2,10 @@ import { createHmac, timingSafeEqual } from 'node:crypto';
 
 /**
  * Accesso al pannello ordini: la password è nella variabile ADMIN_PASSWORD.
- * Dopo l'accesso il browser riceve un gettone firmato valido 30 giorni;
+ * Dopo l'accesso il browser riceve un gettone firmato valido 7 giorni;
  * cambiando la password tutti i gettoni smettono di funzionare.
  */
-const DURATA_MS = 30 * 24 * 60 * 60 * 1000;
+const DURATA_MS = 7 * 24 * 60 * 60 * 1000;
 
 const firma = (dati: string, chiave: string) => createHmac('sha256', chiave).update(dati).digest('base64url');
 

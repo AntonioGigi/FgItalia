@@ -112,6 +112,24 @@ export async function verificaPassword(password: unknown, salvata: string): Prom
 
 export const passwordAccettabile = (p: unknown): p is string => typeof p === 'string' && p.length >= PASSWORD_MINIMA && p.length <= 200;
 
+/** Password fra le più usate al mondo (e varianti ovvie): sono le prime che provano i programmi di attacco */
+const PASSWORD_COMUNI = new Set([
+  '12345678', '123456789', '1234567890', '87654321', '11111111', '00000000', '12341234', '11223344', 'password',
+  'password1', 'password123', 'passw0rd', 'qwertyui', 'qwerty123', 'qwertyuiop', 'asdfghjk', 'iloveyou', 'abcd1234',
+  'abc12345', 'aaaaaaaa', 'princess', 'sunshine', 'football', 'baseball', 'superman', 'welcome1', 'admin123',
+  'changeme', 'ciao1234', 'ciaociao', 'juventus', 'napoli1926', 'fisioterapia', 'fgitalia', 'fgitalia1',
+]);
+
+/** Spiega perché la password è troppo facile da indovinare, oppure undefined se va bene */
+export function passwordDebole(p: string, email = ''): string | undefined {
+  const minuscola = p.toLowerCase();
+  const nomeEmail = email.split('@')[0]?.toLowerCase();
+  if (PASSWORD_COMUNI.has(minuscola) || /^(.)\1+$/.test(p) || /^\d+$/.test(p) && new Set(p).size <= 3)
+    return 'Questa password è tra le più usate: scegline una meno prevedibile.';
+  if (nomeEmail && nomeEmail.length >= 4 && minuscola.includes(nomeEmail)) return 'La password non deve contenere il tuo indirizzo email.';
+  return undefined;
+}
+
 // ——— sessione e link per reimpostare la password ———
 
 const firma = (dati: string) => createHmac('sha256', variabile('SESSION_SECRET')).update(dati).digest('base64url');

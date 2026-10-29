@@ -129,7 +129,7 @@ const datiStrutturati = {
 
           {
             acquistabileOnline && (
-              <form class="acquisto" data-acquisto={prodotto.id} onsubmit="return false">
+              <form class="acquisto" data-acquisto={prodotto.id}>
                 <div class="quantita" role="group" aria-label="Quantità">
                   <button type="button" data-meno aria-label="Diminuisci la quantità">
                     <Icona nome="meno" dimensione={18} />
@@ -270,7 +270,8 @@ const datiStrutturati = {
     const leggi = () => Math.min(99, Math.max(1, Math.floor(Number(campo.value)) || 1));
     modulo.querySelector('[data-meno]')?.addEventListener('click', () => (campo.value = String(Math.max(1, leggi() - 1))));
     modulo.querySelector('[data-piu]')?.addEventListener('click', () => (campo.value = String(Math.min(99, leggi() + 1))));
-    modulo.addEventListener('submit', () => {
+    modulo.addEventListener('submit', (e) => {
+      e.preventDefault();
       aggiungi(modulo.dataset.acquisto!, leggi());
       campo.value = '1';
       if (avviso) avviso.hidden = false;

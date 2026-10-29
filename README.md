@@ -81,6 +81,23 @@ Gli account dei clienti, i preventivi e le richieste di assistenza sono salvati 
 6. **Assistenza:** le richieste arrivano via email a `EMAIL_NOTIFICHE` (quelle con lo studio fermo hanno 🔴 nell'oggetto) e si gestiscono in `/gestione-ordini/`, scheda "Assistenza". Rispondendo all'email si scrive direttamente al cliente.
 7. **Preventivi:** ogni preventivo scaricato da un cliente arriva anche via email a FGItalia, utile per richiamarlo.
 
+## Sicurezza
+
+Cosa fa il sito:
+- **HTTPS ovunque** (certificato automatico di Netlify, `Strict-Transport-Security`).
+- **Content Security Policy** in ogni pagina (`astro.config.mjs`): il browser esegue solo gli script del sito, riconosciuti dalla loro impronta SHA-256. Insieme a `X-Frame-Options`, `Permissions-Policy` e `Cross-Origin-Opener-Policy` (in `netlify.toml`) protegge da codice iniettato e da pagine false che incorniciano il sito.
+- **Pagamenti:** i dati di carta e PayPal restano su Stripe (PCI DSS); il sito ricalcola i prezzi lato server e accetta solo notifiche di pagamento firmate da Stripe.
+- **Area clienti:** password con scrypt e sale casuale, password troppo comuni rifiutate, sessione in cookie firmato `HttpOnly`/`Secure`/`SameSite`, cambio password che chiude le altre sessioni, richieste accettate solo dal sito stesso.
+- **Limiti contro i tentativi a raffica** (`netlify/lib/limiti.ts`): accesso clienti (8 errori per account, 20 per connessione ogni 15 minuti), pannello ordini (5 errori per connessione ogni 15 minuti, 30 in tutto ogni ora), recupero password (3 email all'ora per indirizzo), registrazioni, ricerca ordini, pagamenti e iscrizioni. I contatori usano impronte: niente IP o email in chiaro.
+- **Documenti:** fatture, preventivi e ordini si scaricano solo dal titolare; le pagine con dati personali non vanno in cache né su Google.
+- **Errori:** al visitatore solo un codice, il dettaglio resta nei log di Netlify.
+
+Cosa deve fare chi gestisce il sito:
+- Attivare la **verifica in due passaggi (2FA)** su GitHub, Netlify, Stripe, Brevo e Aruba: chi entra in uno di questi account vede tutti i dati.
+- Usare password lunghe e diverse per `ADMIN_PASSWORD`, `SESSION_SECRET` (almeno 32 caratteri casuali) e gli account dei servizi.
+- In GitHub, *Settings → Code security*: attivare **Dependabot security updates** per ricevere le correzioni di sicurezza delle librerie.
+- Se una chiave finisce dove non deve (chat, email, foto): rigenerarla subito sul servizio e aggiornarla su Netlify.
+
 ### Google
 - [Google Search Console](https://search.google.com/search-console): aggiungi il sito e invia la sitemap `https://www.fgitalia.it/sitemap.xml`.
 - [Google Merchant Center](https://merchants.google.com): aggiungi il feed `https://www.fgitalia.it/feed-google.xml` per comparire gratis in Google Shopping.

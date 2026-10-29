@@ -11,9 +11,35 @@
 
 # I reindirizzamenti dai vecchi indirizzi WordPress sono in public/_redirects
 
+# Intestazioni di sicurezza per tutte le pagine (la Content Security Policy completa è in ogni pagina,
+# generata da Astro con le impronte degli script: vedi astro.config.mjs)
 [[headers]]
   for = "/*"
   [headers.values]
+    # solo HTTPS per un anno (non si estende ai sottodomini, per non toccare la posta di Aruba)
+    Strict-Transport-Security = "max-age=31536000"
     X-Content-Type-Options = "nosniff"
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Frame-Options = "SAMEORIGIN"
+    Content-Security-Policy = "frame-ancestors 'self'; object-src 'none'; base-uri 'self'"
+    Cross-Origin-Opener-Policy = "same-origin"
+    Permissions-Policy = "camera=(), microphone=(), geolocation=(), usb=()"
+
+# Pagine con dati personali: mai in cache e mai indicizzate
+[[headers]]
+  for = "/account/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/gestione-ordini/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    X-Robots-Tag = "noindex, nofollow"
+
+[[headers]]
+  for = "/ordine/*"
+  [headers.values]
+    Cache-Control = "no-store"
+    X-Robots-Tag = "noindex, nofollow"

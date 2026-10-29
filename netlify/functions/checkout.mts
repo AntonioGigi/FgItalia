@@ -1,8 +1,9 @@
-import type { Config } from '@netlify/functions';
+import type { Config, Context } from '@netlify/functions';
 import { calcolaTotali } from '../../src/lib/negozio';
 import { errore, json, urlSito } from '../lib/ambiente';
 import { leggiCatalogo } from '../lib/catalogo';
 import { clienteDaRichiesta, salvaCliente, type Cliente } from '../lib/clienti';
+import { ipRichiesta, MINUTI, superaLimite } from '../lib/limiti';
 import { nuovoNumeroOrdine, nuovoToken } from '../lib/ordini';
 import { stripe } from '../lib/stripe';
 
@@ -11,8 +12,10 @@ import { stripe } from '../lib/stripe';
  * a partire dal carrello. Prezzi e disponibilità vengono ricalcolati qui dal catalogo
  * pubblicato: il browser invia solo codici prodotto e quantità.
  */
-export default async (req: Request) => {
+export default async (req: Request, context?: Context) => {
   if (req.method !== 'POST') return errore('Metodo non consentito', 405);
+  if (await superaLimite(`checkout-ip:${ipRichiesta(req, context)}`, 20, 10 * MINUTI))
+    return errore('Troppi tentativi di pagamento ravvicinati: riprova tra qualche minuto.', 429);
 
   let corpo: { carrello?: unknown };
   try {
@@ -24,7 +27,7 @@ export default async (req: Request) => {
   const catalogo = await leggiCatalogo(req);
   if (!catalogo.negozioAttivo) return errore('Il pagamento online non è attivo: ordina su WhatsApp o con il modulo contatti.', 503);
 
-  const totali = calcolaTotali(Array.isArray(corpo.carrello) ? corpo.carrello : [], catalogo);
+  const totali = calcolaTotali(Array.isArray(corpo.carrello) ? corpo.carrello.slice(0, 100) : [], catalogo);
   if (totali.righe.length === 0) return errore('Il carrello è vuoto o i prodotti non sono più disponibili.');
 
   const sito = urlSito();
