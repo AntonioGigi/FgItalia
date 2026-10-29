@@ -1,7 +1,9 @@
 import type { Config, Context } from '@netlify/functions';
+import { getStore } from '@netlify/blobs';
 import { errore, json, variabile } from '../lib/ambiente';
 import { creaGettone, gettoneDaRichiesta, gettoneValido, passwordCorretta } from '../lib/accesso';
 import { emailAggiornamentoRichiesta, emailAggiornamentoStato, emailFatturaDisponibile, emailNegozio, inviaEmail } from '../lib/email';
+import { nuoviCodiciRecupero, prepara, verifica, type DueFattori } from '../lib/dueFattori';
 import { azzera, bloccato, conta, ipRichiesta, MINUTI, ORE } from '../lib/limiti';
 import { archivioFatture, elencoOrdini, leggiOrdine, salvaOrdine, STATI, type StatoOrdine } from '../lib/ordini';
 import { elencoRichieste, leggiRichiesta, salvaRichiesta, STATI_ASSISTENZA, type StatoAssistenza } from '../lib/pratiche';
@@ -10,6 +12,12 @@ import { elencoRichieste, leggiRichiesta, salvaRichiesta, STATI_ASSISTENZA, type
 const FATTURA_MASSIMA = 4 * 1024 * 1024;
 
 const pausa = (ms: number) => new Promise((r) => setTimeout(r, ms));
+
+/** Verifica in due passaggi del pannello: un solo segreto, salvato cifrato su Netlify Blobs */
+const archivioSicurezza = () => getStore({ name: 'sicurezza', consistency: 'strong' });
+const CHIAVE_2FA = 'pannello-due-fattori';
+const leggi2fa = async () => (await archivioSicurezza().get(CHIAVE_2FA, { type: 'json' })) as DueFattori | null;
+const salva2fa = (d: DueFattori) => archivioSicurezza().setJSON(CHIAVE_2FA, d);
 
 /** Pannello ordini di FGItalia: accesso, elenco, dettaglio e cambio di stato */
 export default async (req: Request, context?: Context) => {
@@ -34,12 +42,66 @@ export default async (req: Request, context?: Context) => {
       return errore('Password errata', 401);
     }
     await azzera(`admin-ip:${ip}`);
+    const dueFattori = await leggi2fa();
+    if (dueFattori?.attivo) {
+      if (!corpo.codice) return json({ serveCodice: true });
+      if (await bloccato('admin-codice', 5)) return errore('Troppi codici sbagliati: riprova tra 15 minuti.', 429);
+      if (!verifica(dueFattori, corpo.codice)) {
+        await conta('admin-codice', 15 * MINUTI);
+        await pausa(1500);
+        return errore('Codice non valido: controlla l’app o usa un codice di recupero.', 401);
+      }
+      await salva2fa(dueFattori);
+      await azzera('admin-codice');
+    }
     return json({ gettone: creaGettone(password) });
   }
 
   if (!gettoneValido(gettoneDaRichiesta(req), password)) return errore('Accesso scaduto: inserisci di nuovo la password', 401);
 
   switch (corpo.azione) {
+    case 'sicurezza-stato': {
+      const d = await leggi2fa();
+      return json({ attiva: !!d?.attivo, codiciRimasti: d?.attivo ? d.recupero.length : 0 });
+    }
+
+    case 'sicurezza-prepara': {
+      if ((await leggi2fa())?.attivo) return errore('La verifica in due passaggi è già attiva.');
+      const p = await prepara('pannello ordini');
+      await salva2fa(p.dati);
+      return json({ qr: p.qr, chiave: p.chiaveManuale, link: p.link });
+    }
+
+    case 'sicurezza-attiva': {
+      const d = await leggi2fa();
+      if (!d || d.attivo) return errore('Prima genera il codice QR.');
+      if (!verifica(d, corpo.codice)) return errore('Il codice non corrisponde: controlla che l’ora del telefono sia giusta e riprova.');
+      const { codici, impronte } = nuoviCodiciRecupero();
+      d.attivo = true;
+      d.recupero = impronte;
+      await salva2fa(d);
+      return json({ attiva: true, codici });
+    }
+
+    case 'sicurezza-disattiva':
+    case 'sicurezza-nuovi-codici': {
+      const d = await leggi2fa();
+      if (!d?.attivo) return errore('La verifica in due passaggi non è attiva.');
+      if (await bloccato('admin-codice', 5)) return errore('Troppi codici sbagliati: riprova tra 15 minuti.', 429);
+      if (!verifica(d, corpo.codice)) {
+        await conta('admin-codice', 15 * MINUTI);
+        return errore('Codice non valido.', 403);
+      }
+      if (corpo.azione === 'sicurezza-disattiva') {
+        await archivioSicurezza().delete(CHIAVE_2FA);
+        return json({ attiva: false });
+      }
+      const { codici, impronte } = nuoviCodiciRecupero();
+      d.recupero = impronte;
+      await salva2fa(d);
+      return json({ attiva: true, codici });
+    }
+
     case 'elenco':
       return json(await elencoOrdini());
 

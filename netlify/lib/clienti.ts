@@ -2,6 +2,7 @@ import { getStore } from '@netlify/blobs';
 import { createHash, createHmac, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { variabile } from './ambiente';
+import type { DueFattori } from './dueFattori';
 import { archivioOrdini, type Indirizzo, type Ordine } from './ordini';
 
 /**
@@ -54,7 +55,12 @@ export interface Cliente {
   /** data in cui ha dichiarato di essere un operatore del settore */
   dichiarazioneProfessionista: string;
   creato: string;
+  /** vuota per chi si è registrato con Google e non ha ancora scelto una password */
   passwordHash: string;
+  /** identificativo Google (campo "sub") se ha collegato l'accesso con Google */
+  google?: string;
+  /** verifica in due passaggi: attiva, oppure in preparazione finché il cliente non conferma il primo codice */
+  dueFattori?: DueFattori;
   /** cambia a ogni nuova password: le sessioni precedenti smettono di funzionare */
   versione: number;
   fatturazione: DatiFatturazione;
@@ -296,6 +302,68 @@ export const numeroPraticaValido = (prefisso: string, n: unknown): n is string =
 
 /** Quello che il browser riceve del cliente (mai l'impronta della password) */
 export function vistaAccount(c: Cliente) {
-  const { passwordHash: _hash, versione: _versione, stripe: _stripe, ...resto } = c;
-  return { ...resto, dispositivi: c.dispositivi.map((d) => ({ ...d, prossima: prossimaManutenzione(d) })) };
+  const { passwordHash, versione: _versione, stripe: _stripe, google, dueFattori, ...resto } = c;
+  return {
+    ...resto,
+    haPassword: !!passwordHash,
+    conGoogle: !!google,
+    dueFattori: !!dueFattori?.attivo,
+    codiciRecupero: dueFattori?.attivo ? dueFattori.recupero.length : 0,
+    dispositivi: c.dispositivi.map((d) => ({ ...d, prossima: prossimaManutenzione(d) })),
+  };
 }
+
+// ——— accesso in due tempi (codice dopo password o Google) ———
+
+export const COOKIE_ATTESA = 'fg_attesa';
+const DURATA_ATTESA_MS = 5 * 60 * 1000;
+
+/** Gettone di pochi minuti: password (o Google) già verificata, manca il codice a 6 cifre */
+export function creaAttesa(c: Cliente, adesso = Date.now()): string {
+  const dati = `${c.id}.${adesso + DURATA_ATTESA_MS}.${c.versione}`;
+  return `${dati}.${firma(`attesa.${dati}`)}`;
+}
+
+export async function clienteInAttesa(req: Request, adesso = Date.now()): Promise<Cliente | null> {
+  const [id, scadenza, versione, valore] = (leggiCookie(req, COOKIE_ATTESA) ?? '').split('.');
+  if (!id || !scadenza || !versione || !valore || Number(scadenza) < adesso) return null;
+  if (!uguali(valore, firma(`attesa.${id}.${scadenza}.${versione}`))) return null;
+  const cliente = await leggiCliente(id);
+  return cliente && cliente.versione === Number(versione) ? cliente : null;
+}
+
+export const cookieAttesa = (gettone: string) =>
+  `${COOKIE_ATTESA}=${encodeURIComponent(gettone)}; Path=/api/account; Max-Age=${DURATA_ATTESA_MS / 1000}; HttpOnly; Secure; SameSite=Lax`;
+export const cookieAttesaFinita = () => `${COOKIE_ATTESA}=; Path=/api/account; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
+
+// ——— registrazione con Google (in attesa di professione e dichiarazione) ———
+
+export const COOKIE_NUOVO_GOOGLE = 'fg_google_nuovo';
+const DURATA_NUOVO_MS = 20 * 60 * 1000;
+
+export interface NuovoGoogle {
+  email: string;
+  nome: string;
+  google: string;
+  scade: number;
+}
+
+export function creaNuovoGoogle(dati: Omit<NuovoGoogle, 'scade'>, adesso = Date.now()): string {
+  const corpo = Buffer.from(JSON.stringify({ ...dati, scade: adesso + DURATA_NUOVO_MS })).toString('base64url');
+  return `${corpo}.${firma(`nuovo-google.${corpo}`)}`;
+}
+
+export function leggiNuovoGoogle(req: Request, adesso = Date.now()): NuovoGoogle | null {
+  const [corpo, valore] = (leggiCookie(req, COOKIE_NUOVO_GOOGLE) ?? '').split('.');
+  if (!corpo || !valore || !uguali(valore, firma(`nuovo-google.${corpo}`))) return null;
+  try {
+    const dati = JSON.parse(Buffer.from(corpo, 'base64url').toString()) as NuovoGoogle;
+    return dati.scade > adesso ? dati : null;
+  } catch {
+    return null;
+  }
+}
+
+export const cookieNuovoGoogle = (gettone: string) =>
+  `${COOKIE_NUOVO_GOOGLE}=${encodeURIComponent(gettone)}; Path=/api/account; Max-Age=${DURATA_NUOVO_MS / 1000}; HttpOnly; Secure; SameSite=Lax`;
+export const cookieNuovoGoogleFinito = () => `${COOKIE_NUOVO_GOOGLE}=; Path=/api/account; Max-Age=0; HttpOnly; Secure; SameSite=Lax`;
