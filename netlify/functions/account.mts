@@ -1,4 +1,4 @@
-import type { Config } from '@netlify/functions';
+import type { Config, Context } from '@netlify/functions';
 import { errore, json, urlSito } from '../lib/ambiente';
 import { leggiCatalogo, leggiSchede } from '../lib/catalogo';
 import {
@@ -21,6 +21,7 @@ import {
   oggiIso,
   ordiniCliente,
   passwordAccettabile,
+  passwordDebole,
   salvaCliente,
   sincronizzaDispositivi,
   verificaPassword,
@@ -38,6 +39,7 @@ import {
   inviaEmail,
   linkStato,
 } from '../lib/email';
+import { azzera, bloccato, conta, ipRichiesta, MINUTI, ORE, superaLimite } from '../lib/limiti';
 import type { Indirizzo } from '../lib/ordini';
 import {
   TIPI_ASSISTENZA,
@@ -143,20 +145,24 @@ async function profilo(c: Cliente, req: Request) {
  * Area clienti: registrazione, accesso, dati di fatturazione, dispositivi,
  * preventivi e richieste di assistenza. La sessione è un cookie firmato (HttpOnly).
  */
-export default async (req: Request) => {
+export default async (req: Request, context?: Context) => {
   try {
-    return await gestisci(req);
+    return await gestisci(req, ipRichiesta(req, context));
   } catch (e) {
-    // un errore imprevisto diventa un messaggio leggibile (e finisce nei log di Netlify)
-    console.error('Area clienti: errore', e);
+    // il dettaglio dell'errore resta nei log di Netlify (cercando il codice); al visitatore non si mostrano dati interni
+    const codice = Math.random().toString(36).slice(2, 8).toUpperCase();
+    console.error(`Area clienti: errore ${codice}`, e);
     const messaggio = e instanceof Error ? e.message : String(e);
     if (messaggio.includes('SESSION_SECRET'))
       return errore('Area clienti non ancora configurata: manca la variabile SESSION_SECRET su Netlify.', 500);
-    return errore(`Non è stato possibile completare l’operazione (${messaggio.slice(0, 120)}). Riprova o contattaci.`, 500);
+    return errore(`Non è stato possibile completare l’operazione. Riprova o contattaci indicando il codice ${codice}.`, 500);
   }
 };
 
-async function gestisci(req: Request): Promise<Response> {
+const troppiTentativi = (minuti: number) =>
+  errore(`Troppi tentativi ravvicinati: per sicurezza riprova tra ${minuti} minuti o reimposta la password.`, 429);
+
+async function gestisci(req: Request, ip: string): Promise<Response> {
   if (req.method !== 'POST') return errore('Metodo non consentito', 405);
   // contro le richieste da altri siti: solo JSON e solo dalla stessa origine
   if (!(req.headers.get('content-type') ?? '').includes('application/json')) return errore('Richiesta non valida');
@@ -178,8 +184,11 @@ async function gestisci(req: Request): Promise<Response> {
       if (!nome) return errore('Scrivi nome e cognome.');
       if (!emailValida(email)) return errore('L’indirizzo email non è valido.');
       if (!passwordAccettabile(corpo.password)) return errore('La password deve avere almeno 8 caratteri.');
+      const debole = passwordDebole(corpo.password, email);
+      if (debole) return errore(debole);
       if (!professione) return errore('Indica la tua professione.');
       if (corpo.professionista !== true) return errore('L’area clienti è riservata agli operatori del settore: conferma la dichiarazione.');
+      if (await superaLimite(`registra:${ip}`, 5, ORE)) return errore('Troppe registrazioni da questa connessione: riprova più tardi.', 429);
       if (await clienteDaEmail(email)) return errore('Esiste già un account con questa email: accedi o recupera la password.', 409);
 
       const adesso = new Date().toISOString();
@@ -207,11 +216,16 @@ async function gestisci(req: Request): Promise<Response> {
     }
 
     case 'accedi': {
-      const cliente = await clienteDaEmail(normalizzaEmail(corpo.email));
+      const email = normalizzaEmail(corpo.email);
+      // al massimo 8 password sbagliate per account e 20 per connessione ogni 15 minuti
+      if ((await bloccato(`accedi-email:${email}`, 8)) || (await bloccato(`accedi-ip:${ip}`, 20))) return troppiTentativi(15);
+      const cliente = await clienteDaEmail(email);
       if (!cliente || !(await verificaPassword(corpo.password, cliente.passwordHash))) {
+        await Promise.all([conta(`accedi-email:${email}`, 15 * MINUTI), conta(`accedi-ip:${ip}`, 15 * MINUTI)]);
         await pausa(1200); // rallenta i tentativi a caso
         return errore('Email o password non corrette.', 401);
       }
+      await azzera(`accedi-email:${email}`);
       return conCookie(json({ nome: cliente.nome }), cookieSessione(creaSessione(cliente)));
     }
 
@@ -219,7 +233,10 @@ async function gestisci(req: Request): Promise<Response> {
       return conCookie(json({ uscito: true }), cookieUscita());
 
     case 'password-dimenticata': {
-      const cliente = await clienteDaEmail(normalizzaEmail(corpo.email));
+      const email = normalizzaEmail(corpo.email);
+      // niente valanghe di email: 3 link all'ora per indirizzo, 10 per connessione (la risposta resta uguale)
+      const limitato = (await superaLimite(`dimenticata-email:${email}`, 3, ORE)) || (await superaLimite(`dimenticata-ip:${ip}`, 10, ORE));
+      const cliente = limitato ? null : await clienteDaEmail(email);
       if (cliente) {
         const link = `${urlSito()}/account/reimposta/?t=${encodeURIComponent(creaLinkReimposta(cliente))}`;
         await notifica(() => inviaEmail({ email: cliente.email, nome: cliente.nome }, emailReimpostaPassword(cliente, link)));
@@ -229,9 +246,15 @@ async function gestisci(req: Request): Promise<Response> {
     }
 
     case 'reimposta': {
+      if (await bloccato(`reimposta-ip:${ip}`, 10)) return troppiTentativi(60);
       const cliente = await clienteDaLinkReimposta(corpo.gettone);
-      if (!cliente) return errore('Il link è scaduto o è già stato usato: chiedine uno nuovo.', 400);
+      if (!cliente) {
+        await conta(`reimposta-ip:${ip}`, ORE);
+        return errore('Il link è scaduto o è già stato usato: chiedine uno nuovo.', 400);
+      }
       if (!passwordAccettabile(corpo.password)) return errore('La password deve avere almeno 8 caratteri.');
+      const debole = passwordDebole(corpo.password, cliente.email);
+      if (debole) return errore(debole);
       cliente.passwordHash = await cifraPassword(corpo.password);
       cliente.versione += 1;
       await salvaCliente(cliente);
@@ -266,11 +289,15 @@ async function gestisci(req: Request): Promise<Response> {
     }
 
     case 'cambia-password': {
+      if (await bloccato(`conferma:${cliente.id}`, 5)) return troppiTentativi(15);
       if (!(await verificaPassword(corpo.attuale, cliente.passwordHash))) {
+        await conta(`conferma:${cliente.id}`, 15 * MINUTI);
         await pausa(800);
         return errore('La password attuale non è corretta.', 403);
       }
       if (!passwordAccettabile(corpo.nuova)) return errore('La nuova password deve avere almeno 8 caratteri.');
+      const debole = passwordDebole(corpo.nuova, cliente.email);
+      if (debole) return errore(debole);
       cliente.passwordHash = await cifraPassword(corpo.nuova);
       cliente.versione += 1; // esce dagli altri dispositivi
       await salvaCliente(cliente);
@@ -278,7 +305,9 @@ async function gestisci(req: Request): Promise<Response> {
     }
 
     case 'elimina-account': {
+      if (await bloccato(`conferma:${cliente.id}`, 5)) return troppiTentativi(15);
       if (!(await verificaPassword(corpo.password, cliente.passwordHash))) {
+        await conta(`conferma:${cliente.id}`, 15 * MINUTI);
         await pausa(800);
         return errore('La password non è corretta.', 403);
       }

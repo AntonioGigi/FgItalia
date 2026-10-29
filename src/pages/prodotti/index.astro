@@ -24,7 +24,7 @@ const marchi = (await marchiOrdinati()).filter((m) => marchiUsati.has(m.id));
   />
 
   <section class="contenitore catalogo">
-    <form class="filtri" role="search" data-filtri onsubmit="return false">
+    <form class="filtri" role="search" data-filtri>
       <label class="filtri__cerca">
         <Icona nome="cerca" dimensione={20} />
         <span class="solo-lettori">Cerca un prodotto</span>
@@ -114,6 +114,7 @@ const marchi = (await marchiOrdinati()).filter((m) => marchiUsati.has(m.id));
   }
 
   form?.addEventListener('input', filtra);
+  form?.addEventListener('submit', (e) => e.preventDefault());
   if (iniziali.size > 0) filtra();
 </script>
 

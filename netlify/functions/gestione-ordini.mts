@@ -1,7 +1,8 @@
-import type { Config } from '@netlify/functions';
+import type { Config, Context } from '@netlify/functions';
 import { errore, json, variabile } from '../lib/ambiente';
 import { creaGettone, gettoneDaRichiesta, gettoneValido, passwordCorretta } from '../lib/accesso';
 import { emailAggiornamentoRichiesta, emailAggiornamentoStato, emailFatturaDisponibile, emailNegozio, inviaEmail } from '../lib/email';
+import { azzera, bloccato, conta, ipRichiesta, MINUTI, ORE } from '../lib/limiti';
 import { archivioFatture, elencoOrdini, leggiOrdine, salvaOrdine, STATI, type StatoOrdine } from '../lib/ordini';
 import { elencoRichieste, leggiRichiesta, salvaRichiesta, STATI_ASSISTENZA, type StatoAssistenza } from '../lib/pratiche';
 
@@ -11,9 +12,10 @@ const FATTURA_MASSIMA = 4 * 1024 * 1024;
 const pausa = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
 /** Pannello ordini di FGItalia: accesso, elenco, dettaglio e cambio di stato */
-export default async (req: Request) => {
+export default async (req: Request, context?: Context) => {
   if (req.method !== 'POST') return errore('Metodo non consentito', 405);
   const password = variabile('ADMIN_PASSWORD');
+  const ip = ipRichiesta(req, context);
 
   let corpo: Record<string, unknown>;
   try {
@@ -23,10 +25,15 @@ export default async (req: Request) => {
   }
 
   if (corpo.azione === 'accedi') {
+    // 5 errori per connessione ogni 15 minuti, 30 in tutto ogni ora (anche da connessioni diverse)
+    if ((await bloccato(`admin-ip:${ip}`, 5)) || (await bloccato('admin-tutti', 30)))
+      return errore('Troppi tentativi con la password sbagliata: per sicurezza il pannello è bloccato per qualche minuto.', 429);
     if (!passwordCorretta(corpo.password, password)) {
+      await Promise.all([conta(`admin-ip:${ip}`, 15 * MINUTI), conta('admin-tutti', ORE)]);
       await pausa(1500); // rallenta i tentativi a caso
       return errore('Password errata', 401);
     }
+    await azzera(`admin-ip:${ip}`);
     return json({ gettone: creaGettone(password) });
   }
 

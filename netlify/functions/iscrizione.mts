@@ -1,10 +1,12 @@
-import type { Config } from '@netlify/functions';
+import type { Config, Context } from '@netlify/functions';
 import { errore, json } from '../lib/ambiente';
 import { aggiungiIscritto } from '../lib/email';
+import { ipRichiesta, ORE, superaLimite } from '../lib/limiti';
 
 /** Iscrizione agli avvisi su corsi e offerte (lista su Brevo) */
-export default async (req: Request) => {
+export default async (req: Request, context?: Context) => {
   if (req.method !== 'POST') return errore('Metodo non consentito', 405);
+  if (await superaLimite(`iscrizione-ip:${ipRichiesta(req, context)}`, 10, ORE)) return errore('Troppe iscrizioni da questa connessione: riprova più tardi.', 429);
   const dati = await req.formData().catch(() => null);
   if (!dati) return errore('Richiesta non valida');
 

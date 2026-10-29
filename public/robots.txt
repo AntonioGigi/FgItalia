@@ -1,6 +1,7 @@
 User-agent: *
 Disallow: /admin/
 Disallow: /gestione-ordini/
+Disallow: /account/
 Disallow: /carrello/
 Disallow: /ordine/
 Disallow: /api/
