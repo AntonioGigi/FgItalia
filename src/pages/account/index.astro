@@ -41,6 +41,50 @@ import { sito } from '../../lib/sito';
           <button class="pulsante pulsante--primario" type="submit">Accedi</button>
           <button class="collegamento" type="button" data-modulo-ingresso="dimenticata">Password dimenticata?</button>
           <p class="messaggio" role="alert" data-messaggio hidden></p>
+          {
+            sito.accesso_google && (
+              <>
+                <div class="oppure"><span>oppure</span></div>
+                <a class="pulsante pulsante--contorno pulsante-google" href="/api/account/google">
+                  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.5 5.5 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.7z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9h-4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.7V6.6h-4a12 12 0 0 0 0 10.8l4-3z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.6l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"/></svg>
+                  Continua con Google
+                </a>
+              </>
+            )
+          }
+        </form>
+
+        <form class="modulo" data-modulo="codice" hidden>
+          <p><strong>Verifica in due passaggi</strong><br />Apri l’app di autenticazione sul telefono e scrivi il codice a 6 cifre di FGItalia.</p>
+          <label>
+            <span>Codice</span>
+            <input name="codice" required inputmode="numeric" autocomplete="one-time-code" maxlength="11" placeholder="123456" />
+          </label>
+          <button class="pulsante pulsante--primario" type="submit">Conferma</button>
+          <p class="nota">Non hai il telefono? Scrivi uno dei codici di recupero che hai salvato (es. ABCDE-FGHJK).</p>
+          <button class="collegamento" type="button" data-modulo-ingresso="accedi">Torna all’accesso</button>
+          <p class="messaggio" role="alert" data-messaggio hidden></p>
+        </form>
+
+        <form class="modulo" data-modulo="completa-google" hidden>
+          <p><strong>Ultimo passo</strong><br />Hai effettuato l’accesso con Google. Completa la registrazione con la tua professione.</p>
+          <label><span>Telefono <small>(facoltativo)</small></span><input name="telefono" type="tel" autocomplete="tel" /></label>
+          <label>
+            <span>Professione</span>
+            <select name="professione" required data-professioni>
+              <option value="">Scegli…</option>
+            </select>
+          </label>
+          <label class="spunta">
+            <input type="checkbox" name="professionista" required />
+            <span>Dichiaro di essere un operatore del settore sanitario (D.Lgs. 24 febbraio 1997, n. 46).</span>
+          </label>
+          <label class="spunta">
+            <input type="checkbox" name="privacy" required />
+            <span>Ho letto l’<a href="/privacy/" target="_blank">informativa sulla privacy</a>.</span>
+          </label>
+          <button class="pulsante pulsante--primario" type="submit">Crea l’account</button>
+          <p class="messaggio" role="alert" data-messaggio hidden></p>
         </form>
 
         <form class="modulo" data-modulo="registra" hidden>
@@ -64,6 +108,17 @@ import { sito } from '../../lib/sito';
           </label>
           <button class="pulsante pulsante--primario" type="submit">Crea l’account</button>
           <p class="messaggio" role="alert" data-messaggio hidden></p>
+          {
+            sito.accesso_google && (
+              <>
+                <div class="oppure"><span>oppure</span></div>
+                <a class="pulsante pulsante--contorno pulsante-google" href="/api/account/google">
+                  <svg viewBox="0 0 24 24" width="20" height="20" aria-hidden="true"><path fill="#4285F4" d="M23.5 12.3c0-.8-.1-1.6-.2-2.3H12v4.4h6.5a5.5 5.5 0 0 1-2.4 3.6v3h3.9c2.2-2.1 3.5-5.1 3.5-8.7z"/><path fill="#34A853" d="M12 24c3.2 0 6-1.1 7.9-2.9l-3.9-3c-1.1.7-2.4 1.2-4 1.2-3.1 0-5.7-2.1-6.6-4.9h-4v3.1A12 12 0 0 0 12 24z"/><path fill="#FBBC05" d="M5.4 14.4a7.2 7.2 0 0 1 0-4.7V6.6h-4a12 12 0 0 0 0 10.8l4-3z"/><path fill="#EA4335" d="M12 4.8c1.8 0 3.3.6 4.6 1.8l3.4-3.4A12 12 0 0 0 1.4 6.6l4 3.1C6.3 6.9 8.9 4.8 12 4.8z"/></svg>
+                  Continua con Google
+                </a>
+              </>
+            )
+          }
         </form>
 
         <form class="modulo" data-modulo="dimenticata" hidden>
@@ -218,10 +273,55 @@ import { sito } from '../../lib/sito';
           <p class="messaggio" role="status" data-messaggio hidden></p>
         </form>
 
+        <details class="aggiungi" data-sicurezza>
+          <summary><Icona nome="scudo" dimensione={18} /> Verifica in due passaggi <span class="stato-2fa" data-stato-2fa></span></summary>
+          <div class="due-fattori">
+            <div data-2fa-spenta>
+              <p>
+                Oltre alla password ti chiediamo un codice a 6 cifre generato dal telefono: anche chi scoprisse la password non
+                potrebbe entrare. Ti serve un’app gratuita come <strong>Google Authenticator</strong> o
+                <strong>Microsoft Authenticator</strong>.
+              </p>
+              <button class="pulsante pulsante--primario" type="button" data-2fa-prepara>Attiva la verifica in due passaggi</button>
+              <div class="due-fattori__qr" data-2fa-passi hidden>
+                <ol>
+                  <li>Apri l’app e scegli “Aggiungi” o “+”, poi inquadra il codice QR. <a data-2fa-link href="#">Sul telefono puoi anche toccare qui.</a></li>
+                  <li>Se non puoi inquadrarlo, inserisci a mano questa chiave: <code data-2fa-chiave></code></li>
+                  <li>Scrivi qui sotto il codice a 6 cifre che compare nell’app.</li>
+                </ol>
+                <div class="due-fattori__immagine" data-2fa-qr></div>
+                <form class="modulo modulo--griglia" data-2fa-conferma>
+                  <label><span>Codice dall’app</span><input name="codice" required inputmode="numeric" autocomplete="one-time-code" maxlength="6" /></label>
+                  <button class="pulsante pulsante--primario" type="submit">Conferma e attiva</button>
+                  <p class="messaggio" role="status" data-messaggio hidden></p>
+                </form>
+              </div>
+            </div>
+
+            <div data-2fa-accesa hidden>
+              <p>✅ <strong>Attiva.</strong> A ogni accesso, anche con Google, ti chiediamo il codice dell’app. Codici di recupero rimasti: <strong data-2fa-rimasti></strong>.</p>
+              <form class="modulo modulo--griglia" data-2fa-gestisci>
+                <label><span>Codice dall’app (o di recupero)</span><input name="codice" required inputmode="numeric" autocomplete="one-time-code" maxlength="11" /></label>
+                <button class="pulsante pulsante--contorno" type="submit" name="scelta" value="nuovi">Nuovi codici di recupero</button>
+                <button class="pulsante pulsante--contorno" type="submit" name="scelta" value="disattiva">Disattiva</button>
+                <p class="messaggio" role="status" data-messaggio hidden></p>
+              </form>
+            </div>
+
+            <div class="due-fattori__codici" data-2fa-codici hidden>
+              <p>
+                <strong>Salva questi codici di recupero</strong> (stampali o fai uno screenshot e tienilo al sicuro): servono se perdi o
+                cambi il telefono. Ognuno vale una volta sola e non li mostreremo più.
+              </p>
+              <ul data-2fa-elenco></ul>
+            </div>
+          </div>
+        </details>
+
         <details class="aggiungi">
-          <summary><Icona nome="lucchetto" dimensione={18} /> Cambia password</summary>
+          <summary><Icona nome="lucchetto" dimensione={18} /> <span data-titolo-password>Cambia password</span></summary>
           <form class="modulo modulo--griglia" data-password>
-            <label><span>Password attuale</span><input name="attuale" type="password" required autocomplete="current-password" /></label>
+            <label data-campo-attuale><span>Password attuale</span><input name="attuale" type="password" autocomplete="current-password" /></label>
             <label><span>Nuova password</span><input name="nuova" type="password" required minlength="8" autocomplete="new-password" /></label>
             <button class="pulsante pulsante--primario" type="submit">Cambia password</button>
             <p class="messaggio" role="status" data-messaggio hidden></p>
@@ -235,7 +335,9 @@ import { sito } from '../../lib/sito';
               Cancelliamo account, dati salvati, dispositivi e promemoria. Gli ordini e le fatture restano nei nostri archivi
               per gli obblighi di legge.
             </p>
-            <label><span>Password</span><input name="password" type="password" required autocomplete="current-password" /></label>
+            <label data-elimina-password><span>Password</span><input name="password" type="password" autocomplete="current-password" /></label>
+            <label data-elimina-codice hidden><span>Codice dall’app</span><input name="codice" inputmode="numeric" autocomplete="one-time-code" maxlength="11" /></label>
+            <label data-elimina-conferma hidden><span>Scrivi ELIMINA per confermare</span><input name="conferma" autocomplete="off" /></label>
             <button class="pulsante pulsante--contorno" type="submit">Elimina definitivamente</button>
             <p class="messaggio" role="alert" data-messaggio hidden></p>
           </form>
@@ -292,6 +394,10 @@ import { sito } from '../../lib/sito';
     spedizione: Record<string, string | undefined>;
     dispositivi: Dispositivo[];
     avvisiManutenzione: boolean;
+    haPassword: boolean;
+    conGoogle: boolean;
+    dueFattori: boolean;
+    codiciRecupero: number;
   }
   interface Richiesta {
     numero: string;
@@ -693,7 +799,27 @@ import { sito } from '../../lib/sito';
       : '';
   }
 
+  /** Verifica in due passaggi, password e cancellazione secondo come è fatto l'account */
+  function disegnaSicurezza() {
+    const a = profilo.account;
+    $('[data-stato-2fa]').textContent = a.dueFattori ? '· attiva' : '· non attiva';
+    $('[data-2fa-spenta]').hidden = a.dueFattori;
+    $('[data-2fa-accesa]').hidden = !a.dueFattori;
+    $('[data-2fa-rimasti]').textContent = String(a.codiciRecupero);
+    $('[data-titolo-password]').textContent = a.haPassword ? 'Cambia password' : 'Scegli una password (per accedere anche senza Google)';
+    $('[data-campo-attuale]').hidden = !a.haPassword;
+    $('[data-elimina-password]').hidden = !a.haPassword;
+    $('[data-elimina-codice]').hidden = a.haPassword || !a.dueFattori;
+    $('[data-elimina-conferma]').hidden = a.haPassword || a.dueFattori;
+  }
+
+  function mostraCodiciRecupero(codici: string[]) {
+    $('[data-2fa-elenco]').innerHTML = codici.map((c) => `<li><code>${escape(c)}</code></li>`).join('');
+    $('[data-2fa-codici]').hidden = false;
+  }
+
   function riempiDati() {
+    disegnaSicurezza();
     const a = profilo.account;
     const modulo = $<HTMLFormElement>('[data-dati]');
     const imposta = (nome: string, valore: string | undefined) => {
@@ -772,6 +898,24 @@ import { sito } from '../../lib/sito';
       return;
     }
 
+    const prepara2fa = t.closest<HTMLButtonElement>('[data-2fa-prepara]');
+    if (prepara2fa) {
+      prepara2fa.disabled = true;
+      try {
+        const { qr, chiave, link } = await api('due-fattori-prepara');
+        $('[data-2fa-qr]').innerHTML = qr; // SVG generato dal nostro server
+        $('[data-2fa-chiave]').textContent = chiave;
+        $<HTMLAnchorElement>('[data-2fa-link]').href = link;
+        $('[data-2fa-passi]').hidden = false;
+        prepara2fa.hidden = true;
+      } catch (err) {
+        alert((err as Error).message);
+      } finally {
+        prepara2fa.disabled = false;
+      }
+      return;
+    }
+
     const rimuovi = t.closest<HTMLElement>('[data-rimuovi-dispositivo]');
     if (rimuovi && confirm('Togliere questo dispositivo dall’elenco?')) {
       const { account } = await api('rimuovi-dispositivo', { id: rimuovi.dataset.rimuoviDispositivo });
@@ -786,9 +930,55 @@ import { sito } from '../../lib/sito';
 
     if (modulo.dataset.modulo === 'accedi')
       return invia(modulo, async (d) => {
-        const { nome } = await api('accedi', { email: d.get('email'), password: d.get('password') });
+        const risposta = await api<{ nome?: string; serveCodice?: boolean }>('accedi', { email: d.get('email'), password: d.get('password') });
+        if (risposta.serveCodice) {
+          mostraModuloIngresso('codice');
+          $<HTMLInputElement>('[data-modulo="codice"] input[name="codice"]').focus();
+          return;
+        }
+        await entra(risposta.nome!);
+      });
+
+    if (modulo.dataset.modulo === 'codice')
+      return invia(modulo, async (d) => {
+        const { nome } = await api('accedi-codice', { codice: d.get('codice') });
         await entra(nome);
       });
+
+    if (modulo.dataset.modulo === 'completa-google')
+      return invia(modulo, async (d) => {
+        const { nome } = await api('completa-google', {
+          telefono: d.get('telefono'),
+          professione: d.get('professione'),
+          professionista: d.get('professionista') === 'on',
+        });
+        location.hash = 'dati';
+        await entra(nome);
+      });
+
+    if ('2faConferma' in modulo.dataset)
+      return invia(modulo, async (d) => {
+        const { account, codici } = await api('due-fattori-attiva', { codice: d.get('codice') });
+        profilo.account = { ...profilo.account, ...account };
+        $('[data-2fa-passi]').hidden = true;
+        modulo.reset();
+        disegnaSicurezza();
+        mostraCodiciRecupero(codici);
+      });
+
+    if ('2faGestisci' in modulo.dataset) {
+      const scelta = ((e as SubmitEvent).submitter as HTMLButtonElement | null)?.value;
+      if (scelta === 'disattiva' && !confirm('Disattivare la verifica in due passaggi? Il tuo account sarà protetto solo dalla password.')) return;
+      return invia(modulo, async (d) => {
+        const risposta = await api(scelta === 'disattiva' ? 'due-fattori-disattiva' : 'due-fattori-nuovi-codici', { codice: d.get('codice') });
+        profilo.account = { ...profilo.account, ...risposta.account };
+        modulo.reset();
+        $('[data-2fa-codici]').hidden = true;
+        disegnaSicurezza();
+        if (risposta.codici) mostraCodiciRecupero(risposta.codici);
+        return scelta === 'disattiva' ? '' : 'Nuovi codici creati: quelli vecchi non valgono più.';
+      });
+    }
 
     if (modulo.dataset.modulo === 'registra')
       return invia(modulo, async (d) => {
@@ -831,13 +1021,16 @@ import { sito } from '../../lib/sito';
       return invia(modulo, async (d) => {
         await api('cambia-password', { attuale: d.get('attuale'), nuova: d.get('nuova') });
         modulo.reset();
-        return 'Password cambiata. Sugli altri dispositivi dovrai accedere di nuovo.';
+        const prima = !profilo.account.haPassword;
+        profilo.account.haPassword = true;
+        disegnaSicurezza();
+        return prima ? 'Password salvata: ora puoi accedere anche con email e password.' : 'Password cambiata. Sugli altri dispositivi dovrai accedere di nuovo.';
       });
 
     if ('elimina' in modulo.dataset) {
       if (!confirm('Vuoi davvero eliminare il tuo account? L’operazione non si può annullare.')) return;
       return invia(modulo, async (d) => {
-        await api('elimina-account', { password: d.get('password') });
+        await api('elimina-account', { password: d.get('password'), codice: d.get('codice'), conferma: d.get('conferma') });
         segnaUscita();
         vista('ingresso');
         mostraModuloIngresso('registra');
@@ -897,9 +1090,25 @@ import { sito } from '../../lib/sito';
       await caricaArea();
     } catch {
       vista('ingresso');
-      const scelta = new URLSearchParams(location.search).get('modulo');
-      mostraModuloIngresso(scelta === 'registra' ? 'registra' : 'accedi');
       riempiProfessioni(PROFESSIONI);
+      const parametri = new URLSearchParams(location.search);
+      const scelta = parametri.get('modulo');
+      if (parametri.get('completa') === 'google') mostraModuloIngresso('completa-google');
+      else if (parametri.get('codice') === '1') mostraModuloIngresso('codice');
+      else mostraModuloIngresso(scelta === 'registra' ? 'registra' : 'accedi');
+
+      const erroreGoogle = parametri.get('errore')?.replace(/^google-/, '');
+      if (erroreGoogle) {
+        const testi: Record<string, string> = {
+          'non-configurato': 'L’accesso con Google non è ancora attivo: usa email e password.',
+          annullato: 'Accesso con Google annullato.',
+          scaduto: 'La richiesta è scaduta: premi di nuovo “Continua con Google”.',
+          'altro-account': 'Questa email è già collegata a un altro account Google: accedi con email e password.',
+          'troppi-tentativi': 'Troppi tentativi ravvicinati: riprova tra qualche minuto.',
+        };
+        messaggio($('[data-modulo="accedi"]'), testi[erroreGoogle] ?? 'Non è stato possibile accedere con Google: riprova o usa email e password.');
+      }
+      if (parametri.has('errore') || parametri.has('completa') || parametri.has('codice')) history.replaceState(null, '', location.pathname);
     }
   })();
 </script>
@@ -1611,6 +1820,114 @@ import { sito } from '../../lib/sito';
 
     .pannello :global(.rispondi) {
       grid-template-columns: 1fr;
+    }
+  }
+
+  /* ——— accesso con Google e verifica in due passaggi ——— */
+  .oppure {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin: 4px 0;
+    font-size: 0.85rem;
+    color: var(--grigio-500);
+  }
+
+  .oppure::before,
+  .oppure::after {
+    content: '';
+    flex: 1;
+    height: 1px;
+    background: var(--grigio-200);
+  }
+
+  .pulsante-google {
+    gap: 12px;
+    background: var(--bianco);
+  }
+
+  .stato-2fa {
+    font-weight: 600;
+    color: var(--grigio-500);
+  }
+
+  .due-fattori {
+    display: grid;
+    gap: 16px;
+    padding-top: 12px;
+  }
+
+  .due-fattori p {
+    margin: 0 0 12px;
+  }
+
+  .due-fattori__qr {
+    display: grid;
+    grid-template-columns: 1fr 200px;
+    gap: 16px 24px;
+    align-items: start;
+    margin-top: 16px;
+  }
+
+  .due-fattori__qr ol {
+    margin: 0;
+    padding-left: 1.2em;
+  }
+
+  .due-fattori__qr li {
+    margin-bottom: 8px;
+  }
+
+  .due-fattori__qr code,
+  .due-fattori__codici code {
+    padding: 2px 6px;
+    border-radius: 6px;
+    background: var(--grigio-100);
+    font-size: 0.95rem;
+    letter-spacing: 0.05em;
+    word-break: break-all;
+  }
+
+  .due-fattori__immagine {
+    width: 200px;
+    padding: 8px;
+    border-radius: 12px;
+    background: var(--bianco);
+    border: 1px solid var(--grigio-200);
+  }
+
+  .due-fattori__immagine :global(svg) {
+    display: block;
+    width: 100%;
+    height: auto;
+  }
+
+  .due-fattori__qr form {
+    grid-column: 1 / -1;
+  }
+
+  .due-fattori__codici {
+    padding: 16px 20px;
+    border-radius: 14px;
+    background: var(--accento-chiaro);
+  }
+
+  .due-fattori__codici ul {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+    gap: 8px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+  }
+
+  @media (max-width: 560px) {
+    .due-fattori__qr {
+      grid-template-columns: 1fr;
+    }
+
+    .due-fattori__immagine {
+      justify-self: center;
     }
   }
 </style>

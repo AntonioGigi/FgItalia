@@ -238,6 +238,7 @@ collections:
           - { label: Orari, name: orari, widget: string, required: false, hint: 'Es. Lun–Ven 9:00–13:00 / 15:30–19:00' }
           - { label: Instagram, name: instagram, widget: string, required: false, hint: 'Nome utente (es. fgitalia) o link al profilo' }
           - { label: Facebook, name: facebook, widget: string, required: false, hint: 'Link alla pagina Facebook' }
+          - { label: Accesso con Google nell'area clienti, name: accesso_google, widget: boolean, default: false, hint: 'Attivalo solo dopo aver inserito GOOGLE_CLIENT_ID e GOOGLE_CLIENT_SECRET su Netlify.' }
           - { label: Negozio online attivo, name: negozio_attivo, widget: boolean, hint: 'Se disattivato, i prodotti si possono solo ordinare su WhatsApp o con il modulo.' }
           - { label: Costo spedizione (€, IVA inclusa), name: spedizione_costo, widget: number, value_type: float, step: 0.01, min: 0 }
           - { label: Spedizione gratuita per ordini da (€, IVA esclusa), name: spedizione_gratis_da, widget: number, value_type: float, step: 1, min: 0, hint: '0 = spedizione mai gratuita' }

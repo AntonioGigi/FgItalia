@@ -26,6 +26,10 @@ import { sito } from '../lib/sito';
         <Icona nome="lucchetto" dimensione={32} />
         <h1>Pannello ordini</h1>
         <label><span>Password</span><input type="password" name="password" required autocomplete="current-password" /></label>
+        <label data-campo-codice hidden>
+          <span>Codice dall’app di autenticazione</span>
+          <input name="codice" inputmode="numeric" autocomplete="one-time-code" maxlength="11" placeholder="123456" />
+        </label>
         <button class="pulsante pulsante--primario" type="submit">Entra</button>
         <p class="errore" role="alert" data-errore-accesso hidden></p>
       </form>
@@ -37,11 +41,60 @@ import { sito } from '../lib/sito';
           <button type="button" data-filtro="tutti" aria-pressed="false">Tutti</button>
           <button type="button" data-filtro="assistenza" aria-pressed="false">Assistenza <span data-conta="assistenza"></span></button>
           <button type="button" data-prova-email>Prova email</button>
+          <button type="button" data-apri-sicurezza>Sicurezza</button>
           <button type="button" class="filtri__aggiorna" data-ricarica aria-label="Aggiorna">↻</button>
         </div>
         <p class="esito esito--prova" role="status" data-esito-prova hidden></p>
+        <p class="avviso-sicurezza" data-avviso-2fa hidden>
+          🔒 <strong>Proteggi il pannello:</strong> attiva la verifica in due passaggi, così per entrare non basterà la password.
+          <button type="button" class="collegamento" data-apri-sicurezza>Attivala ora</button>
+        </p>
         <ul class="ordini" data-ordini></ul>
         <p class="vuoto" data-vuoto hidden>Nessun ordine in questa sezione.</p>
+      </section>
+
+      <section class="scheda sicurezza" data-sicurezza hidden>
+        <button class="indietro" type="button" data-indietro><Icona nome="frecciaSinistra" dimensione={18} /> Tutti gli ordini</button>
+        <h1>Verifica in due passaggi</h1>
+        <p>
+          Per entrare nel pannello servirà, oltre alla password, il codice a 6 cifre dell’app sul telefono (Google Authenticator,
+          Microsoft Authenticator…). Così, anche se qualcuno scoprisse la password, non potrebbe vedere ordini e dati dei clienti.
+        </p>
+        <p class="sicurezza__stato" data-2fa-stato>Caricamento…</p>
+
+        <div data-2fa-spenta hidden>
+          <button class="pulsante pulsante--primario" type="button" data-2fa-prepara>Attiva</button>
+          <div class="sicurezza__qr" data-2fa-passi hidden>
+            <ol>
+              <li>Nell’app tocca “+” e inquadra il codice QR. <a data-2fa-link href="#">Dal telefono puoi toccare qui.</a></li>
+              <li>Oppure inserisci a mano la chiave: <code data-2fa-chiave></code></li>
+              <li>Scrivi il codice a 6 cifre che compare nell’app.</li>
+            </ol>
+            <div class="sicurezza__immagine" data-2fa-qr></div>
+            <form class="aggiorna" data-2fa-conferma>
+              <label><span>Codice dall’app</span><input name="codice" required inputmode="numeric" autocomplete="one-time-code" maxlength="6" /></label>
+              <button class="pulsante pulsante--primario" type="submit">Conferma e attiva</button>
+              <p class="esito" role="status" data-esito-2fa hidden></p>
+            </form>
+          </div>
+        </div>
+
+        <form class="aggiorna" data-2fa-gestisci hidden>
+          <label><span>Codice dall’app (o un codice di recupero)</span><input name="codice" required inputmode="numeric" autocomplete="one-time-code" maxlength="11" /></label>
+          <div class="sicurezza__pulsanti">
+            <button class="pulsante pulsante--contorno" type="submit" value="nuovi">Nuovi codici di recupero</button>
+            <button class="pulsante pulsante--contorno" type="submit" value="disattiva">Disattiva</button>
+          </div>
+          <p class="esito" role="status" data-esito-gestisci hidden></p>
+        </form>
+
+        <div class="sicurezza__codici" data-2fa-codici hidden>
+          <p>
+            <strong>Salva subito questi codici di recupero</strong> (stampali o tienili in un posto sicuro). Servono per entrare se
+            perdi o cambi il telefono: ognuno vale una volta sola e non verranno più mostrati.
+          </p>
+          <ul data-2fa-elenco></ul>
+        </div>
       </section>
 
       <section class="scheda" data-scheda hidden>
@@ -195,7 +248,8 @@ import { sito } from '../lib/sito';
         return dati;
       }
 
-      function vista(nome: 'accesso' | 'elenco' | 'scheda' | 'richiesta') {
+      function vista(nome: 'accesso' | 'elenco' | 'scheda' | 'richiesta' | 'sicurezza') {
+        $('[data-sicurezza]').hidden = nome !== 'sicurezza';
         $('[data-accesso]').hidden = nome !== 'accesso';
         $('[data-elenco]').hidden = nome !== 'elenco';
         $('[data-scheda]').hidden = nome !== 'scheda';
@@ -259,6 +313,9 @@ import { sito } from '../lib/sito';
         const daLink = decodeURIComponent(location.hash.slice(1));
         if (daLink === 'assistenza') filtro = 'assistenza';
         disegnaElenco();
+        api({ azione: 'sicurezza-stato' })
+          .then((stato) => ($('[data-avviso-2fa]').hidden = stato.attiva))
+          .catch(() => {});
         if (daLink.startsWith('AS-')) apriRichiesta(daLink);
         else if (daLink && daLink !== 'assistenza') apri(daLink);
       }
@@ -396,6 +453,80 @@ import { sito } from '../lib/sito';
           return vista('elenco');
         }
         if (t.closest('[data-esci]')) esci();
+        if (t.closest('[data-apri-sicurezza]')) return void apriSicurezza();
+        const prepara = t.closest<HTMLButtonElement>('[data-2fa-prepara]');
+        if (prepara) {
+          prepara.disabled = true;
+          return void api({ azione: 'sicurezza-prepara' })
+            .then(({ qr, chiave, link }) => {
+              $('[data-2fa-qr]').innerHTML = qr; // SVG generato dal nostro server
+              $('[data-2fa-chiave]').textContent = chiave;
+              $<HTMLAnchorElement>('[data-2fa-link]').href = link;
+              $('[data-2fa-passi]').hidden = false;
+              prepara.hidden = true;
+            })
+            .catch((err) => alert((err as Error).message))
+            .finally(() => (prepara.disabled = false));
+        }
+      });
+
+      // ——— verifica in due passaggi ———
+      function disegnaStato2fa(stato: { attiva: boolean; codiciRimasti: number }) {
+        $('[data-2fa-stato]').innerHTML = stato.attiva
+          ? `✅ <strong>Attiva.</strong> Codici di recupero rimasti: ${stato.codiciRimasti}.`
+          : '⚠️ <strong>Non attiva:</strong> per entrare basta la password.';
+        $('[data-2fa-spenta]').hidden = stato.attiva;
+        $('[data-2fa-gestisci]').hidden = !stato.attiva;
+        $('[data-avviso-2fa]').hidden = stato.attiva;
+      }
+
+      function mostraCodici(codici: string[]) {
+        $('[data-2fa-elenco]').innerHTML = codici.map((c) => `<li><code>${escape(c)}</code></li>`).join('');
+        $('[data-2fa-codici]').hidden = false;
+      }
+
+      async function apriSicurezza() {
+        vista('sicurezza');
+        $('[data-2fa-codici]').hidden = true;
+        $('[data-2fa-passi]').hidden = true;
+        $('[data-2fa-prepara]').hidden = false;
+        disegnaStato2fa(await api({ azione: 'sicurezza-stato' }));
+      }
+
+      $<HTMLFormElement>('[data-2fa-conferma]').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const modulo = e.target as HTMLFormElement;
+        const esito = $('[data-esito-2fa]');
+        try {
+          const { codici } = await api({ azione: 'sicurezza-attiva', codice: new FormData(modulo).get('codice') });
+          modulo.reset();
+          $('[data-2fa-passi]').hidden = true;
+          disegnaStato2fa({ attiva: true, codiciRimasti: codici.length });
+          mostraCodici(codici);
+          esito.hidden = true;
+        } catch (err) {
+          esito.textContent = (err as Error).message;
+          esito.hidden = false;
+        }
+      });
+
+      $<HTMLFormElement>('[data-2fa-gestisci]').addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const modulo = e.target as HTMLFormElement;
+        const scelta = ((e as SubmitEvent).submitter as HTMLButtonElement | null)?.value;
+        const esito = $('[data-esito-gestisci]');
+        if (scelta === 'disattiva' && !confirm('Disattivare la verifica in due passaggi del pannello?')) return;
+        try {
+          const r = await api({ azione: scelta === 'disattiva' ? 'sicurezza-disattiva' : 'sicurezza-nuovi-codici', codice: new FormData(modulo).get('codice') });
+          modulo.reset();
+          disegnaStato2fa({ attiva: r.attiva, codiciRimasti: r.codici?.length ?? 0 });
+          if (r.codici) mostraCodici(r.codici);
+          esito.textContent = r.attiva ? 'Nuovi codici creati: quelli vecchi non valgono più.' : 'Verifica in due passaggi disattivata.';
+          esito.hidden = false;
+        } catch (err) {
+          esito.textContent = (err as Error).message;
+          esito.hidden = false;
+        }
       });
 
       $('[data-aggiorna]').addEventListener('change', aggiornaCampi);
@@ -484,7 +615,16 @@ import { sito } from '../lib/sito';
         const errore = $('[data-errore-accesso]');
         errore.hidden = true;
         try {
-          const { gettone: nuovo } = await api({ azione: 'accedi', password: new FormData(e.target as HTMLFormElement).get('password') });
+          const d = new FormData(e.target as HTMLFormElement);
+          const risposta = await api({ azione: 'accedi', password: d.get('password'), codice: d.get('codice') || undefined });
+          if (risposta.serveCodice) {
+            $('[data-campo-codice]').hidden = false;
+            $<HTMLInputElement>('[data-campo-codice] input').focus();
+            errore.textContent = 'Password corretta: ora scrivi il codice a 6 cifre dell’app.';
+            errore.hidden = false;
+            return;
+          }
+          const nuovo = risposta.gettone;
           gettone = nuovo;
           try {
             localStorage.setItem(CHIAVE, gettone);
@@ -884,6 +1024,110 @@ import { sito } from '../lib/sito';
       @media (max-width: 560px) {
         .spedizione {
           grid-template-columns: 1fr;
+        }
+      }
+
+      .avviso-sicurezza {
+        margin: 0 0 16px;
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: var(--accento-chiaro);
+        font-size: 0.95rem;
+      }
+
+      .collegamento {
+        padding: 0;
+        border: 0;
+        background: none;
+        font: inherit;
+        font-weight: 700;
+        color: var(--blu-600);
+        text-decoration: underline;
+        cursor: pointer;
+      }
+
+      .sicurezza h1 {
+        margin: 0 0 12px;
+        font-size: 1.4rem;
+      }
+
+      .sicurezza__stato {
+        padding: 12px 16px;
+        border-radius: 12px;
+        background: var(--grigio-100);
+      }
+
+      .sicurezza__qr {
+        display: grid;
+        grid-template-columns: 1fr 200px;
+        gap: 16px 24px;
+        margin-top: 16px;
+      }
+
+      .sicurezza__qr ol {
+        margin: 0;
+        padding-left: 1.2em;
+      }
+
+      .sicurezza__qr li {
+        margin-bottom: 8px;
+      }
+
+      .sicurezza__qr form {
+        grid-column: 1 / -1;
+      }
+
+      .sicurezza__immagine {
+        width: 200px;
+        padding: 8px;
+        border: 1px solid var(--grigio-200);
+        border-radius: 12px;
+        background: var(--bianco);
+      }
+
+      .sicurezza__immagine :global(svg) {
+        display: block;
+        width: 100%;
+        height: auto;
+      }
+
+      .sicurezza code {
+        padding: 2px 6px;
+        border-radius: 6px;
+        background: var(--grigio-100);
+        letter-spacing: 0.05em;
+        word-break: break-all;
+      }
+
+      .sicurezza__pulsanti {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .sicurezza__codici {
+        margin-top: 16px;
+        padding: 16px 20px;
+        border-radius: 14px;
+        background: var(--accento-chiaro);
+      }
+
+      .sicurezza__codici ul {
+        display: grid;
+        grid-template-columns: repeat(auto-fill, minmax(140px, 1fr));
+        gap: 8px;
+        margin: 0;
+        padding: 0;
+        list-style: none;
+      }
+
+      @media (max-width: 560px) {
+        .sicurezza__qr {
+          grid-template-columns: 1fr;
+        }
+
+        .sicurezza__immagine {
+          justify-self: center;
         }
       }
     </style>

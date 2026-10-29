@@ -5,10 +5,15 @@ import {
   clienteDaEmail,
   clienteDaLinkReimposta,
   clienteDaRichiesta,
+  clienteInAttesa,
   cifraPassword,
   collegaOrdiniPrecedenti,
+  cookieAttesa,
+  cookieAttesaFinita,
+  cookieNuovoGoogleFinito,
   cookieSessione,
   cookieUscita,
+  creaAttesa,
   creaLinkReimposta,
   creaSessione,
   dataValida,
@@ -16,6 +21,7 @@ import {
   emailValida,
   idCliente,
   indiceOrdini,
+  leggiNuovoGoogle,
   normalizzaEmail,
   nuovoNumero,
   oggiIso,
@@ -39,6 +45,7 @@ import {
   inviaEmail,
   linkStato,
 } from '../lib/email';
+import { nuoviCodiciRecupero, prepara, verifica } from '../lib/dueFattori';
 import { azzera, bloccato, conta, ipRichiesta, MINUTI, ORE, superaLimite } from '../lib/limiti';
 import type { Indirizzo } from '../lib/ordini';
 import {
@@ -226,7 +233,57 @@ async function gestisci(req: Request, ip: string): Promise<Response> {
         return errore('Email o password non corrette.', 401);
       }
       await azzera(`accedi-email:${email}`);
+      // con la verifica in due passaggi la password non basta: serve anche il codice dell'app
+      if (cliente.dueFattori?.attivo) return conCookie(json({ serveCodice: true }), cookieAttesa(creaAttesa(cliente)));
       return conCookie(json({ nome: cliente.nome }), cookieSessione(creaSessione(cliente)));
+    }
+
+    case 'accedi-codice': {
+      const cliente = await clienteInAttesa(req);
+      if (!cliente?.dueFattori?.attivo) return errore('Sono passati troppi minuti: accedi di nuovo.', 401);
+      if (await bloccato(`codice:${cliente.id}`, 5)) return troppiTentativi(15);
+      if (!verifica(cliente.dueFattori, corpo.codice)) {
+        await conta(`codice:${cliente.id}`, 15 * MINUTI);
+        await pausa(800);
+        return errore('Codice non valido: controlla l’app o usa un codice di recupero.', 401);
+      }
+      await salvaCliente(cliente); // registra il codice usato, che non vale una seconda volta
+      await azzera(`codice:${cliente.id}`);
+      const risposta = conCookie(json({ nome: cliente.nome }), cookieSessione(creaSessione(cliente)));
+      return conCookie(risposta, cookieAttesaFinita());
+    }
+
+    case 'completa-google': {
+      const nuovo = leggiNuovoGoogle(req);
+      if (!nuovo) return errore('Sono passati troppi minuti: premi di nuovo “Continua con Google”.', 401);
+      const professione = testo(corpo.professione, 80);
+      if (!professione) return errore('Indica la tua professione.');
+      if (corpo.professionista !== true) return errore('L’area clienti è riservata agli operatori del settore: conferma la dichiarazione.');
+      const esistente = await clienteDaEmail(nuovo.email);
+      if (esistente) return errore('Esiste già un account con questa email: accedi con password o con Google.', 409);
+      const adesso = new Date().toISOString();
+      const cliente: Cliente = {
+        id: idCliente(nuovo.email),
+        email: nuovo.email,
+        nome: testo(corpo.nome, 120) ?? nuovo.nome,
+        telefono: testo(corpo.telefono, 30),
+        professione,
+        dichiarazioneProfessionista: adesso,
+        creato: adesso,
+        passwordHash: '',
+        google: nuovo.google,
+        versione: 1,
+        fatturazione: {},
+        spedizione: {},
+        dispositivi: [],
+        avvisiManutenzione: true,
+        assistenza: [],
+        preventivi: [],
+      };
+      await salvaCliente(cliente);
+      await collegaOrdiniPrecedenti(cliente);
+      await notifica(() => inviaEmail({ email: cliente.email, nome: cliente.nome }, emailBenvenuto(cliente)));
+      return conCookie(conCookie(json({ nome: cliente.nome }), cookieSessione(creaSessione(cliente))), cookieNuovoGoogleFinito());
     }
 
     case 'esci':
@@ -290,7 +347,8 @@ async function gestisci(req: Request, ip: string): Promise<Response> {
 
     case 'cambia-password': {
       if (await bloccato(`conferma:${cliente.id}`, 5)) return troppiTentativi(15);
-      if (!(await verificaPassword(corpo.attuale, cliente.passwordHash))) {
+      // chi si è registrato con Google non ha ancora una password: può sceglierne una senza quella attuale
+      if (cliente.passwordHash && !(await verificaPassword(corpo.attuale, cliente.passwordHash))) {
         await conta(`conferma:${cliente.id}`, 15 * MINUTI);
         await pausa(800);
         return errore('La password attuale non è corretta.', 403);
@@ -306,15 +364,63 @@ async function gestisci(req: Request, ip: string): Promise<Response> {
 
     case 'elimina-account': {
       if (await bloccato(`conferma:${cliente.id}`, 5)) return troppiTentativi(15);
-      if (!(await verificaPassword(corpo.password, cliente.passwordHash))) {
+      const confermato = cliente.passwordHash
+        ? await verificaPassword(corpo.password, cliente.passwordHash)
+        : cliente.dueFattori?.attivo
+          ? verifica(cliente.dueFattori, corpo.codice)
+          : String(corpo.conferma ?? '').trim().toUpperCase() === 'ELIMINA';
+      if (!confermato) {
         await conta(`conferma:${cliente.id}`, 15 * MINUTI);
         await pausa(800);
-        return errore('La password non è corretta.', 403);
+        return errore(cliente.passwordHash ? 'La password non è corretta.' : 'Conferma non valida.', 403);
       }
       // gli ordini restano archiviati per gli obblighi fiscali; si cancellano account e collegamenti
       await eliminaCliente(cliente);
       await indiceOrdini().delete(cliente.id);
       return conCookie(json({ eliminato: true }), cookieUscita());
+    }
+
+    case 'due-fattori-prepara': {
+      if (cliente.dueFattori?.attivo) return errore('La verifica in due passaggi è già attiva.');
+      const preparazione = await prepara(cliente.email);
+      cliente.dueFattori = preparazione.dati;
+      await salvaCliente(cliente);
+      return json({ qr: preparazione.qr, chiave: preparazione.chiaveManuale, link: preparazione.link });
+    }
+
+    case 'due-fattori-attiva': {
+      if (!cliente.dueFattori || cliente.dueFattori.attivo) return errore('Prima genera il codice QR.');
+      if (await bloccato(`codice:${cliente.id}`, 5)) return troppiTentativi(15);
+      if (!verifica(cliente.dueFattori, corpo.codice)) {
+        await conta(`codice:${cliente.id}`, 15 * MINUTI);
+        return errore('Il codice non corrisponde: controlla che l’ora del telefono sia giusta e riprova.');
+      }
+      const { codici, impronte } = nuoviCodiciRecupero();
+      cliente.dueFattori.attivo = true;
+      cliente.dueFattori.recupero = impronte;
+      cliente.versione += 1; // le altre sessioni aperte devono rientrare con il codice
+      await salvaCliente(cliente);
+      return conCookie(json({ account: vistaAccount(cliente), codici }), cookieSessione(creaSessione(cliente)));
+    }
+
+    case 'due-fattori-disattiva':
+    case 'due-fattori-nuovi-codici': {
+      if (!cliente.dueFattori?.attivo) return errore('La verifica in due passaggi non è attiva.');
+      if (await bloccato(`codice:${cliente.id}`, 5)) return troppiTentativi(15);
+      if (!verifica(cliente.dueFattori, corpo.codice)) {
+        await conta(`codice:${cliente.id}`, 15 * MINUTI);
+        await pausa(800);
+        return errore('Codice non valido.', 403);
+      }
+      if (corpo.azione === 'due-fattori-disattiva') {
+        delete cliente.dueFattori;
+        await salvaCliente(cliente);
+        return json({ account: vistaAccount(cliente) });
+      }
+      const { codici, impronte } = nuoviCodiciRecupero();
+      cliente.dueFattori.recupero = impronte;
+      await salvaCliente(cliente);
+      return json({ account: vistaAccount(cliente), codici });
     }
 
     case 'dispositivo': {

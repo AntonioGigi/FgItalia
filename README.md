@@ -67,6 +67,7 @@ Per provare senza soldi veri usa prima le chiavi "di test" di Stripe e la carta 
 | `EMAIL_MITTENTE` | indirizzo verificato su Brevo da cui partono le email |
 | `EMAIL_NOTIFICHE` | dove ricevere gli avvisi dei nuovi ordini (se vuota: l'email del sito) |
 | `ADMIN_PASSWORD` | password del pannello ordini `/gestione-ordini/` (lunga, almeno 12 caratteri) |
+| `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | facoltative: accesso con Google per i clienti (vedi sotto) |
 | `SESSION_SECRET` | chiave segreta per l'area clienti: una frase lunga e casuale (almeno 32 caratteri). Se la cambi, tutti i clienti devono rifare l'accesso |
 | `INSTAGRAM_TOKEN` | facoltativo: mostra gli ultimi post Instagram in home |
 
@@ -81,12 +82,23 @@ Gli account dei clienti, i preventivi e le richieste di assistenza sono salvati 
 6. **Assistenza:** le richieste arrivano via email a `EMAIL_NOTIFICHE` (quelle con lo studio fermo hanno 🔴 nell'oggetto) e si gestiscono in `/gestione-ordini/`, scheda "Assistenza". Rispondendo all'email si scrive direttamente al cliente.
 7. **Preventivi:** ogni preventivo scaricato da un cliente arriva anche via email a FGItalia, utile per richiamarlo.
 
+## Accesso con Google (area clienti)
+
+1. Su [console.cloud.google.com](https://console.cloud.google.com) crea un progetto "FGItalia".
+2. *API e servizi → Schermata consenso OAuth*: tipo **Esterno**, nome "FGItalia", email di assistenza, dominio autorizzato `fgitalia.it`, link alla privacy `https://www.fgitalia.it/privacy/`. Lascia gli ambiti di base (email, profilo) e premi **Pubblica app**.
+3. *Credenziali → Crea credenziali → ID client OAuth → Applicazione web*. In **URI di reindirizzamento autorizzati** aggiungi `https://www.fgitalia.it/api/account/google/ritorno` (e, per le prove, `https://NOME-SITO.netlify.app/api/account/google/ritorno`).
+4. Copia **ID client** e **Client secret** su Netlify nelle variabili `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`, poi ripubblica.
+5. Nel pannello `/admin/`, *Impostazioni del sito*, attiva **Accesso con Google nell'area clienti**.
+
+Chi entra con Google per la prima volta completa la registrazione con professione e dichiarazione di operatore del settore. Se l'email coincide con un account esistente, i due si collegano (Google ha già verificato l'email).
+
 ## Sicurezza
 
 Cosa fa il sito:
 - **HTTPS ovunque** (certificato automatico di Netlify, `Strict-Transport-Security`).
 - **Content Security Policy** in ogni pagina (`astro.config.mjs`): il browser esegue solo gli script del sito, riconosciuti dalla loro impronta SHA-256. Insieme a `X-Frame-Options`, `Permissions-Policy` e `Cross-Origin-Opener-Policy` (in `netlify.toml`) protegge da codice iniettato e da pagine false che incorniciano il sito.
 - **Pagamenti:** i dati di carta e PayPal restano su Stripe (PCI DSS); il sito ricalcola i prezzi lato server e accetta solo notifiche di pagamento firmate da Stripe.
+- **Verifica in due passaggi (codici TOTP a 6 cifre, app tipo Google Authenticator):** per il pannello ordini (sezione *Sicurezza*) e, facoltativa, per i clienti (*I miei dati*). Segreto cifrato AES-256-GCM, codici usabili una volta sola, 8 codici di recupero salvati solo come impronta, 5 tentativi sbagliati ogni 15 minuti. Vale anche per chi entra con Google. Se si perdono telefono e codici del pannello: su Netlify, *Blobs → sicurezza*, cancellare `pannello-due-fattori`.
 - **Area clienti:** password con scrypt e sale casuale, password troppo comuni rifiutate, sessione in cookie firmato `HttpOnly`/`Secure`/`SameSite`, cambio password che chiude le altre sessioni, richieste accettate solo dal sito stesso.
 - **Limiti contro i tentativi a raffica** (`netlify/lib/limiti.ts`): accesso clienti (8 errori per account, 20 per connessione ogni 15 minuti), pannello ordini (5 errori per connessione ogni 15 minuti, 30 in tutto ogni ora), recupero password (3 email all'ora per indirizzo), registrazioni, ricerca ordini, pagamenti e iscrizioni. I contatori usano impronte: niente IP o email in chiaro.
 - **Documenti:** fatture, preventivi e ordini si scaricano solo dal titolare; le pagine con dati personali non vanno in cache né su Google.
