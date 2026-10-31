@@ -1,0 +1,186 @@
+---
+import '../styles/global.css';
+import Icona from '../components/Icona.astro';
+import { sito } from '../lib/sito';
+
+// Finestra di accesso aperta da /admin/ (Decap CMS) al posto di "Accedi con GitHub":
+// chiede la password del pannello ordini (e il codice della verifica in due passaggi),
+// poi passa a Decap il token GitHub con il protocollo dei provider OAuth esterni.
+---
+
+<!doctype html>
+<html lang="it">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="robots" content="noindex, nofollow" />
+    <title>Accesso gestione | {sito.nome_breve}</title>
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+  </head>
+  <body>
+    <main class="accesso">
+      <img src={sito.logo || '/favicon.svg'} alt={sito.nome_breve} height="40" />
+      <h1>Gestione del sito</h1>
+      <p class="stato" data-stato>Verifica dell’accesso…</p>
+
+      <form data-modulo hidden>
+        <label><span>Password del pannello</span><input type="password" name="password" required autocomplete="current-password" /></label>
+        <label data-campo-codice hidden>
+          <span>Codice dall’app di autenticazione</span>
+          <input name="codice" inputmode="numeric" autocomplete="one-time-code" maxlength="11" placeholder="123456" />
+        </label>
+        <button class="pulsante pulsante--primario" type="submit"><Icona nome="lucchetto" dimensione={18} /> Entra</button>
+        <p class="errore" role="alert" data-errore hidden></p>
+      </form>
+    </main>
+
+    <script>
+      const CHIAVE = 'fgitalia-pannello'; // stesso gettone del pannello ordini
+      const stato = document.querySelector<HTMLElement>('[data-stato]')!;
+      const modulo = document.querySelector<HTMLFormElement>('[data-modulo]')!;
+      const errore = document.querySelector<HTMLElement>('[data-errore]')!;
+
+      const leggiGettone = () => {
+        try {
+          return localStorage.getItem(CHIAVE) ?? '';
+        } catch {
+          return '';
+        }
+      };
+
+      async function chiama(url: string, corpo: unknown, gettone?: string) {
+        const r = await fetch(url, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', ...(gettone && { Authorization: `Bearer ${gettone}` }) },
+          body: JSON.stringify(corpo),
+        });
+        const dati = await r.json().catch(() => ({}));
+        if (!r.ok) throw Object.assign(new Error(dati.errore ?? 'Errore'), { stato: r.status });
+        return dati;
+      }
+
+      /** Protocollo di Decap: "authorizing:github" → risposta del pannello → token */
+      function consegna(token: string) {
+        const apri = window.opener as Window | null;
+        if (!apri) {
+          stato.textContent = 'Accesso riuscito. Torna alla scheda del pannello e premi di nuovo il pulsante di accesso.';
+          return;
+        }
+        window.addEventListener('message', function risposta(e) {
+          if (e.origin !== location.origin) return;
+          window.removeEventListener('message', risposta);
+          apri.postMessage(`authorization:github:success:${JSON.stringify({ token, provider: 'github' })}`, e.origin);
+          stato.textContent = 'Accesso riuscito: puoi chiudere questa finestra.';
+          setTimeout(() => window.close(), 300);
+        });
+        apri.postMessage('authorizing:github', location.origin);
+      }
+
+      async function prova(gettone: string) {
+        const { token } = await chiama('/api/cms-token', {}, gettone);
+        consegna(token);
+      }
+
+      function chiediPassword(messaggio = '') {
+        stato.textContent = 'Inserisci la password del pannello ordini.';
+        modulo.hidden = false;
+        errore.textContent = messaggio;
+        errore.hidden = !messaggio;
+        modulo.querySelector<HTMLInputElement>('input[name="password"]')!.focus();
+      }
+
+      modulo.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const d = new FormData(modulo);
+        errore.hidden = true;
+        try {
+          const r = await chiama('/api/gestione-ordini', { azione: 'accedi', password: d.get('password'), codice: d.get('codice') || undefined });
+          if (r.serveCodice) {
+            modulo.querySelector<HTMLElement>('[data-campo-codice]')!.hidden = false;
+            modulo.querySelector<HTMLInputElement>('input[name="codice"]')!.focus();
+            errore.textContent = 'Password corretta: ora scrivi il codice a 6 cifre dell’app.';
+            errore.hidden = false;
+            return;
+          }
+          try {
+            localStorage.setItem(CHIAVE, r.gettone);
+          } catch {}
+          modulo.hidden = true;
+          stato.textContent = 'Accesso in corso…';
+          await prova(r.gettone);
+        } catch (err) {
+          errore.textContent = (err as Error).message;
+          errore.hidden = false;
+        }
+      });
+
+      // già entrati nel pannello ordini da questo browser? allora non serve ridigitare la password
+      const gettone = leggiGettone();
+      if (gettone)
+        prova(gettone).catch((err) => chiediPassword((err as { stato?: number }).stato === 401 ? '' : (err as Error).message));
+      else chiediPassword();
+    </script>
+
+    <style>
+      body {
+        display: grid;
+        min-height: 100vh;
+        place-items: center;
+        margin: 0;
+        background: var(--grigio-100);
+      }
+
+      .accesso {
+        display: grid;
+        gap: 14px;
+        width: min(380px, calc(100% - 32px));
+        padding: 28px;
+        border-radius: 20px;
+        background: var(--bianco);
+        box-shadow: var(--ombra);
+      }
+
+      .accesso img {
+        height: 40px;
+        width: auto;
+      }
+
+      h1 {
+        margin: 0;
+        font-size: 1.4rem;
+      }
+
+      .stato {
+        margin: 0;
+        color: var(--grigio-700);
+      }
+
+      form {
+        display: grid;
+        gap: 14px;
+      }
+
+      label span {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.88rem;
+        font-weight: 600;
+        color: var(--grigio-700);
+      }
+
+      input {
+        width: 100%;
+        padding: 12px 14px;
+        font: inherit;
+        border: 1px solid var(--grigio-300);
+        border-radius: 10px;
+      }
+
+      .errore {
+        margin: 0;
+        font-weight: 600;
+        color: #b42318;
+      }
+    </style>
+  </body>
+</html>

@@ -157,3 +157,28 @@ describe('ricerca ordini', () => {
     expect((await cerca()).status).toBe(429);
   });
 });
+
+describe('accesso al pannello dei contenuti (/admin/)', () => {
+  it('dà il token GitHub solo a chi è entrato nel pannello ordini', async () => {
+    const { default: cmsToken } = await import('../netlify/functions/cms-token.mts');
+    const { creaGettone } = await import('../netlify/lib/accesso');
+    const chiedi = (gettone?: string) =>
+      cmsToken(
+        new Request('https://x/api/cms-token', {
+          method: 'POST',
+          headers: { 'x-nf-client-connection-ip': '12.0.0.1', ...(gettone && { authorization: `Bearer ${gettone}` }) },
+        }),
+      );
+    expect((await chiedi()).status).toBe(401);
+    expect((await chiedi(creaGettone('password-sbagliata'))).status).toBe(401);
+
+    const valido = creaGettone('una-password-lunga');
+    delete process.env.GITHUB_CMS_TOKEN;
+    const senza = await chiedi(valido);
+    expect(senza.status).toBe(503);
+    expect((await senza.json()).errore).toContain('GITHUB_CMS_TOKEN');
+
+    process.env.GITHUB_CMS_TOKEN = 'github_pat_prova';
+    expect(await (await chiedi(valido)).json()).toEqual({ token: 'github_pat_prova' });
+  });
+});

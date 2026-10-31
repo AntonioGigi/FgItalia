@@ -7,8 +7,47 @@
     <title>Gestione sito | FGItalia</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link href="/admin/config.yml" type="text/yaml" rel="cms-config-url" />
+    <style>
+      .scorciatoia-ordini {
+        position: fixed;
+        right: 16px;
+        bottom: 16px;
+        z-index: 1000;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        padding: 12px 18px;
+        border-radius: 999px;
+        background: #08163f;
+        color: #fff;
+        font: 600 15px/1.2 system-ui, sans-serif;
+        text-decoration: none;
+        box-shadow: 0 8px 24px rgb(8 22 63 / 0.3);
+      }
+      .scorciatoia-ordini:hover {
+        background: #003098;
+      }
+    </style>
   </head>
   <body>
+    <a class="scorciatoia-ordini" href="/gestione-ordini/">📦 Ordini e assistenza</a>
+    <script>
+      // Accesso con la password del pannello ordini (pagina /cms-accesso/) invece dell'account GitHub
+      window.CMS_MANUAL_INIT = true;
+    </script>
     <script src="https://unpkg.com/decap-cms@3.16.3/dist/decap-cms.js"></script>
+    <script>
+      CMS.init({
+        config: {
+          backend: {
+            name: 'github',
+            repo: 'AntonioGigi/FgItalia',
+            branch: 'main',
+            base_url: window.location.origin,
+            auth_endpoint: 'cms-accesso/',
+          },
+        },
+      });
+    </script>
   </body>
 </html>
