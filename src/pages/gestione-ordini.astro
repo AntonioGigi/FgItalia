@@ -18,6 +18,7 @@ import { sito } from '../lib/sito';
     <header class="barra">
       <a href="/" class="barra__logo"><img src={sito.logo || '/favicon.svg'} alt={sito.nome_breve} height="36" /></a>
       <strong>Ordini</strong>
+      <a class="barra__contenuti" href="/admin/">✏️ Prodotti e contenuti</a>
       <button class="barra__esci" type="button" data-esci hidden>Esci</button>
     </header>
 
@@ -660,6 +661,22 @@ import { sito } from '../lib/sito';
       .barra__logo img {
         height: 36px;
         width: auto;
+      }
+
+      .barra__contenuti {
+        margin-left: auto;
+        padding: 8px 14px;
+        border-radius: 999px;
+        background: var(--blu-100);
+        color: var(--blu-700);
+        font-size: 0.9rem;
+        font-weight: 700;
+        text-decoration: none;
+        white-space: nowrap;
+      }
+
+      .barra__contenuti + .barra__esci {
+        margin-left: 0;
       }
 
       .barra__esci {

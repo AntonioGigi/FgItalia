@@ -40,7 +40,11 @@ npm run build    # controlli + test + sito in dist/
 
 1. Su [netlify.com](https://www.netlify.com), *Add new site → Import from GitHub* e scegli questo repository (ramo `main`). Le impostazioni di build sono già in `netlify.toml`.
 2. **Moduli contatti e corsi:** in *Site configuration → Forms → Form notifications* aggiungi una notifica email verso l'indirizzo di FGItalia.
-3. **Pannello `/admin/`:** in *Site configuration → Access & security → OAuth* installa il provider **GitHub** (servono Client ID e Secret di una GitHub OAuth App con callback `https://api.netlify.com/auth/done`). Chi deve usare il pannello accede con un account GitHub che abbia accesso in scrittura al repository.
+3. **Pannello `/admin/` (prodotti e contenuti):** si entra con la **stessa password del pannello ordini** (`ADMIN_PASSWORD`, più il codice della verifica in due passaggi se attiva), non serve un account GitHub. Il pannello salva le modifiche nel repository con un token GitHub limitato:
+   1. GitHub → foto profilo → *Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token*.
+   2. Nome "FGItalia pannello", scadenza la più lunga disponibile, *Repository access: Only select repositories* → `FgItalia`.
+   3. *Permissions → Repository permissions → Contents: Read and write*. Genera e copia il token.
+   4. Su Netlify aggiungi la variabile `GITHUB_CMS_TOKEN` con il token e ripubblica. Alla scadenza crea un token nuovo e sostituiscilo.
 4. **Dominio:** in *Domain management* aggiungi `fgitalia.it` e `www.fgitalia.it`, poi presso il registrar del dominio imposta i DNS indicati da Netlify. Il certificato HTTPS è automatico. Tutti i vecchi indirizzi WordPress (prodotti, categorie, pagine) sono reindirizzati alle nuove pagine in `public/_redirects`.
 
 ## Attivare pagamenti, ordini e avvisi
@@ -66,7 +70,8 @@ Per provare senza soldi veri usa prima le chiavi "di test" di Stripe e la carta 
 | --- | --- |
 | `EMAIL_MITTENTE` | indirizzo verificato su Brevo da cui partono le email |
 | `EMAIL_NOTIFICHE` | dove ricevere gli avvisi dei nuovi ordini (se vuota: l'email del sito) |
-| `ADMIN_PASSWORD` | password del pannello ordini `/gestione-ordini/` (lunga, almeno 12 caratteri) |
+| `ADMIN_PASSWORD` | password del pannello ordini `/gestione-ordini/` e del pannello contenuti `/admin/` (lunga, almeno 12 caratteri) |
+| `GITHUB_CMS_TOKEN` | token GitHub "fine-grained" con cui `/admin/` salva prodotti e pagine (vedi "Messa online") |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | facoltative: accesso con Google per i clienti (vedi sotto) |
 | `SESSION_SECRET` | chiave segreta per l'area clienti: una frase lunga e casuale (almeno 32 caratteri). Se la cambi, tutti i clienti devono rifare l'accesso |
 | `INSTAGRAM_TOKEN` | facoltativo: mostra gli ultimi post Instagram in home |
