@@ -34,8 +34,10 @@ export default async (req: Request, context?: Context) => {
 
   if (corpo.azione === 'accedi') {
     // 5 errori per connessione ogni 15 minuti, 30 in tutto ogni ora (anche da connessioni diverse)
-    if ((await bloccato(`admin-ip:${ip}`, 5)) || (await bloccato('admin-tutti', 30)))
-      return errore('Troppi tentativi con la password sbagliata: per sicurezza il pannello è bloccato per qualche minuto.', 429);
+    if (await bloccato(`admin-ip:${ip}`, 5))
+      return errore('Troppi tentativi con la password sbagliata: per sicurezza l’accesso è bloccato per 15 minuti. Intanto controlla la password su Netlify (variabile ADMIN_PASSWORD).', 429);
+    if (await bloccato('admin-tutti', 30))
+      return errore('Troppi tentativi con la password sbagliata da più connessioni: per sicurezza l’accesso è bloccato per un’ora.', 429);
     if (!passwordCorretta(corpo.password, password)) {
       await Promise.all([conta(`admin-ip:${ip}`, 15 * MINUTI), conta('admin-tutti', ORE)]);
       await pausa(1500); // rallenta i tentativi a caso
