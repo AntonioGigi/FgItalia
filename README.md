@@ -39,7 +39,7 @@ npm run build    # controlli + test + sito in dist/
 ## Messa online (Netlify, gratuito)
 
 1. Su [netlify.com](https://www.netlify.com), *Add new site → Import from GitHub* e scegli questo repository (ramo `main`). Le impostazioni di build sono già in `netlify.toml`.
-2. **Moduli contatti e corsi:** in *Site configuration → Forms → Form notifications* aggiungi una notifica email verso l'indirizzo di FGItalia.
+2. **Moduli contatti e corsi:** arrivano nel pannello, scheda *Messaggi*, e per email a `EMAIL_NOTIFICHE` (rispondendo si scrive al cliente). Non serve configurare Netlify Forms.
 3. **Pannello `/admin/` (prodotti e contenuti):** si entra con la **stessa password del pannello ordini** (`ADMIN_PASSWORD`, più il codice della verifica in due passaggi se attiva), non serve un account GitHub. Il pannello salva le modifiche nel repository con un token GitHub limitato:
    1. GitHub → foto profilo → *Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token*.
    2. Nome "FGItalia pannello", scadenza la più lunga disponibile, *Repository access: Only select repositories* → `FgItalia`.
@@ -75,6 +75,10 @@ Per provare senza soldi veri usa prima le chiavi "di test" di Stripe e la carta 
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | facoltative: accesso con Google per i clienti (vedi sotto) |
 | `SESSION_SECRET` | chiave segreta per l'area clienti: una frase lunga e casuale (almeno 32 caratteri). Se la cambi, tutti i clienti devono rifare l'accesso |
 | `INSTAGRAM_TOKEN` | facoltativo: mostra gli ultimi post Instagram in home |
+| `NETLIFY_BUILD_HOOK` | indirizzo di un *build hook* (Netlify → *Site configuration → Build & deploy → Build hooks → Add build hook*, nome "Ogni notte"): il sito si ripubblica ogni notte, così le promozioni iniziano e finiscono da sole il giorno giusto |
+
+### Promozioni
+Dal pannello `/admin/` → *Promozioni*: percentuale di sconto, su tutto / alcune categorie / alcuni prodotti, date di inizio e fine. Quando è attiva, i prezzi scontati valgono ovunque (schede, carrello, pagamento Stripe, preventivi, feed Google Shopping), compaiono la striscia rossa in cima al sito, la pagina `/offerte/` e la sezione "In offerta" in home. Con *Avvisa via email gli iscritti* parte una sola email alla lista Brevo.
 
 ### Area clienti
 Gli account dei clienti, i preventivi e le richieste di assistenza sono salvati su Netlify (Blobs), come gli ordini: non servono altri servizi.

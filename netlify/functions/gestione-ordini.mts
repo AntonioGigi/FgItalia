@@ -16,6 +16,7 @@ import {
 import { rispostaPdf } from '../lib/pdf';
 import { nuoviCodiciRecupero, prepara, verifica, type DueFattori } from '../lib/dueFattori';
 import { azzera, bloccato, conta, ipRichiesta, MINUTI, ORE } from '../lib/limiti';
+import { archivioMessaggi, elencoMessaggi, idMessaggioValido, type Messaggio } from '../lib/messaggi';
 import { archivioFatture, elencoOrdini, leggiOrdine, salvaOrdine, STATI, type StatoOrdine } from '../lib/ordini';
 import {
   archivioPreventivi,
@@ -287,6 +288,21 @@ export default async (req: Request, context?: Context) => {
         }
       }
       return json({ richiesta, emailInviata });
+    }
+
+    // ——— messaggi dai moduli del sito ———
+
+    case 'messaggi-elenco':
+      return json(await elencoMessaggi());
+
+    case 'messaggio-aggiorna': {
+      if (!idMessaggioValido(corpo.id)) return errore('Messaggio non trovato', 404);
+      const m = (await archivioMessaggi().get(corpo.id, { type: 'json' })) as Messaggio | null;
+      if (!m) return errore('Messaggio non trovato', 404);
+      if (typeof corpo.letto === 'boolean') m.letto = corpo.letto;
+      if (typeof corpo.archiviato === 'boolean') m.archiviato = corpo.archiviato;
+      await archivioMessaggi().setJSON(m.id, m);
+      return json(m);
     }
 
     // ——— preventivi fatti dal pannello ———

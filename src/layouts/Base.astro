@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import Header from '../components/Header.astro';
+import BannerOfferte from '../components/BannerOfferte.astro';
 import Footer from '../components/Footer.astro';
 import Icona from '../components/Icona.astro';
 import AvvisoProfessionisti from '../components/AvvisoProfessionisti.astro';
@@ -81,6 +82,7 @@ const azienda = {
   </head>
   <body>
     <a class="vai-al-contenuto" href="#contenuto">Vai al contenuto</a>
+    <BannerOfferte />
     <Header />
     <main id="contenuto">
       <slot />

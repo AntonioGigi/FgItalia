@@ -129,9 +129,9 @@ collections:
       - { label: Descrizione completa, name: body, widget: markdown, required: false }
 
   - name: novita
-    label: Novità e offerte
+    label: Novità
     label_singular: Novità
-    description: Notizie, offerte e nuovi arrivi. Ogni novità ha la sua pagina da condividere sui social.
+    description: Notizie e nuovi arrivi (per gli sconti veri usa "Promozioni"). Ogni novità ha la sua pagina da condividere sui social.
     folder: src/content/novita
     create: true
     extension: md
@@ -145,6 +145,54 @@ collections:
       - { label: Riassunto, name: riassunto, widget: text }
       - { label: Pubblicato, name: pubblicato, widget: boolean, default: true }
       - { label: Testo, name: body, widget: markdown }
+
+  - name: promozioni
+    label: Promozioni
+    label_singular: Promozione
+    description: 'Sconti veri: i prezzi si abbassano da soli su sito, carrello, pagamento e preventivi, compare la striscia rossa in alto e la pagina Offerte. Inizio e fine scattano da soli (il sito si aggiorna ogni notte).'
+    folder: src/content/promozioni
+    create: true
+    extension: md
+    slug: '{{titolo}}'
+    summary: '{{titolo}} · -{{sconto}}% · dal {{dal | date("DD/MM/YYYY")}}'
+    sortable_fields: [dal, titolo]
+    fields:
+      - { label: Titolo, name: titolo, widget: string, hint: 'Es. "Black Friday: 15% su tutte le creme". Compare nella striscia in alto e nella pagina Offerte.' }
+      - { label: Sconto (%), name: sconto, widget: number, value_type: int, min: 1, max: 90 }
+      - label: Su quali prodotti
+        name: applica_a
+        widget: select
+        default: tutti
+        options:
+          - { label: Tutti i prodotti con prezzo, value: tutti }
+          - { label: Solo alcune categorie, value: categorie }
+          - { label: Solo alcuni prodotti, value: prodotti }
+      - label: Categorie in offerta
+        name: categorie
+        widget: relation
+        collection: categorie
+        value_field: '{{slug}}'
+        search_fields: [titolo]
+        display_fields: [titolo]
+        multiple: true
+        required: false
+        hint: Solo se hai scelto "Solo alcune categorie".
+      - label: Prodotti in offerta
+        name: prodotti
+        widget: relation
+        collection: prodotti
+        value_field: '{{slug}}'
+        search_fields: [titolo, codice]
+        display_fields: [titolo]
+        multiple: true
+        required: false
+        hint: Solo se hai scelto "Solo alcuni prodotti".
+      - { label: Dal giorno, name: dal, widget: datetime, time_format: false, date_format: DD/MM/YYYY, format: YYYY-MM-DD }
+      - { label: Fino al giorno (compreso), name: al, widget: datetime, time_format: false, date_format: DD/MM/YYYY, format: YYYY-MM-DD, required: false, hint: Vuoto = finché non la togli. }
+      - { label: Striscia rossa in cima al sito, name: banner, widget: boolean, default: true }
+      - { label: Avvisa via email gli iscritti, name: avvisa_iscritti, widget: boolean, default: false, hint: 'Una sola email per promozione, inviata quando la promozione è attiva e il sito si aggiorna.' }
+      - { label: Pubblicata, name: pubblicato, widget: boolean, default: true }
+      - { label: Dettagli, name: body, widget: markdown, required: false, hint: Condizioni o descrizione, compaiono nella pagina Offerte. }
 
   - name: corsi
     label: Corsi

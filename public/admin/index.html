@@ -4,39 +4,39 @@
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="robots" content="noindex" />
-    <title>Gestione sito | FGItalia</title>
+    <title>Prodotti e contenuti | FGItalia</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link href="/admin/config.yml" type="text/yaml" rel="cms-config-url" />
-    <style>
-      .scorciatoia-ordini {
-        position: fixed;
-        right: 16px;
-        bottom: 16px;
-        z-index: 1000;
-        display: inline-flex;
-        align-items: center;
-        gap: 8px;
-        padding: 12px 18px;
-        border-radius: 999px;
-        background: #0f2138;
-        color: #fff;
-        font: 600 15px/1.2 system-ui, sans-serif;
-        text-decoration: none;
-        box-shadow: 0 8px 24px rgb(8 22 63 / 0.3);
-      }
-      .scorciatoia-ordini:hover {
-        background: #24466f;
-      }
-    </style>
+    <link rel="preload" href="/admin/plus-jakarta-sans.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="stylesheet" href="/admin/tema.css" />
   </head>
   <body>
-    <a class="scorciatoia-ordini" href="/gestione-ordini/">📦 Ordini e assistenza</a>
+    <!-- stessa barra di /gestione-ordini/ (src/components/BarraPannello.astro): tenerle uguali -->
+    <header class="barra-pannello">
+      <a class="barra-pannello__logo" href="/" title="Vai al sito">
+        <img src="/favicon.svg" alt="" width="30" height="30" />
+        <span>FGItalia <small>Pannello</small></span>
+      </a>
+      <nav aria-label="Sezioni del pannello">
+        <a href="/admin/" aria-current="page"><span aria-hidden="true">✏️</span> Prodotti e contenuti</a>
+        <a href="/gestione-ordini/#ordini"><span aria-hidden="true">📦</span> Ordini</a>
+        <a href="/gestione-ordini/#preventivi"><span aria-hidden="true">📄</span> Preventivi</a>
+        <a href="/gestione-ordini/#assistenza"><span aria-hidden="true">🛠️</span> Assistenza</a>
+        <a href="/gestione-ordini/#messaggi"><span aria-hidden="true">💬</span> Messaggi</a>
+        <a href="https://webmail.aruba.it/" target="_blank" rel="noopener" title="Apri la casella email (webmail Aruba)"
+          ><span aria-hidden="true">📧</span> Posta</a
+        >
+      </nav>
+    </header>
+    <div id="nc-root"></div>
     <script>
       // Accesso con la password del pannello ordini (pagina /cms-accesso/) invece dell'account GitHub
       window.CMS_MANUAL_INIT = true;
     </script>
     <script src="https://unpkg.com/decap-cms@3.16.3/dist/decap-cms.js"></script>
     <script>
+      // l'anteprima dei prodotti usa gli stessi colori e caratteri del sito
+      CMS.registerPreviewStyle('/admin/tema-anteprima.css');
       CMS.init({
         config: {
           backend: {

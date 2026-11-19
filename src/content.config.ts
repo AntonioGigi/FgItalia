@@ -91,4 +91,27 @@ const corsi = defineCollection({
   }),
 });
 
-export const collections = { categorie, marchi, prodotti, novita, corsi };
+/**
+ * Promozioni: sconto in percentuale su tutti i prodotti, su alcune categorie o su
+ * singoli prodotti, dal giorno "dal" al giorno "al" compresi. Il prezzo scontato vale
+ * ovunque (catalogo, carrello, pagamento, preventivi) perché passa da src/lib/promozioni.ts.
+ */
+const promozioni = defineCollection({
+  loader: glob({ pattern: '*.md', base: './src/content/promozioni' }),
+  schema: z.object({
+    titolo: z.string(),
+    sconto: z.coerce.number().min(1).max(90),
+    applica_a: z.enum(['tutti', 'categorie', 'prodotti']).default('tutti'),
+    categorie: z.preprocess((v) => v ?? [], z.array(reference('categorie'))),
+    prodotti: z.preprocess((v) => v ?? [], z.array(reference('prodotti'))),
+    dal: z.coerce.date(),
+    al: vuotoComeAssente(z.coerce.date()),
+    /** striscia in cima a tutte le pagine del sito */
+    banner: z.boolean().default(true),
+    /** alla pubblicazione invia un'email agli iscritti agli avvisi */
+    avvisa_iscritti: z.boolean().default(false),
+    pubblicato: z.boolean().default(true),
+  }),
+});
+
+export const collections = { categorie, marchi, prodotti, novita, corsi, promozioni };

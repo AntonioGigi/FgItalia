@@ -1,0 +1,125 @@
+---
+/**
+ * Barra in cima al pannello di gestione: la stessa (copiata a mano) è in public/admin/index.html,
+ * così "Prodotti e contenuti" e "Ordini" sembrano un unico pannello.
+ */
+import { sito } from '../lib/sito';
+
+interface Props {
+  attiva: 'contenuti' | 'ordini';
+}
+const { attiva } = Astro.props;
+const voci = [
+  { href: '/admin/', testo: 'Prodotti e contenuti', icona: '✏️', id: 'contenuti' },
+  { href: '/gestione-ordini/#ordini', testo: 'Ordini', icona: '📦', id: 'ordini' },
+  { href: '/gestione-ordini/#preventivi', testo: 'Preventivi', icona: '📄', id: 'preventivi' },
+  { href: '/gestione-ordini/#assistenza', testo: 'Assistenza', icona: '🛠️', id: 'assistenza' },
+  { href: '/gestione-ordini/#messaggi', testo: 'Messaggi', icona: '💬', id: 'messaggi' },
+];
+---
+
+<header class="barra-pannello">
+  <a class="barra-pannello__logo" href="/" title="Vai al sito">
+    <img src="/favicon.svg" alt="" width="30" height="30" />
+    <span>{sito.nome_breve} <small>Pannello</small></span>
+  </a>
+  <nav aria-label="Sezioni del pannello">
+    {
+      voci.map((v) => (
+        <a href={v.href} data-voce={v.id} aria-current={v.id === attiva ? 'page' : undefined}>
+          <span aria-hidden="true">{v.icona}</span> {v.testo}
+        </a>
+      ))
+    }
+    <a href="https://webmail.aruba.it/" target="_blank" rel="noopener" title="Apri la casella email (webmail Aruba)">
+      <span aria-hidden="true">📧</span> Posta
+    </a>
+  </nav>
+  <slot />
+</header>
+
+<style>
+  .barra-pannello {
+    position: sticky;
+    top: 0;
+    z-index: 20;
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    min-height: 56px;
+    padding: 6px 16px;
+    background: #0f2138;
+    color: #fff;
+    font-family: 'Plus Jakarta Sans Variable', system-ui, sans-serif;
+    border-bottom: 3px solid #e0a030;
+  }
+
+  .barra-pannello__logo {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
+    color: #fff;
+    font-weight: 800;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  .barra-pannello__logo img {
+    border-radius: 8px;
+    background: #fff;
+  }
+
+  .barra-pannello__logo small {
+    display: block;
+    font-size: 0.7rem;
+    font-weight: 600;
+    color: #e0a030;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    line-height: 1;
+  }
+
+  nav {
+    display: flex;
+    gap: 4px;
+    overflow-x: auto;
+    scrollbar-width: none;
+    flex: 1;
+  }
+
+  nav a {
+    display: inline-flex;
+    gap: 6px;
+    align-items: center;
+    padding: 8px 12px;
+    border-radius: 999px;
+    color: #c9d3da;
+    font-size: 0.9rem;
+    font-weight: 700;
+    text-decoration: none;
+    white-space: nowrap;
+  }
+
+  nav a:hover {
+    background: rgb(255 255 255 / 0.1);
+    color: #fff;
+  }
+
+  nav a[aria-current='page'] {
+    background: #e0a030;
+    color: #0f2138;
+  }
+
+  @media (max-width: 720px) {
+    .barra-pannello {
+      flex-wrap: wrap;
+      gap: 6px 12px;
+      padding-block: 8px;
+    }
+
+    nav {
+      order: 3;
+      flex-basis: 100%;
+    }
+  }
+</style>

@@ -89,7 +89,7 @@ const conTesto = await Promise.all(prossimi.map(async (corso) => ({ corso, Conte
       }
     </div>
 
-    <form class="modulo-corsi" id="iscrizione" name="corsi" method="POST" action="/grazie/" data-netlify="true" netlify-honeypot="sito-web">
+    <form class="modulo-corsi" id="iscrizione" name="corsi" method="POST" action="/api/messaggio">
       <input type="hidden" name="form-name" value="corsi" />
       <p hidden>
         <label>Non compilare questo campo: <input name="sito-web" /></label>

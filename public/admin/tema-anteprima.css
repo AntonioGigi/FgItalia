@@ -1,0 +1,29 @@
+/* Anteprima a destra nell'editor: stesso carattere e colori del sito */
+@font-face {
+  font-family: 'Plus Jakarta Sans Variable';
+  font-weight: 200 800;
+  src: url('/admin/plus-jakarta-sans.woff2') format('woff2-variations');
+}
+
+body {
+  font-family: 'Plus Jakarta Sans Variable', system-ui, sans-serif;
+  color: #14212b;
+  line-height: 1.65;
+  padding: 8px 20px;
+}
+
+h1,
+h2,
+h3 {
+  color: #0f2138;
+  line-height: 1.2;
+}
+
+a {
+  color: #2f5d8f;
+}
+
+img {
+  max-width: 100%;
+  border-radius: 12px;
+}

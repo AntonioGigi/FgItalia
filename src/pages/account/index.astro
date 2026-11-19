@@ -791,7 +791,7 @@ import { sito } from '../../lib/sito';
               <span>${p.righe.map((r) => `${r.quantita} × ${escape(r.titolo)}`).join(', ')}</span></div>
               <strong class="preventivi__totale">${euro(p.totaleCent)}</strong>
               <div class="azioni">
-                <a class="pulsante pulsante--scuro piccolo" href="${linkDocumento('preventivo', p.numero)}" target="_blank"><span aria-hidden="true">⬇</span> PDF</a>
+                <a class="pulsante pulsante--scuro piccolo" href="${linkDocumento('preventivo', p.numero)}&scarica=1" download="Preventivo-${escape(p.numero)}.pdf"><span aria-hidden="true">⬇</span> PDF</a>
                 ${p.daFgitalia ? '' : `<button class="pulsante pulsante--contorno piccolo" type="button" data-preventivo-carrello="${escape(p.numero)}">Rimetti nel carrello</button>`}
               </div>
             </li>`;

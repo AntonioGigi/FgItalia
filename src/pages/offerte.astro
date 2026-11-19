@@ -1,0 +1,113 @@
+---
+import Base from '../layouts/Base.astro';
+import TestataPagina from '../components/TestataPagina.astro';
+import CardProdotto from '../components/CardProdotto.astro';
+import InvitoContatto from '../components/InvitoContatto.astro';
+import { render } from 'astro:content';
+import { prodottiPubblicati } from '../lib/catalogo';
+import { promozioniAttive, scontoDa } from '../lib/promozioni';
+import { formatoData } from '../lib/sito';
+
+const promozioni = await promozioniAttive();
+const inOfferta = (await prodottiPubblicati()).filter((p) => scontoDa(promozioni, p));
+const descrizioni = await Promise.all(promozioni.map(async (p) => ({ p, Content: (await render(p)).Content })));
+---
+
+<Base titolo="Offerte" descrizione="Promozioni e prodotti in offerta per fisioterapisti e studi.">
+  <TestataPagina
+    sopratitolo="Offerte"
+    titolo={promozioni.length ? 'Le offerte del momento' : 'Offerte'}
+    testo={promozioni.length
+      ? 'Prezzi già scontati in tutto il sito, nel carrello e nei preventivi.'
+      : 'Al momento non ci sono promozioni attive. Iscriviti agli avvisi per sapere quando arrivano.'}
+    briciole={[{ href: '/offerte/', testo: 'Offerte' }]}
+  />
+
+  <section class="contenitore offerte">
+    {
+      descrizioni.length > 0 && (
+        <ul class="promozioni">
+          {descrizioni.map(({ p, Content }) => (
+            <li>
+              <span class="promozioni__sconto">-{p.data.sconto}%</span>
+              <div>
+                <h2>{p.data.titolo}</h2>
+                <p class="promozioni__date">
+                  {p.data.al ? `Valida fino al ${formatoData.format(p.data.al)}` : 'Valida fino a nuovo avviso'}
+                </p>
+                <div class="prosa">
+                  <Content />
+                </div>
+              </div>
+            </li>
+          ))}
+        </ul>
+      )
+    }
+
+    {
+      inOfferta.length > 0 && (
+        <>
+          <h2 class="offerte__titolo">Prodotti in offerta ({inOfferta.length})</h2>
+          <div class="griglia griglia--prodotti">
+            {inOfferta.map((p) => (
+              <CardProdotto prodotto={p} />
+            ))}
+          </div>
+        </>
+      )
+    }
+  </section>
+
+  <InvitoContatto />
+</Base>
+
+<style>
+  .offerte {
+    padding-block: 24px 16px;
+  }
+
+  .promozioni {
+    display: grid;
+    gap: 16px;
+    margin: 0 0 48px;
+    padding: 0;
+    list-style: none;
+  }
+
+  .promozioni li {
+    display: flex;
+    gap: 20px;
+    align-items: flex-start;
+    padding: 24px;
+    border-radius: var(--raggio);
+    background: #fef3f2;
+    border: 1px solid #fecdca;
+  }
+
+  .promozioni__sconto {
+    flex-shrink: 0;
+    padding: 10px 14px;
+    border-radius: 14px;
+    background: #d92d20;
+    color: var(--bianco);
+    font-size: 1.4rem;
+    font-weight: 800;
+  }
+
+  .promozioni h2 {
+    margin: 0 0 4px;
+    font-size: 1.3rem;
+  }
+
+  .promozioni__date {
+    margin: 0 0 8px;
+    font-weight: 600;
+    color: #b42318;
+  }
+
+  .offerte__titolo {
+    font-size: 1.5rem;
+    margin-bottom: 20px;
+  }
+</style>
