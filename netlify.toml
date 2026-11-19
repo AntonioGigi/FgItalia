@@ -22,7 +22,6 @@
     Referrer-Policy = "strict-origin-when-cross-origin"
     X-Frame-Options = "SAMEORIGIN"
     Content-Security-Policy = "frame-ancestors 'self'; object-src 'none'; base-uri 'self'"
-    Cross-Origin-Opener-Policy = "same-origin"
     Permissions-Policy = "camera=(), microphone=(), geolocation=(), usb=()"
 
 # Pagine con dati personali: mai in cache e mai indicizzate
@@ -30,16 +29,22 @@
   for = "/account/*"
   [headers.values]
     Cache-Control = "no-store"
+    # isola la pagina da altre finestre (non su /admin/ e /cms-accesso/, che si parlano tra finestre)
+    Cross-Origin-Opener-Policy = "same-origin"
     X-Robots-Tag = "noindex, nofollow"
 
 [[headers]]
   for = "/gestione-ordini/*"
   [headers.values]
     Cache-Control = "no-store"
+    # isola la pagina da altre finestre (non su /admin/ e /cms-accesso/, che si parlano tra finestre)
+    Cross-Origin-Opener-Policy = "same-origin"
     X-Robots-Tag = "noindex, nofollow"
 
 [[headers]]
   for = "/ordine/*"
   [headers.values]
     Cache-Control = "no-store"
+    # isola la pagina da altre finestre (non su /admin/ e /cms-accesso/, che si parlano tra finestre)
+    Cross-Origin-Opener-Policy = "same-origin"
     X-Robots-Tag = "noindex, nofollow"
