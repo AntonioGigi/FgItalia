@@ -338,7 +338,9 @@ describe('preventivi', () => {
 
     const pdf = await documento(new Request(`https://www.fgitalia.it/api/account/documento?tipo=preventivo&n=${numero}`, { headers: { cookie } }));
     expect(pdf.status).toBe(200);
-    expect(Buffer.from(await pdf.arrayBuffer()).subarray(0, 5).toString()).toBe('%PDF-');
+    const byte = Buffer.from(await pdf.arrayBuffer());
+    expect(byte.subarray(0, 5).toString()).toBe('%PDF-');
+    expect(byte.includes('/Subtype /Image')).toBe(true); // il logo c'è anche se il sito non risponde
     expect(pdf.headers.get('content-disposition')).toContain(`Preventivo-${numero}.pdf`);
   });
 

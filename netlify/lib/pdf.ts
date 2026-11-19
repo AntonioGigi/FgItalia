@@ -2,6 +2,7 @@ import { PDFDocument, StandardFonts, rgb, type PDFFont, type PDFImage, type PDFP
 import { euro } from '../../src/lib/negozio';
 import { sito } from '../../src/lib/sito';
 import { urlSito } from './ambiente';
+import { LOGO_PNG_BASE64, PERCORSO_LOGO_INCLUSO } from './logo';
 
 /**
  * Documenti PDF dell'area clienti (preventivi e riepiloghi d'ordine), creati al momento
@@ -81,7 +82,7 @@ function aCapo(testo: string, font: PDFFont, dimensione: number, larghezza: numb
 
 /** Il logo si legge dal sito che ha ricevuto la richiesta (anche le anteprime), altrimenti dal dominio principale */
 async function caricaLogo(pdf: PDFDocument, origine?: string): Promise<PDFImage | undefined> {
-  if (!sito.logo) return undefined;
+  if (!sito.logo || sito.logo === PERCORSO_LOGO_INCLUSO) return pdf.embedPng(Buffer.from(LOGO_PNG_BASE64, 'base64'));
   for (const base of new Set([origine, urlSito()].filter((b): b is string => !!b))) {
     try {
       const risposta = await fetch(`${base}${sito.logo}`);
@@ -92,7 +93,8 @@ async function caricaLogo(pdf: PDFDocument, origine?: string): Promise<PDFImage 
       // provo l'indirizzo successivo; senza logo il documento resta valido
     }
   }
-  return undefined;
+  // logo cambiato dal pannello ma non raggiungibile: meglio quello incluso che nessuno
+  return pdf.embedPng(Buffer.from(LOGO_PNG_BASE64, 'base64'));
 }
 
 export async function creaPdf(d: DatiDocumento, origine?: string): Promise<Uint8Array> {
