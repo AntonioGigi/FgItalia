@@ -62,12 +62,17 @@ import { sito } from '../lib/sito';
       /** Protocollo di Decap: "authorizing:github" → risposta del pannello → token */
       function consegna(token: string) {
         const apri = window.opener as Window | null;
+        const nonRisponde =
+          'Accesso riuscito, ma il pannello non risponde. Chiudi questa finestra, ricarica la pagina /admin/ e premi di nuovo “Accedi”.';
         if (!apri) {
-          stato.textContent = 'Accesso riuscito. Torna alla scheda del pannello e premi di nuovo il pulsante di accesso.';
+          stato.textContent = nonRisponde;
           return;
         }
+        // se il pannello non risponde entro qualche secondo, meglio dirlo che lasciare "Accesso in corso…"
+        const attesa = setTimeout(() => (stato.textContent = nonRisponde), 6000);
         window.addEventListener('message', function risposta(e) {
           if (e.origin !== location.origin) return;
+          clearTimeout(attesa);
           window.removeEventListener('message', risposta);
           apri.postMessage(`authorization:github:success:${JSON.stringify({ token, provider: 'github' })}`, e.origin);
           stato.textContent = 'Accesso riuscito: puoi chiudere questa finestra.';
