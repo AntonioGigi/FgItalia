@@ -1,0 +1,229 @@
+/*
+ * Tema del pannello "Prodotti e contenuti" (Decap CMS) con i colori e il carattere del sito.
+ * Decap usa classi generate (css-xxxx-NomeComponente): qui si aggancia la parte stabile del nome.
+ */
+@font-face {
+  font-family: 'Plus Jakarta Sans Variable';
+  font-style: normal;
+  font-display: swap;
+  font-weight: 200 800;
+  src: url('/admin/plus-jakarta-sans.woff2') format('woff2-variations');
+}
+
+:root {
+  --blu-900: #0f2138;
+  --blu-800: #1b3557;
+  --blu-700: #24466f;
+  --blu-600: #2f5d8f;
+  --blu-100: #e7edf4;
+  --blu-50: #f4f7fa;
+  --oro: #e0a030;
+  --oro-chiaro: #fbeed3;
+  --grigio-100: #f3f6f8;
+  --grigio-200: #e2e8ec;
+  --grigio-500: #6b7b87;
+  --font: 'Plus Jakarta Sans Variable', system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif;
+  --altezza-barra: 59px;
+}
+
+html,
+body {
+  background: var(--grigio-100) !important;
+}
+
+body,
+button,
+input,
+select,
+textarea,
+#nc-root [class*='css-'] {
+  font-family: var(--font) !important;
+}
+
+/* ——— barra comune del pannello (uguale a /gestione-ordini/) ——— */
+.barra-pannello {
+  position: sticky;
+  top: 0;
+  z-index: 400;
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  height: var(--altezza-barra);
+  padding: 0 16px;
+  background: var(--blu-900);
+  color: #fff;
+  font-family: var(--font);
+  border-bottom: 3px solid var(--oro);
+  box-sizing: border-box;
+}
+
+.barra-pannello__logo {
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+  color: #fff;
+  font-weight: 800;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.barra-pannello__logo img {
+  border-radius: 8px;
+  background: #fff;
+}
+
+.barra-pannello__logo small {
+  display: block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: var(--oro);
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  line-height: 1;
+}
+
+.barra-pannello nav {
+  display: flex;
+  flex: 1;
+  gap: 4px;
+  overflow-x: auto;
+  scrollbar-width: none;
+}
+
+.barra-pannello nav a {
+  display: inline-flex;
+  gap: 6px;
+  align-items: center;
+  padding: 8px 12px;
+  border-radius: 999px;
+  color: #c9d3da;
+  font-size: 0.9rem;
+  font-weight: 700;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.barra-pannello nav a:hover {
+  background: rgb(255 255 255 / 0.1);
+  color: #fff;
+}
+
+.barra-pannello nav a[aria-current='page'] {
+  background: var(--oro);
+  color: var(--blu-900);
+}
+
+@media (max-width: 720px) {
+  .barra-pannello__logo span {
+    display: none;
+  }
+}
+
+/* ——— intestazione di Decap sotto la nostra barra ——— */
+header[class*='-AppHeader'] {
+  top: var(--altezza-barra) !important;
+  box-shadow: 0 1px 0 var(--grigio-200) !important;
+}
+
+/* l'editor occupa tutta la finestra: lo faccio partire sotto la barra */
+[class*='-EditorContainer'] {
+  top: var(--altezza-barra) !important;
+  height: calc(100% - var(--altezza-barra)) !important;
+}
+
+[class*='-AppHeaderNavLink'],
+[class*='-AppHeaderSiteLink'],
+[class*='-AppHeaderTestRepoIndicator'] {
+  color: var(--blu-700) !important;
+}
+
+[class*='-AppHeaderNavLink'].header-link-active,
+[class*='-AppHeaderNavLink']:hover {
+  color: var(--blu-900) !important;
+  box-shadow: inset 0 -3px 0 var(--oro);
+}
+
+/* pulsanti scuri di Decap → blu del sito; "Nuovo…" → oro */
+[class*='-AppHeaderQuickNewButton'],
+[class*='-CollectionTopNewButton'] {
+  border-radius: 999px !important;
+  background: var(--oro) !important;
+  color: var(--blu-900) !important;
+  font-weight: 800 !important;
+  box-shadow: none !important;
+}
+
+[class*='-AppHeaderQuickNewButton']:hover,
+[class*='-CollectionTopNewButton']:hover {
+  background: #c98a1c !important;
+}
+
+/* schede bianche più morbide, come sul sito */
+[class*='-card-card'] {
+  border-radius: 18px !important;
+  box-shadow: 0 1px 2px rgb(8 22 63 / 0.06), 0 8px 24px rgb(8 22 63 / 0.06) !important;
+}
+
+[class*='-CollectionTopHeading'],
+[class*='-SidebarHeading'] {
+  color: var(--blu-900) !important;
+  font-weight: 800 !important;
+}
+
+[class*='-SidebarNavLink'] {
+  color: var(--blu-700) !important;
+  font-weight: 600;
+}
+
+[class*='-SidebarNavLink'].sidebar-active,
+[class*='-SidebarNavLink']:hover {
+  background: var(--oro-chiaro) !important;
+  border-left-color: var(--oro) !important;
+  color: var(--blu-900) !important;
+}
+
+[class*='-ViewControlsButton'] {
+  color: var(--blu-600) !important;
+}
+
+/* ——— editor ——— */
+[class*='-ToolbarContainer'] {
+  border-bottom: 1px solid var(--grigio-200);
+}
+
+[class*='-FieldLabel'] {
+  color: var(--blu-800) !important;
+  background-color: var(--blu-100) !important;
+  border-radius: 8px 8px 0 0 !important;
+}
+
+[class*='-ControlContainer'] input:focus,
+[class*='-ControlContainer'] textarea:focus {
+  outline: none;
+}
+
+[class*='-ControlContainer']:focus-within [class*='-FieldLabel'] {
+  background-color: var(--blu-700) !important;
+  color: #fff !important;
+}
+
+[class*='-ControlContainer']:focus-within input,
+[class*='-ControlContainer']:focus-within textarea,
+[class*='-ControlContainer']:focus-within [class*='-control'] {
+  border-color: var(--blu-700) !important;
+}
+
+[class*='-ToggleBackground'] {
+  background-color: var(--grigio-200);
+}
+
+[class*='-ControlHint'] {
+  color: var(--grigio-500) !important;
+}
+
+/* "Pubblica" nel blu del sito */
+[class*='-PublishButton'] {
+  border-radius: 999px !important;
+  background-color: var(--blu-700) !important;
+  color: #fff !important;
+}

@@ -1,6 +1,6 @@
 import { getStore } from '@netlify/blobs';
 import { urlSito } from '../lib/ambiente';
-import { emailNuovoCorso, inviaCampagna } from '../lib/email';
+import { emailNuovoCorso, emailPromozione, inviaCampagna } from '../lib/email';
 
 interface Corso {
   id: string;
@@ -15,31 +15,67 @@ interface Corso {
   avvisaIscritti: boolean;
 }
 
+interface Promozione {
+  id: string;
+  titolo: string;
+  sconto: number;
+  al?: string;
+  dettagli?: string;
+  avvisaIscritti: boolean;
+}
+
+interface Avviso {
+  id: string;
+  avvisaIscritti: boolean;
+  nome: string;
+  email: () => { oggetto: string; html: string };
+}
+
+async function leggi<T>(percorso: string): Promise<T[]> {
+  const risposta = await fetch(`${urlSito()}${percorso}`);
+  if (!risposta.ok) {
+    console.error(`${percorso} non disponibile (${risposta.status})`);
+    return [];
+  }
+  return (await risposta.json()) as T[];
+}
+
+/** Ogni corso o promozione viene annunciato una volta sola */
+async function annuncia(archivio: string, avvisi: Avviso[]) {
+  const annunciati = getStore({ name: archivio, consistency: 'strong' });
+  for (const a of avvisi) {
+    if (!a.avvisaIscritti || (await annunciati.get(a.id))) continue;
+    // segno subito: meglio un avviso perso che doppio
+    await annunciati.set(a.id, new Date().toISOString());
+    const { oggetto, html } = a.email();
+    try {
+      await inviaCampagna(a.nome, oggetto, html);
+      console.log(`Avviso inviato: ${a.id}`);
+    } catch (e) {
+      console.error(`Avviso non inviato: ${a.id}`, e);
+      await annunciati.delete(a.id);
+    }
+  }
+}
+
 /**
  * Parte da sola dopo ogni pubblicazione del sito (il nome del file è l'evento Netlify):
- * se tra i prossimi corsi ce n'è uno nuovo, invia un'email a tutti gli iscritti agli avvisi.
- * Ogni corso viene annunciato una volta sola.
+ * se c'è un corso nuovo o una promozione appena iniziata con "Avvisa gli iscritti",
+ * invia un'email a tutti gli iscritti agli avvisi.
  */
 export default async () => {
   if (!process.env.BREVO_API_KEY || !process.env.BREVO_LISTA_ID) return new Response('Avvisi non configurati');
 
-  const risposta = await fetch(`${urlSito()}/api/corsi.json`);
-  if (!risposta.ok) return new Response('Corsi non disponibili', { status: 502 });
-  const corsi = (await risposta.json()) as Corso[];
+  const corsi = await leggi<Corso>('/api/corsi.json');
+  await annuncia(
+    'corsi-annunciati',
+    corsi.map((c) => ({ id: c.id, avvisaIscritti: c.avvisaIscritti, nome: `Corso: ${c.titolo}`, email: () => emailNuovoCorso(c) })),
+  );
 
-  const annunciati = getStore({ name: 'corsi-annunciati', consistency: 'strong' });
-  for (const corso of corsi) {
-    if (!corso.avvisaIscritti || (await annunciati.get(corso.id))) continue;
-    // segno subito il corso: meglio un avviso perso che doppio
-    await annunciati.set(corso.id, new Date().toISOString());
-    const { oggetto, html } = emailNuovoCorso(corso);
-    try {
-      await inviaCampagna(`Corso: ${corso.titolo}`, oggetto, html);
-      console.log(`Avviso inviato per il corso ${corso.id}`);
-    } catch (e) {
-      console.error(`Avviso non inviato per il corso ${corso.id}`, e);
-      await annunciati.delete(corso.id);
-    }
-  }
+  const promozioni = await leggi<Promozione>('/api/promozioni.json');
+  await annuncia(
+    'promozioni-annunciate',
+    promozioni.map((p) => ({ id: p.id, avvisaIscritti: p.avvisaIscritti, nome: `Promozione: ${p.titolo}`, email: () => emailPromozione(p) })),
+  );
   return new Response('ok');
 };

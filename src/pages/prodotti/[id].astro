@@ -5,7 +5,8 @@ import Icona from '../../components/Icona.astro';
 import Condividi from '../../components/Condividi.astro';
 import CardProdotto from '../../components/CardProdotto.astro';
 import { prodottiPubblicati, type Prodotto } from '../../lib/catalogo';
-import { sito, soloCifre, linkWhatsApp, prezzo, statiDisponibilita } from '../../lib/sito';
+import { sito, soloCifre, linkWhatsApp, prezzo, statiDisponibilita, formatoData } from '../../lib/sito';
+import { scontoPer } from '../../lib/promozioni';
 
 export async function getStaticPaths() {
   const prodotti = await prodottiPubblicati();
@@ -19,7 +20,8 @@ interface Props {
 
 const { prodotto, tutti } = Astro.props;
 const { titolo, codice, descrizione_breve, immagini, specifiche, scheda_pdf, documenti, sottocategoria } = prodotto.data;
-const prezzoTesto = prezzo(prodotto.data.prezzo);
+const sconto = await scontoPer(prodotto);
+const prezzoTesto = prezzo(sconto?.prezzo ?? prodotto.data.prezzo);
 const { disponibilita } = prodotto.data;
 const esaurito = disponibilita === 'esaurito';
 const acquistabileOnline = sito.negozio_attivo && !!prodotto.data.prezzo && !esaurito;
@@ -51,7 +53,8 @@ const datiStrutturati = {
   ...(prodotto.data.prezzo && {
     offers: {
       '@type': 'Offer',
-      price: prodotto.data.prezzo.toFixed(2),
+      price: (sconto?.prezzo ?? prodotto.data.prezzo).toFixed(2),
+      ...(sconto?.promozione.data.al && { priceValidUntil: sconto.promozione.data.al.toISOString().slice(0, 10) }),
       priceCurrency: 'EUR',
       availability: statiDisponibilita[disponibilita].schema,
       priceSpecification: { '@type': 'PriceSpecification', valueAddedTaxIncluded: false },
@@ -114,11 +117,21 @@ const datiStrutturati = {
             {disponibilita === 'su_ordinazione' && ' – chiedici i tempi di consegna'}
           </p>
 
+          {
+            sconto && (
+              <p class="scheda__offerta">
+                <span>-{sconto.percentuale}%</span>
+                {sconto.promozione.data.titolo}
+                {sconto.promozione.data.al && ` · fino al ${formatoData.format(sconto.promozione.data.al)}`}
+              </p>
+            )
+          }
           <div class="scheda__prezzo">
             {
               prezzoTesto ? (
                 <>
-                  <strong>{prezzoTesto}</strong>
+                  {sconto && <s>{prezzo(sconto.listino)}</s>}
+                  <strong class:list={{ 'scheda__prezzo--offerta': sconto }}>{prezzoTesto}</strong>
                   <span>+ IVA</span>
                 </>
               ) : (
@@ -431,6 +444,34 @@ const datiStrutturati = {
   }
 
   .scheda__stato--esaurito {
+    color: #b42318;
+  }
+
+  .scheda__offerta {
+    display: inline-flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 8px;
+    margin: 0 0 8px;
+    font-weight: 700;
+    color: #b42318;
+  }
+
+  .scheda__offerta span {
+    padding: 3px 10px;
+    border-radius: 999px;
+    background: #d92d20;
+    color: var(--bianco);
+    font-size: 0.85rem;
+  }
+
+  .scheda__prezzo s {
+    font-size: 1.1rem;
+    font-weight: 600;
+    color: var(--grigio-500);
+  }
+
+  .scheda__prezzo .scheda__prezzo--offerta {
     color: #b42318;
   }
 

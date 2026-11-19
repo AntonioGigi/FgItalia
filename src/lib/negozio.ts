@@ -14,8 +14,12 @@ export interface RigaCarrello {
 
 export interface ProdottoVendibile {
   titolo: string;
-  /** euro, IVA esclusa */
+  /** euro, IVA esclusa: già scontato se c'è una promozione */
   prezzo?: number;
+  /** prezzo di listino prima della promozione (solo se c'è uno sconto) */
+  prezzoListino?: number;
+  /** percentuale di sconto della promozione attiva */
+  sconto?: number;
   disponibilita: 'disponibile' | 'su_ordinazione' | 'esaurito';
   immagine?: string;
 }
@@ -41,6 +45,9 @@ export interface RigaCalcolata {
   /** prezzo unitario IVA inclusa, in centesimi */
   unitarioCent: number;
   totaleCent: number;
+  /** se in promozione: prezzo unitario pieno IVA inclusa e percentuale di sconto */
+  listinoCent?: number;
+  sconto?: number;
 }
 
 export interface Totali {
@@ -85,7 +92,15 @@ export function calcolaTotali(carrello: RigaCarrello[], catalogo: Catalogo): Tot
   for (const { id, quantita } of normalizzaCarrello(carrello, catalogo)) {
     const p = catalogo.prodotti[id] as ProdottoVendibile & { prezzo: number };
     const unitarioCent = prezzoIvatoCent(p.prezzo);
-    righe.push({ id, titolo: p.titolo, quantita, immagine: p.immagine, unitarioCent, totaleCent: unitarioCent * quantita });
+    righe.push({
+      id,
+      titolo: p.titolo,
+      quantita,
+      immagine: p.immagine,
+      unitarioCent,
+      totaleCent: unitarioCent * quantita,
+      ...(p.sconto && p.prezzoListino && { listinoCent: prezzoIvatoCent(p.prezzoListino), sconto: p.sconto }),
+    });
     imponibileCent += centesimi(p.prezzo) * quantita;
   }
   const prodottiCent = righe.reduce((s, r) => s + r.totaleCent, 0);

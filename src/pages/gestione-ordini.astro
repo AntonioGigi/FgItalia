@@ -1,6 +1,7 @@
 ---
 import '../styles/global.css';
 import Icona from '../components/Icona.astro';
+import BarraPannello from '../components/BarraPannello.astro';
 import { sito } from '../lib/sito';
 ---
 
@@ -15,12 +16,9 @@ import { sito } from '../lib/sito';
     <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
   </head>
   <body>
-    <header class="barra">
-      <a href="/" class="barra__logo"><img src={sito.logo || '/favicon.svg'} alt={sito.nome_breve} height="36" /></a>
-      <strong>Ordini</strong>
-      <a class="barra__contenuti" href="/admin/">✏️ Prodotti e contenuti</a>
+    <BarraPannello attiva="ordini">
       <button class="barra__esci" type="button" data-esci hidden>Esci</button>
-    </header>
+    </BarraPannello>
 
     <main class="pannello">
       <form class="accesso" data-accesso hidden>
@@ -42,6 +40,7 @@ import { sito } from '../lib/sito';
           <button type="button" data-filtro="tutti" aria-pressed="false">Tutti</button>
           <button type="button" data-filtro="assistenza" aria-pressed="false">Assistenza <span data-conta="assistenza"></span></button>
           <button type="button" data-filtro="preventivi" aria-pressed="false">Preventivi</button>
+          <button type="button" data-filtro="messaggi" aria-pressed="false">Messaggi <span data-conta="messaggi"></span></button>
           <button type="button" data-prova-email>Prova email</button>
           <button type="button" data-apri-sicurezza>Sicurezza</button>
           <button type="button" class="filtri__aggiorna" data-ricarica aria-label="Aggiorna">↻</button>
@@ -54,6 +53,10 @@ import { sito } from '../lib/sito';
         <div class="nuovo-preventivo" data-barra-preventivi hidden>
           <p>Prepara un preventivo con i prodotti del sito o con qualsiasi altra voce, scarica il PDF o mandalo al cliente per email.</p>
           <button type="button" class="pulsante pulsante--primario" data-nuovo-preventivo>+ Nuovo preventivo</button>
+        </div>
+        <div class="nuovo-preventivo" data-barra-messaggi hidden>
+          <p>Le richieste dal modulo “Contatti” e le iscrizioni ai corsi. Ti arrivano anche per email: rispondendo scrivi direttamente al cliente.</p>
+          <label class="interruttore"><input type="checkbox" data-mostra-archiviati /> Mostra archiviati</label>
         </div>
         <ul class="ordini" data-ordini></ul>
         <p class="vuoto" data-vuoto hidden>Nessun ordine in questa sezione.</p>
@@ -255,6 +258,19 @@ import { sito } from '../lib/sito';
         stripe: { pagamento?: string };
         fattura?: { nome: string; caricata: string };
       }
+      interface Messaggio {
+        id: string;
+        tipo: 'preventivo' | 'corsi';
+        ricevuto: string;
+        nome: string;
+        email: string;
+        telefono?: string;
+        dettagli: { etichetta: string; valore: string }[];
+        testo?: string;
+        letto: boolean;
+        archiviato: boolean;
+      }
+
       interface Richiesta {
         numero: string;
         creato: string;
@@ -311,6 +327,8 @@ import { sito } from '../lib/sito';
       let aperto: Ordine | undefined;
       let richieste: Richiesta[] = [];
       let richiestaAperta: Richiesta | undefined;
+      let messaggi: Messaggio[] = [];
+      const SCHEDE_CON_LINK = ['assistenza', 'preventivi', 'messaggi'];
 
       async function api(corpo: Record<string, unknown>) {
         const risposta = await fetch('/api/gestione-ordini', {
@@ -351,7 +369,12 @@ import { sito } from '../lib/sito';
 
       function disegnaElenco() {
         $('[data-conta="assistenza"]').textContent = String(richieste.filter((r) => r.stato !== 'chiusa').length || '');
+        evidenziaBarra();
+        $('[data-conta="messaggi"]').textContent = String(messaggi.filter((m) => !m.letto && !m.archiviato).length || '');
         $('[data-barra-preventivi]').hidden = filtro !== 'preventivi';
+        $('[data-barra-messaggi]').hidden = filtro !== 'messaggi';
+        $('[data-vuoto]').textContent = 'Nessun ordine in questa sezione.';
+        if (filtro === 'messaggi') return disegnaMessaggi();
         if (filtro === 'assistenza') return disegnaRichieste();
         if (filtro === 'preventivi') return void disegnaPreventivi();
         const scelti = ordini.filter((o) =>
@@ -385,12 +408,88 @@ import { sito } from '../lib/sito';
           .join('');
       }
 
+      function disegnaMessaggi() {
+        document.querySelectorAll<HTMLElement>('[data-filtro]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filtro === filtro)));
+        const archiviati = $<HTMLInputElement>('[data-mostra-archiviati]').checked;
+        const scelti = messaggi.filter((m) => m.archiviato === archiviati);
+        $('[data-vuoto]').textContent = archiviati ? 'Nessun messaggio archiviato.' : 'Nessun messaggio da leggere: le nuove richieste dal sito compariranno qui.';
+        $('[data-vuoto]').hidden = scelti.length > 0;
+        $('[data-ordini]').innerHTML = scelti
+          .map((m) => {
+            const telefono = m.telefono?.replace(/[^\d+]/g, '');
+            const oggetto = encodeURIComponent(m.tipo === 'corsi' ? 'La tua iscrizione al corso FGItalia' : 'La tua richiesta a FGItalia');
+            const wa = telefono ? telefono.replace(/^\+/, '').replace(/^(?=3)/, '39') : '';
+            return `<li class="messaggio${m.letto ? '' : ' messaggio--nuovo'}"><details data-messaggio="${escape(m.id)}">
+              <summary>
+                <span class="ordini__riga"><strong>${m.letto ? '' : '● '}${escape(m.nome)}</strong><span class="etichetta-stato" data-stato="${m.tipo === 'corsi' ? 'in_lavorazione' : 'ricevuto'}">${m.tipo === 'corsi' ? 'Corso' : 'Richiesta preventivo'}</span></span>
+                <span class="ordini__riga"><span>${data(m.ricevuto)}</span><span>${escape(m.email)}</span></span>
+                <span class="ordini__prodotti">${escape(m.dettagli.map((d) => d.valore).join(' · ') || m.testo || '')}</span>
+              </summary>
+              <div class="messaggio__corpo">
+                <p>${m.dettagli.map((d) => `<strong>${escape(d.etichetta)}:</strong> ${escape(d.valore)}`).join('<br>')}
+                ${m.telefono ? `${m.dettagli.length ? '<br>' : ''}<strong>Telefono:</strong> <a href="tel:${escape(telefono)}">${escape(m.telefono)}</a>` : ''}</p>
+                ${m.testo ? `<blockquote>${escape(m.testo).replace(/\n/g, '<br>')}</blockquote>` : ''}
+                <div class="messaggio__azioni">
+                  <a class="pulsante pulsante--primario" href="mailto:${escape(m.email)}?subject=${oggetto}">✉️ Rispondi per email</a>
+                  ${wa ? `<a class="pulsante pulsante--contorno" href="https://wa.me/${escape(wa)}" target="_blank" rel="noopener">WhatsApp</a>` : ''}
+                  ${m.tipo === 'preventivo' ? `<button type="button" class="pulsante pulsante--contorno" data-preventivo-da="${escape(m.id)}">📄 Fai il preventivo</button>` : ''}
+                  <button type="button" class="pulsante pulsante--contorno" data-archivia="${escape(m.id)}">${m.archiviato ? 'Rimetti tra i messaggi' : 'Archivia'}</button>
+                </div>
+              </div>
+            </details></li>`;
+          })
+          .join('');
+      }
+
+      async function aggiornaMessaggio(id: string, modifiche: Partial<Pick<Messaggio, 'letto' | 'archiviato'>>) {
+        const m: Messaggio = await api({ azione: 'messaggio-aggiorna', id, ...modifiche });
+        messaggi = messaggi.map((x) => (x.id === m.id ? m : x));
+        $('[data-conta="messaggi"]').textContent = String(messaggi.filter((x) => !x.letto && !x.archiviato).length || '');
+        return m;
+      }
+
+      // aprendo un messaggio lo segno come letto
+      document.addEventListener(
+        'toggle',
+        (e) => {
+          const d = e.target as HTMLDetailsElement;
+          const id = d.dataset?.messaggio;
+          if (!id || !d.open) return;
+          const m = messaggi.find((x) => x.id === id);
+          if (m && !m.letto) {
+            d.closest('li')?.classList.remove('messaggio--nuovo');
+            void aggiornaMessaggio(id, { letto: true }).catch(() => {});
+          }
+        },
+        true,
+      );
+
+      // i link della barra in alto (#ordini, #preventivi…) cambiano scheda senza ricaricare la pagina
+      window.addEventListener('hashchange', () => {
+        const scheda = location.hash.slice(1);
+        if (!gettone || !(scheda === 'ordini' || SCHEDE_CON_LINK.includes(scheda))) return;
+        filtro = scheda === 'ordini' ? 'aperti' : scheda;
+        vista('elenco');
+        disegnaElenco();
+      });
+
+      function evidenziaBarra() {
+        const voce = filtro === 'aperti' || filtro === 'spediti' || filtro === 'tutti' ? 'ordini' : filtro;
+        document.querySelectorAll<HTMLElement>('[data-voce]').forEach((a) =>
+          a.dataset.voce === voce ? a.setAttribute('aria-current', 'page') : a.removeAttribute('aria-current'),
+        );
+      }
+
       async function caricaElenco() {
         vista('elenco');
         $('[data-ordini]').innerHTML = '<li class="caricamento">Caricamento…</li>';
-        [ordini, richieste] = await Promise.all([api({ azione: 'elenco' }), api({ azione: 'assistenza-elenco' }).catch(() => [])]);
+        [ordini, richieste, messaggi] = await Promise.all([
+          api({ azione: 'elenco' }),
+          api({ azione: 'assistenza-elenco' }).catch(() => []),
+          api({ azione: 'messaggi-elenco' }).catch(() => []),
+        ]);
         const daLink = decodeURIComponent(location.hash.slice(1));
-        if (daLink === 'assistenza' || daLink === 'preventivi') filtro = daLink;
+        if (SCHEDE_CON_LINK.includes(daLink)) filtro = daLink;
         if (daLink.startsWith('PV-')) filtro = 'preventivi';
         disegnaElenco();
         api({ azione: 'sicurezza-stato' })
@@ -398,7 +497,7 @@ import { sito } from '../lib/sito';
           .catch(() => {});
         if (daLink.startsWith('AS-')) apriRichiesta(daLink);
         else if (daLink.startsWith('PV-')) void apriPreventivo(daLink);
-        else if (daLink && daLink !== 'assistenza' && daLink !== 'preventivi') apri(daLink);
+        else if (daLink && daLink !== 'ordini' && !SCHEDE_CON_LINK.includes(daLink)) apri(daLink);
       }
 
       function apriRichiesta(numero: string) {
@@ -512,9 +611,30 @@ import { sito } from '../lib/sito';
         const preventivoBtn = t.closest<HTMLElement>('[data-apri-preventivo]');
         if (preventivoBtn) return void apriPreventivo(preventivoBtn.dataset.apriPreventivo!);
         if (t.closest('[data-nuovo-preventivo]')) return void nuovoPreventivo();
+        const archivia = t.closest<HTMLElement>('[data-archivia]');
+        if (archivia) {
+          const m = messaggi.find((x) => x.id === archivia.dataset.archivia);
+          if (m) return void aggiornaMessaggio(m.id, { archiviato: !m.archiviato, letto: true }).then(disegnaMessaggi);
+        }
+        const daMessaggio = t.closest<HTMLElement>('[data-preventivo-da]');
+        if (daMessaggio) {
+          const m = messaggi.find((x) => x.id === daMessaggio.dataset.preventivoDa);
+          if (m) {
+            nuovoPreventivo();
+            campo('nome').value = m.nome;
+            campo('email').value = m.email;
+            campo('telefono').value = m.telefono ?? '';
+            const struttura = m.dettagli.find((d) => d.etichetta.startsWith('Studio'))?.valore;
+            if (struttura) campo('ragioneSociale').value = struttura;
+            const prodotto = m.dettagli.find((d) => d.etichetta === 'Prodotto')?.valore;
+            (modPrev().elements.namedItem('note') as HTMLTextAreaElement).value = `Come da tua richiesta del ${giorno(m.ricevuto)}${prodotto ? ` (${prodotto})` : ''}.`;
+            return;
+          }
+        }
         const filtroBtn = t.closest<HTMLElement>('[data-filtro]');
         if (filtroBtn) {
           filtro = filtroBtn.dataset.filtro!;
+          history.replaceState(null, '', SCHEDE_CON_LINK.includes(filtro) ? `#${filtro}` : location.pathname);
           return disegnaElenco();
         }
         if (t.closest('[data-ricarica]')) return void caricaElenco();
@@ -532,7 +652,7 @@ import { sito } from '../lib/sito';
             .catch((err) => (esito.textContent = (err as Error).message));
         }
         if (t.closest('[data-indietro]')) {
-          history.replaceState(null, '', filtro === 'assistenza' || filtro === 'preventivi' ? `#${filtro}` : location.pathname);
+          history.replaceState(null, '', SCHEDE_CON_LINK.includes(filtro) ? `#${filtro}` : location.pathname);
           disegnaElenco();
           return vista('elenco');
         }
@@ -614,6 +734,7 @@ import { sito } from '../lib/sito';
       });
 
       $('[data-aggiorna]').addEventListener('change', aggiornaCampi);
+      $('[data-mostra-archiviati]').addEventListener('change', disegnaMessaggi);
 
       $<HTMLFormElement>('[data-fattura]').addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -1073,45 +1194,13 @@ import { sito } from '../lib/sito';
         background: var(--grigio-100);
       }
 
-      .barra {
-        position: sticky;
-        top: 0;
-        z-index: 10;
-        display: flex;
-        align-items: center;
-        gap: 14px;
-        padding: 10px 16px;
-        background: var(--bianco);
-        border-bottom: 1px solid var(--grigio-200);
-      }
-
-      .barra__logo img {
-        height: 36px;
-        width: auto;
-      }
-
-      .barra__contenuti {
-        margin-left: auto;
-        padding: 8px 14px;
-        border-radius: 999px;
-        background: var(--blu-100);
-        color: var(--blu-700);
-        font-size: 0.9rem;
-        font-weight: 700;
-        text-decoration: none;
-        white-space: nowrap;
-      }
-
-      .barra__contenuti + .barra__esci {
-        margin-left: 0;
-      }
-
       .barra__esci {
         margin-left: auto;
         padding: 8px 14px;
-        border: 1px solid var(--grigio-300);
+        border: 1px solid rgb(255 255 255 / 0.35);
         border-radius: 999px;
         background: none;
+        color: #fff;
         font: inherit;
         font-size: 0.9rem;
         cursor: pointer;
@@ -1205,7 +1294,7 @@ import { sito } from '../lib/sito';
         padding: 0;
       }
 
-      .ordini :global(button) {
+      .ordini :global(li > button) {
         display: grid;
         gap: 4px;
         width: 100%;
@@ -1235,6 +1324,62 @@ import { sito } from '../lib/sito';
         white-space: nowrap;
         overflow: hidden;
         text-overflow: ellipsis;
+      }
+
+      .ordini :global(.messaggio details) {
+        border: 1px solid var(--grigio-200);
+        border-radius: 14px;
+        background: var(--bianco);
+      }
+
+      .ordini :global(.messaggio--nuovo details) {
+        border-color: var(--blu-600);
+        box-shadow: inset 4px 0 0 var(--accento);
+      }
+
+      .ordini :global(.messaggio summary) {
+        display: grid;
+        gap: 4px;
+        padding: 16px;
+        cursor: pointer;
+        list-style: none;
+      }
+
+      .ordini :global(.messaggio summary::-webkit-details-marker) {
+        display: none;
+      }
+
+      .ordini :global(.messaggio__corpo) {
+        padding: 0 16px 16px;
+        border-top: 1px solid var(--grigio-200);
+      }
+
+      .ordini :global(.messaggio__corpo blockquote) {
+        margin: 12px 0;
+        padding: 14px 16px;
+        border-radius: 10px;
+        background: var(--blu-50);
+        white-space: normal;
+      }
+
+      .ordini :global(.messaggio__azioni) {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+      }
+
+      .ordini :global(.messaggio__azioni .pulsante) {
+        padding: 9px 16px;
+        font-size: 0.9rem;
+      }
+
+      .interruttore {
+        display: inline-flex;
+        gap: 8px;
+        align-items: center;
+        font-size: 0.9rem;
+        font-weight: 600;
+        cursor: pointer;
       }
 
       .vuoto,

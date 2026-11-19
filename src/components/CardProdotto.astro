@@ -2,6 +2,7 @@
 import { getEntry } from 'astro:content';
 import Icona from './Icona.astro';
 import type { Prodotto } from '../lib/catalogo';
+import { scontoPer } from '../lib/promozioni';
 import { prezzo, statiDisponibilita } from '../lib/sito';
 
 interface Props {
@@ -10,7 +11,8 @@ interface Props {
 
 const { prodotto } = Astro.props;
 const { titolo, immagini, descrizione_breve, sottocategoria } = prodotto.data;
-const prezzoTesto = prezzo(prodotto.data.prezzo);
+const sconto = await scontoPer(prodotto);
+const prezzoTesto = prezzo(sconto?.prezzo ?? prodotto.data.prezzo);
 const { disponibilita } = prodotto.data;
 const categoria = await getEntry(prodotto.data.categoria);
 const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefined;
@@ -22,6 +24,7 @@ const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefi
   data-prodotto
   data-categoria={categoria?.id}
   data-marca={marca?.id ?? ''}
+  data-offerta={sconto ? 'si' : undefined}
   data-testo={`${titolo} ${marca?.data.nome ?? ''} ${prodotto.data.codice ?? ''} ${sottocategoria ?? ''} ${categoria?.data.titolo ?? ''} ${descrizione_breve}`.toLowerCase()}
 >
   <div class="card-prodotto__foto">
@@ -33,6 +36,7 @@ const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefi
       )
     }
     {marca && <span class="card-prodotto__marca">{marca.data.nome}</span>}
+    {sconto && <span class="card-prodotto__sconto">-{sconto.percentuale}%</span>}
     {disponibilita !== 'disponibile' && (
       <span class:list={['card-prodotto__stato', `card-prodotto__stato--${disponibilita}`]}>
         {statiDisponibilita[disponibilita].etichetta}
@@ -46,7 +50,8 @@ const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefi
     <div class="card-prodotto__piede">
       {
         prezzoTesto ? (
-          <span class="card-prodotto__prezzo">
+          <span class:list={['card-prodotto__prezzo', { 'card-prodotto__prezzo--offerta': sconto }]}>
+            {sconto && <s>{prezzo(sconto.listino)}</s>}
             {prezzoTesto} <small>+ IVA</small>
           </span>
         ) : (
@@ -178,6 +183,30 @@ const marca = prodotto.data.marca ? await getEntry(prodotto.data.marca) : undefi
     font-weight: 800;
     color: var(--blu-900);
     font-variant-numeric: tabular-nums;
+  }
+
+  .card-prodotto__sconto {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    padding: 4px 10px;
+    border-radius: 999px;
+    background: #d92d20;
+    color: var(--bianco);
+    font-size: 0.8rem;
+    font-weight: 800;
+    box-shadow: var(--ombra);
+  }
+
+  .card-prodotto__prezzo s {
+    display: block;
+    font-size: 0.8rem;
+    font-weight: 600;
+    color: var(--grigio-500);
+  }
+
+  .card-prodotto__prezzo--offerta {
+    color: #b42318;
   }
 
   .card-prodotto__prezzo small {

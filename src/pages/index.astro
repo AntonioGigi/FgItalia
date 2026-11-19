@@ -8,11 +8,18 @@ import InvitoContatto from '../components/InvitoContatto.astro';
 import IscrizioneAvvisi from '../components/IscrizioneAvvisi.astro';
 import { categorieOrdinate, marchiOrdinati, prodottiPubblicati, novitaPubblicate } from '../lib/catalogo';
 import { sito, anniAttivita, formatoData, linkWhatsApp } from '../lib/sito';
+import { promozioniAttive, scontoDa } from '../lib/promozioni';
 
 const categorie = await categorieOrdinate();
 const marchi = await marchiOrdinati();
 const prodotti = await prodottiPubblicati();
 const inEvidenza = prodotti.filter((p) => p.data.in_evidenza).slice(0, 6);
+const promozioni = await promozioniAttive();
+// in offerta: prima i consigliati, poi gli altri scontati
+const inOfferta = [...prodotti]
+  .filter((p) => scontoDa(promozioni, p))
+  .sort((a, b) => Number(b.data.in_evidenza) - Number(a.data.in_evidenza))
+  .slice(0, 6);
 const novita = (await novitaPubblicate()).slice(0, 3);
 const contaPerCategoria = (id: string) => prodotti.filter((p) => p.data.categoria.id === id).length;
 const whatsapp = linkWhatsApp('Buongiorno, vorrei informazioni sui vostri prodotti.');
@@ -104,6 +111,29 @@ const punti = [
       </div>
     </div>
   </section>
+
+  {
+    inOfferta.length > 0 && (
+      <section class="sezione">
+        <div class="contenitore">
+          <div class="riga-testa appare">
+            <div>
+              <span class="sopratitolo">In offerta</span>
+              <h2>{promozioni[0].data.titolo}</h2>
+            </div>
+            <a class="pulsante pulsante--primario" href="/offerte/">
+              Tutte le offerte <Icona nome="freccia" />
+            </a>
+          </div>
+          <div class="griglia griglia--prodotti">
+            {inOfferta.map((p) => (
+              <CardProdotto prodotto={p} />
+            ))}
+          </div>
+        </div>
+      </section>
+    )
+  }
 
   {
     inEvidenza.length > 0 && (

@@ -106,7 +106,7 @@ import { sito } from '../lib/sito';
           <a class="riga__foto" href="/prodotti/${escape(r.id)}/">${r.immagine ? `<img src="${escape(r.immagine)}" alt="" loading="lazy">` : ''}</a>
           <div class="riga__info">
             <a href="/prodotti/${escape(r.id)}/">${escape(r.titolo)}</a>
-            <span>${euro(r.unitarioCent)} cad. IVA inclusa</span>
+            <span>${r.listinoCent ? `<s>${euro(r.listinoCent)}</s> <b class="riga__offerta">${euro(r.unitarioCent)} (-${r.sconto}%)</b>` : euro(r.unitarioCent)} cad. IVA inclusa</span>
           </div>
           <div class="riga__quantita" role="group" aria-label="Quantità di ${escape(r.titolo)}">
             <button type="button" data-cambia="-1" aria-label="Diminuisci">−</button>
@@ -188,7 +188,15 @@ import { sito } from '../lib/sito';
     pronto.hidden = true;
     try {
       const { numero } = await api<{ numero: string }>('preventivo', { carrello: leggiCarrello() });
-      pronto.innerHTML = `Preventivo <strong>${escapeHtml(numero)}</strong> pronto. <a href="${linkDocumento('preventivo', numero)}" target="_blank">Apri il PDF</a> · lo ritrovi nella tua <a href="/account/#preventivi">area clienti</a>.`;
+      // il PDF si scarica da solo: il collegamento resta solo se il download non parte
+      const scarica = `${linkDocumento('preventivo', numero)}&scarica=1`;
+      const link = document.createElement('a');
+      link.href = scarica;
+      link.download = `Preventivo-${numero}.pdf`;
+      document.body.append(link);
+      link.click();
+      link.remove();
+      pronto.innerHTML = `Preventivo <strong>${escapeHtml(numero)}</strong> scaricato. Se il download non è partito <a href="${scarica}">scaricalo da qui</a> · lo ritrovi anche nella tua <a href="/account/#preventivi">area clienti</a>.`;
       pronto.dataset.tipo = 'ok';
     } catch (err) {
       if (err instanceof ErroreAccount && err.stato === 401) {
@@ -295,6 +303,10 @@ import { sito } from '../lib/sito';
     font-weight: 700;
     color: var(--blu-900);
     text-decoration: none;
+  }
+
+  .righe :global(.riga__offerta) {
+    color: #b42318;
   }
 
   .righe :global(.riga__info span) {

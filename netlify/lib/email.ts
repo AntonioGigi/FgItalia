@@ -213,6 +213,21 @@ export function emailNuovoCorso(corso: {
   };
 }
 
+export function emailPromozione(promo: { titolo: string; sconto: number; al?: string; dettagli?: string }) {
+  const fino = promo.al ? ` fino al ${dataBreve(promo.al)}` : '';
+  return {
+    oggetto: `${promo.titolo}: -${promo.sconto}%${fino}`,
+    html: pagina(
+      promo.titolo,
+      `<p style="font-size:28px;font-weight:800;color:#d92d20;margin:0 0 8px">-${promo.sconto}%</p>
+<p>Lo sconto è già applicato ai prezzi sul sito, nel carrello e nei preventivi${escape(fino)}.</p>
+${promo.dettagli ? `<p>${escape(promo.dettagli).replace(/\n/g, '<br>')}</p>` : ''}
+${pulsante('Vedi i prodotti in offerta', `${urlSito()}/offerte/`)}
+<p style="font-size:12px;color:#6b7b87">Ricevi questa email perché ti sei iscritto agli avvisi di ${escape(sito.nome_breve)}. <a href="{{ unsubscribe }}" style="color:#6b7b87">Non voglio più ricevere avvisi</a>.</p>`,
+    ),
+  };
+}
+
 // ——— Area clienti ———
 
 const dataBreve = (iso: string) =>

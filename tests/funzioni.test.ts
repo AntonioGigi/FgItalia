@@ -45,6 +45,7 @@ vi.mock('../netlify/lib/stripe', () => ({
 }));
 
 let corsiPubblicati: unknown[] = [];
+let promozioniPubblicate: unknown[] = [];
 const emailInviate: { percorso: string; corpo: Record<string, any> }[] = [];
 const catalogo = {
   negozioAttivo: true,
@@ -57,6 +58,7 @@ const catalogo = {
 vi.stubGlobal('fetch', async (url: string, opzioni?: RequestInit) => {
   if (url.endsWith('/api/catalogo.json')) return new Response(JSON.stringify(catalogo));
   if (url.endsWith('/api/corsi.json')) return new Response(JSON.stringify(corsiPubblicati));
+  if (url.endsWith('/api/promozioni.json')) return new Response(JSON.stringify(promozioniPubblicate));
   if (url.startsWith('https://api.brevo.com/v3')) {
     emailInviate.push({ percorso: url.slice(24), corpo: JSON.parse(String(opzioni?.body)) });
     return new Response(JSON.stringify({ id: 7 }), { status: 201 });
@@ -284,5 +286,22 @@ describe('avviso automatico dei nuovi corsi', () => {
     emailInviate.length = 0;
     await dopoPubblicazione();
     expect(emailInviate).toHaveLength(0);
+  });
+  it('annuncia una volta sola le promozioni con "Avvisa gli iscritti"', async () => {
+    corsiPubblicati = [];
+    promozioniPubblicate = [
+      { id: 'black-friday:15:2026-11-27', titolo: 'Black Friday', sconto: 15, al: '2026-11-30', avvisaIscritti: true },
+      { id: 'silenziosa:5:2026-11-01', titolo: 'Silenziosa', sconto: 5, avvisaIscritti: false },
+    ];
+    await dopoPubblicazione();
+    expect(emailInviate.map((e) => e.percorso)).toEqual(['/emailCampaigns', '/emailCampaigns/7/sendNow']);
+    const campagna = emailInviate[0].corpo;
+    expect(campagna.subject).toBe('Black Friday: -15% fino al 30 novembre 2026');
+    expect(campagna.htmlContent).toContain('/offerte/');
+
+    emailInviate.length = 0;
+    await dopoPubblicazione();
+    expect(emailInviate).toHaveLength(0);
+    promozioniPubblicate = [];
   });
 });
