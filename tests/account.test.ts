@@ -348,6 +348,62 @@ describe('preventivi', () => {
     expect((await chiama({ azione: 'preventivo', carrello: [] }, cookie)).status).toBe(400);
   });
 
+  it('dal pannello si crea un preventivo con prodotti del sito, voci libere e sconti', async () => {
+    const cookie = await registra();
+    const admin = await pannello();
+    expect((await admin({ azione: 'preventivo-salva', cliente: { nome: '' }, righe: [] })).status).toBe(400);
+
+    const strumenti = await (await admin({ azione: 'preventivo-strumenti' })).json();
+    expect(strumenti.prodotti.map((p: any) => p.id)).toEqual(['elettrodi', 'genesy']);
+    expect(strumenti.clienti[0].email).toBe('giulia@studio.it');
+
+    emailInviate.length = 0;
+    const r = await admin({
+      azione: 'preventivo-salva',
+      cliente: { nome: 'Giulia Bianchi', email: 'Giulia@Studio.it', ragioneSociale: 'Studio Bianchi', provincia: 'ct' },
+      righe: [
+        { id: 'genesy', titolo: 'Genesy 600', quantita: 1, prezzo: 1000, sconto: 10 },
+        { titolo: 'Lettino portatile in legno', quantita: '2', prezzo: '129,00' },
+      ],
+      spedizione: 0,
+      validitaGiorni: 15,
+      note: 'Pagamento con bonifico',
+      inviaEmail: true,
+    });
+    expect(r.status).toBe(200);
+    const { preventivo: p, emailInviata } = await r.json();
+    expect(p.autore).toBe('fgitalia');
+    expect(p.righe[0]).toMatchObject({ listinoCent: 100000, sconto: 10, nettoCent: 90000 });
+    expect(p.righe[1]).toMatchObject({ id: '', nettoCent: 12900, totaleNettoCent: 25800 });
+    expect(p.imponibileCent).toBe(115800);
+    expect(p.ivaCent).toBe(25476);
+    expect(p.totaleCent).toBe(141276);
+    expect(p.cliente.fatturazione.provincia).toBe('CT');
+    expect(emailInviata).toBe(true);
+    expect(emailInviate[0].corpo.to[0].email).toBe('giulia@studio.it');
+    expect(emailInviate[0].corpo.attachment[0].name).toBe(`Preventivo-${p.numero}.pdf`);
+
+    // il cliente registrato lo ritrova nella sua area e lo scarica
+    const profilo = await (await chiama({ azione: 'profilo' }, cookie)).json();
+    expect(profilo.preventivi.find((x: any) => x.numero === p.numero).daFgitalia).toBe(true);
+    const pdf = await documento(new Request(`https://www.fgitalia.it/api/account/documento?tipo=preventivo&n=${p.numero}`, { headers: { cookie } }));
+    expect(pdf.status).toBe(200);
+
+    // modifica: stesso numero e stessa data
+    const modificato = await (await admin({ azione: 'preventivo-salva', numero: p.numero, cliente: { nome: 'Giulia Bianchi', email: 'giulia@studio.it' }, righe: [{ titolo: 'Voce unica', quantita: 1, prezzo: 50 }] })).json();
+    expect(modificato.preventivo.numero).toBe(p.numero);
+    expect(modificato.preventivo.creato).toBe(p.creato);
+    expect(modificato.preventivo.totaleCent).toBe(6100);
+
+    const elenco = await (await admin({ azione: 'preventivi-elenco' })).json();
+    expect(elenco.find((x: any) => x.numero === p.numero).autore).toBe('fgitalia');
+    const scaricato = await admin({ azione: 'preventivo-pdf', numero: p.numero });
+    expect(scaricato.headers.get('content-type')).toBe('application/pdf');
+
+    expect((await admin({ azione: 'preventivo-elimina', numero: p.numero })).status).toBe(200);
+    expect((await clienteDaEmail('giulia@studio.it'))!.preventivi).not.toContain(p.numero);
+  });
+
   it('i PDF sopportano caratteri fuori dall’alfabeto dei font standard', () => {
     expect(pulito('Crema “arnica” – 100 mL € ✓ 中')).toBe('Crema “arnica” – 100 mL € ? ?');
   });

@@ -41,6 +41,7 @@ import { sito } from '../lib/sito';
           <button type="button" data-filtro="spediti" aria-pressed="false">Spediti</button>
           <button type="button" data-filtro="tutti" aria-pressed="false">Tutti</button>
           <button type="button" data-filtro="assistenza" aria-pressed="false">Assistenza <span data-conta="assistenza"></span></button>
+          <button type="button" data-filtro="preventivi" aria-pressed="false">Preventivi</button>
           <button type="button" data-prova-email>Prova email</button>
           <button type="button" data-apri-sicurezza>Sicurezza</button>
           <button type="button" class="filtri__aggiorna" data-ricarica aria-label="Aggiorna">↻</button>
@@ -50,6 +51,10 @@ import { sito } from '../lib/sito';
           🔒 <strong>Proteggi il pannello:</strong> attiva la verifica in due passaggi, così per entrare non basterà la password.
           <button type="button" class="collegamento" data-apri-sicurezza>Attivala ora</button>
         </p>
+        <div class="nuovo-preventivo" data-barra-preventivi hidden>
+          <p>Prepara un preventivo con i prodotti del sito o con qualsiasi altra voce, scarica il PDF o mandalo al cliente per email.</p>
+          <button type="button" class="pulsante pulsante--primario" data-nuovo-preventivo>+ Nuovo preventivo</button>
+        </div>
         <ul class="ordini" data-ordini></ul>
         <p class="vuoto" data-vuoto hidden>Nessun ordine in questa sezione.</p>
       </section>
@@ -151,6 +156,76 @@ import { sito } from '../lib/sito';
           <p class="esito" role="status" data-esito-richiesta hidden></p>
         </form>
       </section>
+      <section class="scheda" data-preventivo hidden>
+        <button class="indietro" type="button" data-indietro><Icona nome="frecciaSinistra" dimensione={18} /> Tutti i preventivi</button>
+        <form class="preventivo" data-modulo-preventivo novalidate>
+          <div class="scheda__testa">
+            <div><h1 data-titolo-preventivo>Nuovo preventivo</h1><p class="sottotitolo" data-sottotitolo-preventivo></p></div>
+          </div>
+
+          <fieldset>
+            <legend>Destinatario</legend>
+            <label class="intero" data-campo-cerca-cliente>
+              <span>Cliente già registrato sul sito? Cerca per nome o email (facoltativo)</span>
+              <input list="elenco-clienti" data-cerca-cliente placeholder="Scrivi per cercare…" autocomplete="off" />
+              <datalist id="elenco-clienti" data-elenco-clienti></datalist>
+            </label>
+            <div class="campi">
+              <label><span>Nome e cognome *</span><input name="nome" required placeholder="Es. Dott. Andrea Iacono" /></label>
+              <label><span>Studio o ragione sociale</span><input name="ragioneSociale" /></label>
+              <label><span>Email</span><input name="email" type="email" /></label>
+              <label><span>Telefono</span><input name="telefono" type="tel" /></label>
+              <label class="intero"><span>Indirizzo</span><input name="via" placeholder="Via e numero civico" /></label>
+              <label><span>CAP</span><input name="cap" inputmode="numeric" maxlength="5" /></label>
+              <label><span>Città</span><input name="citta" /></label>
+              <label><span>Provincia</span><input name="provincia" maxlength="2" placeholder="CT" /></label>
+              <label><span>Partita IVA</span><input name="partitaIva" /></label>
+              <label><span>Codice fiscale</span><input name="codiceFiscale" /></label>
+              <label><span>Codice SDI</span><input name="codiceSdi" maxlength="7" /></label>
+              <label><span>PEC</span><input name="pec" type="email" /></label>
+            </div>
+          </fieldset>
+
+          <fieldset>
+            <legend>Prodotti</legend>
+            <div class="aggiungi">
+              <label>
+                <span>Aggiungi un prodotto del sito</span>
+                <input list="elenco-prodotti" data-cerca-prodotto placeholder="Scrivi il nome del prodotto…" autocomplete="off" />
+                <datalist id="elenco-prodotti" data-elenco-prodotti></datalist>
+              </label>
+              <button type="button" class="pulsante pulsante--contorno" data-voce-libera>+ Voce libera</button>
+            </div>
+            <p class="suggerimento">Prezzi in euro <strong>IVA esclusa</strong>. Puoi cambiare descrizione e prezzo anche dei prodotti del sito; lo sconto in % compare nel PDF con il prezzo pieno barrato.</p>
+            <div class="voci" data-voci></div>
+            <p class="vuoto-voci" data-vuoto-voci>Nessun prodotto: cercane uno qui sopra o aggiungi una voce libera.</p>
+          </fieldset>
+
+          <fieldset>
+            <legend>Condizioni</legend>
+            <div class="campi">
+              <label><span>Spedizione (€ IVA esclusa, 0 = inclusa)</span><input name="spedizione" inputmode="decimal" value="0" /></label>
+              <label><span>Validità (giorni)</span><input name="validitaGiorni" inputmode="numeric" value="30" /></label>
+              <label class="intero"><span>Note nel PDF (pagamento, consegna, garanzia…)</span><textarea name="note" rows="3"></textarea></label>
+            </div>
+          </fieldset>
+
+          <div class="riepilogo" data-riepilogo></div>
+
+          <div class="invio">
+            <label class="spunta"><input type="checkbox" name="inviaEmail" data-invia-email /> Manda il PDF al cliente per email quando salvo</label>
+            <label class="intero" data-campo-messaggio hidden><span>Messaggio nell’email (facoltativo)</span><textarea name="messaggio" rows="3" placeholder="Gentile dottore, come d’accordo le invio il preventivo…"></textarea></label>
+          </div>
+
+          <div class="azioni-preventivo">
+            <button class="pulsante pulsante--primario" type="submit">Salva e scarica il PDF</button>
+            <button class="pulsante pulsante--contorno" type="button" data-scarica-preventivo hidden>Scarica il PDF</button>
+            <button class="pulsante pulsante--contorno" type="button" data-duplica-preventivo hidden>Duplica</button>
+            <button class="collegamento elimina" type="button" data-elimina-preventivo hidden>Elimina</button>
+          </div>
+          <p class="esito" role="status" data-esito-preventivo hidden></p>
+        </form>
+      </section>
     </main>
 
     <script>
@@ -249,7 +324,8 @@ import { sito } from '../lib/sito';
         return dati;
       }
 
-      function vista(nome: 'accesso' | 'elenco' | 'scheda' | 'richiesta' | 'sicurezza') {
+      function vista(nome: 'accesso' | 'elenco' | 'scheda' | 'richiesta' | 'sicurezza' | 'preventivo') {
+        $('[data-preventivo]').hidden = nome !== 'preventivo';
         $('[data-sicurezza]').hidden = nome !== 'sicurezza';
         $('[data-accesso]').hidden = nome !== 'accesso';
         $('[data-elenco]').hidden = nome !== 'elenco';
@@ -275,7 +351,9 @@ import { sito } from '../lib/sito';
 
       function disegnaElenco() {
         $('[data-conta="assistenza"]').textContent = String(richieste.filter((r) => r.stato !== 'chiusa').length || '');
+        $('[data-barra-preventivi]').hidden = filtro !== 'preventivi';
         if (filtro === 'assistenza') return disegnaRichieste();
+        if (filtro === 'preventivi') return void disegnaPreventivi();
         const scelti = ordini.filter((o) =>
           filtro === 'aperti' ? APERTI.includes(o.stato) : filtro === 'spediti' ? ['spedito', 'consegnato'].includes(o.stato) : true,
         );
@@ -312,13 +390,15 @@ import { sito } from '../lib/sito';
         $('[data-ordini]').innerHTML = '<li class="caricamento">Caricamento…</li>';
         [ordini, richieste] = await Promise.all([api({ azione: 'elenco' }), api({ azione: 'assistenza-elenco' }).catch(() => [])]);
         const daLink = decodeURIComponent(location.hash.slice(1));
-        if (daLink === 'assistenza') filtro = 'assistenza';
+        if (daLink === 'assistenza' || daLink === 'preventivi') filtro = daLink;
+        if (daLink.startsWith('PV-')) filtro = 'preventivi';
         disegnaElenco();
         api({ azione: 'sicurezza-stato' })
           .then((stato) => ($('[data-avviso-2fa]').hidden = stato.attiva))
           .catch(() => {});
         if (daLink.startsWith('AS-')) apriRichiesta(daLink);
-        else if (daLink && daLink !== 'assistenza') apri(daLink);
+        else if (daLink.startsWith('PV-')) void apriPreventivo(daLink);
+        else if (daLink && daLink !== 'assistenza' && daLink !== 'preventivi') apri(daLink);
       }
 
       function apriRichiesta(numero: string) {
@@ -429,6 +509,9 @@ import { sito } from '../lib/sito';
             disegnaFattura(ordine);
           });
         }
+        const preventivoBtn = t.closest<HTMLElement>('[data-apri-preventivo]');
+        if (preventivoBtn) return void apriPreventivo(preventivoBtn.dataset.apriPreventivo!);
+        if (t.closest('[data-nuovo-preventivo]')) return void nuovoPreventivo();
         const filtroBtn = t.closest<HTMLElement>('[data-filtro]');
         if (filtroBtn) {
           filtro = filtroBtn.dataset.filtro!;
@@ -449,7 +532,7 @@ import { sito } from '../lib/sito';
             .catch((err) => (esito.textContent = (err as Error).message));
         }
         if (t.closest('[data-indietro]')) {
-          history.replaceState(null, '', filtro === 'assistenza' ? '#assistenza' : location.pathname);
+          history.replaceState(null, '', filtro === 'assistenza' || filtro === 'preventivi' ? `#${filtro}` : location.pathname);
           disegnaElenco();
           return vista('elenco');
         }
@@ -611,6 +694,350 @@ import { sito } from '../lib/sito';
         bottone.disabled = false;
       });
 
+      // ——— preventivi ———
+
+      interface VocePreventivo {
+        id: string;
+        titolo: string;
+        codice?: string;
+        quantita: number;
+        prezzo: number;
+        sconto: number;
+      }
+      interface PreventivoSalvato {
+        numero: string;
+        creato: string;
+        validoFino: string;
+        autore?: 'fgitalia';
+        cliente: { id: string; nome: string; email: string; telefono?: string; fatturazione: Record<string, string | undefined> };
+        righe: { id: string; titolo: string; codice?: string; quantita: number; listinoCent?: number; sconto?: number; nettoCent: number }[];
+        spedizioneNettoCent: number;
+        note?: string;
+      }
+      interface PreventivoInElenco {
+        numero: string;
+        creato: string;
+        validoFino: string;
+        cliente: { nome: string; email: string; ragioneSociale?: string; conAccount: boolean };
+        righe: number;
+        totaleCent: number;
+        autore: 'fgitalia' | 'cliente';
+      }
+      interface ClienteRegistrato {
+        nome: string;
+        email: string;
+        telefono?: string;
+        fatturazione: Record<string, string | undefined>;
+      }
+      interface ProdottoSito {
+        id: string;
+        titolo: string;
+        prezzo: number | null;
+        codice: string | null;
+      }
+
+      const CAMPI_CLIENTE = ['nome', 'ragioneSociale', 'email', 'telefono', 'via', 'cap', 'citta', 'provincia', 'partitaIva', 'codiceFiscale', 'codiceSdi', 'pec'];
+      let preventivi: PreventivoInElenco[] = [];
+      let voci: VocePreventivo[] = [];
+      let preventivoAperto: string | undefined;
+      let strumenti: Promise<{ prodotti: ProdottoSito[]; clienti: ClienteRegistrato[] }> | undefined;
+      const modPrev = () => $<HTMLFormElement>('[data-modulo-preventivo]');
+      const campo = (nome: string) => modPrev().elements.namedItem(nome) as HTMLInputElement;
+      /** "1.234,50" o "1234.5" → 1234.5 */
+      const leggiNumero = (v: string) => {
+        const pulito = v.trim().replace(/[€\s]/g, '');
+        const n = Number(/,\d{1,2}$/.test(pulito) ? pulito.replace(/\./g, '').replace(',', '.') : pulito.replace(',', '.'));
+        return Number.isFinite(n) ? n : NaN;
+      };
+      const numeroInCampo = (n: number) => (Number.isFinite(n) ? String(Math.round(n * 100) / 100).replace('.', ',') : '');
+      const giorno = (iso: string) => new Intl.DateTimeFormat('it-IT', { day: '2-digit', month: '2-digit', year: 'numeric' }).format(new Date(iso.length === 10 ? `${iso}T12:00:00` : iso));
+
+      function caricaStrumenti() {
+        strumenti ??= api({ azione: 'preventivo-strumenti' }).catch(() => ({ prodotti: [], clienti: [] }));
+        void strumenti.then(({ prodotti, clienti }) => {
+          $('[data-elenco-prodotti]').innerHTML = prodotti
+            .map((p) => `<option value="${escape(p.titolo)}">${p.prezzo ? `${euro(Math.round(p.prezzo * 100))} + IVA` : 'prezzo su richiesta'}</option>`)
+            .join('');
+          $('[data-elenco-clienti]').innerHTML = clienti
+            .map((c) => `<option value="${escape(c.email)}">${escape(c.fatturazione.ragioneSociale || c.nome)}</option>`)
+            .join('');
+          $('[data-campo-cerca-cliente]').hidden = !clienti.length;
+        });
+        return strumenti;
+      }
+
+      async function disegnaPreventivi() {
+        document.querySelectorAll<HTMLElement>('[data-filtro]').forEach((b) => b.setAttribute('aria-pressed', String(b.dataset.filtro === filtro)));
+        $('[data-vuoto]').hidden = true;
+        $('[data-ordini]').innerHTML = '<li class="caricamento">Caricamento…</li>';
+        try {
+          preventivi = await api({ azione: 'preventivi-elenco' });
+        } catch (err) {
+          $('[data-ordini]').innerHTML = `<li class="caricamento">${escape((err as Error).message)}</li>`;
+          return;
+        }
+        if (filtro !== 'preventivi') return;
+        $('[data-vuoto]').textContent = 'Nessun preventivo per ora.';
+        $('[data-vuoto]').hidden = preventivi.length > 0;
+        $('[data-ordini]').innerHTML = preventivi
+          .map(
+            (p) => `<li><button type="button" data-apri-preventivo="${escape(p.numero)}">
+              <span class="ordini__riga"><strong>${escape(p.cliente.ragioneSociale || p.cliente.nome)}</strong><span class="etichetta-stato" data-stato="${p.autore === 'fgitalia' ? 'in_lavorazione' : 'ricevuto'}">${p.autore === 'fgitalia' ? 'Fatto da te' : 'Dal carrello'}</span></span>
+              <span class="ordini__riga"><span>${escape(p.numero)} · ${giorno(p.creato)}${p.validoFino < new Date().toISOString().slice(0, 10) ? ' · scaduto' : ''}</span><strong>${euro(p.totaleCent)}</strong></span>
+              <span class="ordini__prodotti">${p.righe} ${p.righe === 1 ? 'voce' : 'voci'}${p.cliente.email ? ` · ${escape(p.cliente.email)}` : ''}</span>
+            </button></li>`,
+          )
+          .join('');
+      }
+
+      function compilaPreventivo(p?: PreventivoSalvato, copia = false) {
+        const modulo = modPrev();
+        modulo.reset();
+        preventivoAperto = copia ? undefined : p?.numero;
+        const f = p?.cliente.fatturazione ?? {};
+        const valori: Record<string, string | undefined> = { ...f, nome: p?.cliente.nome, email: p?.cliente.email, telefono: p?.cliente.telefono };
+        for (const n of CAMPI_CLIENTE) campo(n).value = valori[n] ?? '';
+        voci = (p?.righe ?? []).map((r) => ({
+          id: r.id,
+          titolo: r.titolo,
+          codice: r.codice,
+          quantita: r.quantita,
+          prezzo: (r.listinoCent ?? r.nettoCent) / 100,
+          sconto: r.sconto ?? 0,
+        }));
+        campo('spedizione').value = numeroInCampo((p?.spedizioneNettoCent ?? 0) / 100);
+        campo('validitaGiorni').value = p
+          ? String(Math.max(1, Math.round((Date.parse(`${p.validoFino}T12:00:00`) - Date.parse(p.creato)) / 86_400_000)))
+          : '30';
+        (modulo.elements.namedItem('note') as HTMLTextAreaElement).value = p?.note ?? '';
+        $('[data-campo-messaggio]').hidden = true;
+        $('[data-titolo-preventivo]').textContent = preventivoAperto ? `Preventivo ${preventivoAperto}` : 'Nuovo preventivo';
+        $('[data-sottotitolo-preventivo]').textContent = preventivoAperto
+          ? `Creato il ${giorno(p!.creato)} · valido fino al ${giorno(p!.validoFino)}${p!.autore === 'fgitalia' ? '' : ' · scaricato dal cliente dal carrello'}`
+          : '';
+        for (const sel of ['[data-scarica-preventivo]', '[data-duplica-preventivo]', '[data-elimina-preventivo]']) $(sel).hidden = !preventivoAperto;
+        $('[data-esito-preventivo]').hidden = true;
+        disegnaVoci();
+        caricaStrumenti();
+        vista('preventivo');
+      }
+
+      function nuovoPreventivo() {
+        history.replaceState(null, '', '#preventivi');
+        compilaPreventivo();
+        campo('nome').focus();
+      }
+
+      async function apriPreventivo(numero: string) {
+        try {
+          const p: PreventivoSalvato = await api({ azione: 'preventivo-leggi', numero });
+          history.replaceState(null, '', `#${numero}`);
+          compilaPreventivo(p);
+        } catch (err) {
+          alert((err as Error).message);
+        }
+      }
+
+      function totaliVoci() {
+        const valide = voci.filter((v) => v.titolo.trim() && v.quantita > 0 && v.prezzo >= 0);
+        const merce = valide.reduce((s, v) => s + Math.round(Math.round(v.prezzo * 100) * (1 - Math.min(100, Math.max(0, v.sconto || 0)) / 100)) * Math.round(v.quantita), 0);
+        const spedizione = Math.max(0, Math.round((leggiNumero(campo('spedizione').value) || 0) * 100));
+        const imponibile = merce + spedizione;
+        const iva = Math.round(imponibile * 0.22);
+        return { imponibile, iva, totale: imponibile + iva, spedizione };
+      }
+
+      function disegnaRiepilogo() {
+        const t = totaliVoci();
+        $('[data-riepilogo]').innerHTML = `
+          <span>Imponibile <strong>${euro(t.imponibile)}</strong></span>
+          <span>IVA 22% <strong>${euro(t.iva)}</strong></span>
+          <span class="riepilogo__totale">Totale <strong>${euro(t.totale)}</strong></span>`;
+      }
+
+      function importoVoce(v: VocePreventivo) {
+        if (!(v.quantita > 0) || !(v.prezzo >= 0)) return '–';
+        const netto = Math.round(Math.round(v.prezzo * 100) * (1 - Math.min(100, Math.max(0, v.sconto || 0)) / 100));
+        return euro(netto * Math.round(v.quantita));
+      }
+
+      function disegnaVoci() {
+        $('[data-vuoto-voci]').hidden = voci.length > 0;
+        $('[data-voci]').innerHTML = voci
+          .map(
+            (v, i) => `<div class="voce" data-voce="${i}">
+              <label class="voce__titolo"><span>Descrizione${v.id ? ' · <a href="/prodotti/' + escape(v.id) + '/" target="_blank">dal sito</a>' : ''}</span><input data-campo="titolo" value="${escape(v.titolo)}" required /></label>
+              <label class="voce__codice"><span>Codice</span><input data-campo="codice" value="${escape(v.codice ?? '')}" /></label>
+              <label class="voce__q"><span>Q.tà</span><input data-campo="quantita" inputmode="numeric" value="${escape(v.quantita)}" /></label>
+              <label class="voce__prezzo"><span>Prezzo €</span><input data-campo="prezzo" inputmode="decimal" value="${escape(numeroInCampo(v.prezzo))}" placeholder="0,00" /></label>
+              <label class="voce__sconto"><span>Sconto %</span><input data-campo="sconto" inputmode="decimal" value="${v.sconto ? escape(numeroInCampo(v.sconto)) : ''}" placeholder="0" /></label>
+              <div class="voce__importo"><span>Importo</span><strong data-importo>${importoVoce(v)}</strong></div>
+              <div class="voce__comandi">
+                <button type="button" data-sposta="-1" aria-label="Sposta su" ${i === 0 ? 'disabled' : ''}>↑</button>
+                <button type="button" data-sposta="1" aria-label="Sposta giù" ${i === voci.length - 1 ? 'disabled' : ''}>↓</button>
+                <button type="button" data-togli aria-label="Togli">✕</button>
+              </div>
+            </div>`,
+          )
+          .join('');
+        disegnaRiepilogo();
+      }
+
+      $('[data-voci]').addEventListener('input', (e) => {
+        const input = e.target as HTMLInputElement;
+        const riga = input.closest<HTMLElement>('[data-voce]');
+        if (!riga || !input.dataset.campo) return;
+        const v = voci[Number(riga.dataset.voce)];
+        const nome = input.dataset.campo as keyof VocePreventivo;
+        if (nome === 'titolo' || nome === 'codice') v[nome] = input.value;
+        else v[nome as 'quantita' | 'prezzo' | 'sconto'] = input.value.trim() ? leggiNumero(input.value) : nome === 'sconto' ? 0 : NaN;
+        riga.querySelector('[data-importo]')!.textContent = importoVoce(v);
+        disegnaRiepilogo();
+      });
+
+      $('[data-voci]').addEventListener('click', (e) => {
+        const b = (e.target as HTMLElement).closest<HTMLButtonElement>('button');
+        const riga = b?.closest<HTMLElement>('[data-voce]');
+        if (!b || !riga) return;
+        const i = Number(riga.dataset.voce);
+        if (b.hasAttribute('data-togli')) voci.splice(i, 1);
+        else if (b.dataset.sposta) {
+          const j = i + Number(b.dataset.sposta);
+          [voci[i], voci[j]] = [voci[j], voci[i]];
+        }
+        disegnaVoci();
+      });
+
+      modPrev().addEventListener('input', (e) => {
+        const nome = (e.target as HTMLInputElement).name;
+        if (nome === 'spedizione') disegnaRiepilogo();
+      });
+
+      $('[data-invia-email]').addEventListener('change', (e) => {
+        $('[data-campo-messaggio]').hidden = !(e.target as HTMLInputElement).checked;
+      });
+
+      $<HTMLInputElement>('[data-cerca-prodotto]').addEventListener('change', async (e) => {
+        const input = e.target as HTMLInputElement;
+        const { prodotti } = await caricaStrumenti();
+        const scelto = prodotti.find((p) => p.titolo === input.value.trim());
+        if (!scelto) return;
+        voci.push({ id: scelto.id, titolo: scelto.titolo, codice: scelto.codice ?? undefined, quantita: 1, prezzo: scelto.prezzo ?? NaN, sconto: 0 });
+        input.value = '';
+        disegnaVoci();
+        const ultima = $('[data-voci]').lastElementChild;
+        ultima?.querySelector<HTMLInputElement>(scelto.prezzo ? '[data-campo="quantita"]' : '[data-campo="prezzo"]')?.focus();
+      });
+
+      $<HTMLInputElement>('[data-cerca-cliente]').addEventListener('change', async (e) => {
+        const input = e.target as HTMLInputElement;
+        const { clienti } = await caricaStrumenti();
+        const cercato = input.value.trim().toLowerCase();
+        const c = clienti.find((x) => x.email.toLowerCase() === cercato);
+        if (!c) return;
+        const valori: Record<string, string | undefined> = { ...c.fatturazione, nome: c.nome, email: c.email, telefono: c.telefono };
+        for (const n of CAMPI_CLIENTE) campo(n).value = valori[n] ?? '';
+        input.value = '';
+      });
+
+      $('[data-voce-libera]').addEventListener('click', () => {
+        voci.push({ id: '', titolo: '', quantita: 1, prezzo: NaN, sconto: 0 });
+        disegnaVoci();
+        $('[data-voci]').lastElementChild?.querySelector<HTMLInputElement>('[data-campo="titolo"]')?.focus();
+      });
+
+      async function scaricaPreventivo(numero: string) {
+        const risposta = await fetch('/api/gestione-ordini', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${gettone}` },
+          body: JSON.stringify({ azione: 'preventivo-pdf', numero }),
+        });
+        if (risposta.status === 401) return esci();
+        if (!risposta.ok) throw new Error((await risposta.json().catch(() => ({}))).errore ?? 'PDF non disponibile');
+        const url = URL.createObjectURL(await risposta.blob());
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `Preventivo-${numero}.pdf`;
+        document.body.append(link);
+        link.click();
+        link.remove();
+        setTimeout(() => URL.revokeObjectURL(url), 60_000);
+      }
+
+      modPrev().addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const esito = $('[data-esito-preventivo]');
+        const bottone = modPrev().querySelector<HTMLButtonElement>('button[type="submit"]')!;
+        esito.dataset.errore = 'false';
+        const errore = (testo: string) => {
+          esito.textContent = testo;
+          esito.dataset.errore = 'true';
+          esito.hidden = false;
+        };
+        if (!campo('nome').value.trim()) return errore('Scrivi il nome del destinatario.');
+        const daSalvare = voci.filter((v) => v.titolo.trim() || Number.isFinite(v.prezzo));
+        if (!daSalvare.length) return errore('Aggiungi almeno un prodotto.');
+        const sbagliata = daSalvare.findIndex((v) => !v.titolo.trim() || !(v.quantita > 0) || !(v.prezzo >= 0) || !(v.sconto >= 0 && v.sconto <= 100));
+        if (sbagliata >= 0) return errore(`Controlla la riga ${voci.indexOf(daSalvare[sbagliata]) + 1}: servono descrizione, quantità e prezzo (lo sconto da 0 a 100).`);
+        const d = new FormData(modPrev());
+        const invia = d.get('inviaEmail') === 'on';
+        if (invia && !campo('email').value.trim()) return errore('Per mandarlo per email serve l’email del destinatario.');
+        bottone.disabled = true;
+        esito.textContent = 'Salvataggio…';
+        esito.hidden = false;
+        try {
+          const cliente = Object.fromEntries(CAMPI_CLIENTE.map((n) => [n, String(d.get(n) ?? '')]));
+          const { preventivo, emailInviata, erroreEmail } = await api({
+            azione: 'preventivo-salva',
+            numero: preventivoAperto,
+            cliente,
+            righe: daSalvare,
+            spedizione: leggiNumero(String(d.get('spedizione') ?? '0')) || 0,
+            validitaGiorni: Number(d.get('validitaGiorni')) || 30,
+            note: d.get('note'),
+            inviaEmail: invia,
+            messaggio: d.get('messaggio'),
+          });
+          history.replaceState(null, '', `#${preventivo.numero}`);
+          compilaPreventivo(preventivo);
+          const parti = [`Preventivo ${preventivo.numero} salvato.`];
+          if (preventivo.cliente.id) parti.push('Il cliente lo trova anche nella sua area clienti.');
+          if (invia) parti.push(emailInviata ? `Email inviata a ${preventivo.cliente.email}.` : `ATTENZIONE: email non inviata${erroreEmail ? ` (${erroreEmail})` : ''}.`);
+          esito.textContent = parti.join(' ');
+          esito.dataset.errore = String(invia && !emailInviata);
+          esito.hidden = false;
+          await scaricaPreventivo(preventivo.numero).catch(() => {});
+        } catch (err) {
+          errore((err as Error).message);
+        }
+        bottone.disabled = false;
+      });
+
+      $('[data-scarica-preventivo]').addEventListener('click', () => {
+        if (preventivoAperto) void scaricaPreventivo(preventivoAperto).catch((err) => alert((err as Error).message));
+      });
+
+      $('[data-duplica-preventivo]').addEventListener('click', async () => {
+        if (!preventivoAperto) return;
+        const p: PreventivoSalvato = await api({ azione: 'preventivo-leggi', numero: preventivoAperto });
+        history.replaceState(null, '', '#preventivi');
+        compilaPreventivo(p, true);
+        $('[data-titolo-preventivo]').textContent = `Nuovo preventivo (copia di ${p.numero})`;
+      });
+
+      $('[data-elimina-preventivo]').addEventListener('click', async () => {
+        if (!preventivoAperto || !confirm(`Eliminare il preventivo ${preventivoAperto}? Sparisce anche dall’area del cliente.`)) return;
+        try {
+          await api({ azione: 'preventivo-elimina', numero: preventivoAperto });
+          history.replaceState(null, '', '#preventivi');
+          filtro = 'preventivi';
+          vista('elenco');
+          disegnaElenco();
+        } catch (err) {
+          alert((err as Error).message);
+        }
+      });
+
       $<HTMLFormElement>('[data-accesso]').addEventListener('submit', async (e) => {
         e.preventDefault();
         const errore = $('[data-errore-accesso]');
@@ -694,6 +1121,11 @@ import { sito } from '../lib/sito';
         max-width: 860px;
         margin: 0 auto;
         padding: 20px 16px 60px;
+      }
+
+      /* il preventivo ha bisogno di più spazio per le righe */
+      .pannello:has([data-preventivo]:not([hidden])) {
+        max-width: 1080px;
       }
 
       .accesso {
@@ -1042,6 +1474,232 @@ import { sito } from '../lib/sito';
         .spedizione {
           grid-template-columns: 1fr;
         }
+      }
+
+      .nuovo-preventivo {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 16px;
+        padding: 16px 18px;
+        border-radius: 16px;
+        background: var(--bianco);
+      }
+
+      .nuovo-preventivo[hidden] {
+        display: none;
+      }
+
+      .nuovo-preventivo p {
+        flex: 1 1 280px;
+        margin: 0;
+        color: var(--grigio-700);
+      }
+
+      .preventivo {
+        display: grid;
+        gap: 22px;
+      }
+
+      .preventivo .sottotitolo {
+        margin: 4px 0 0;
+        color: var(--grigio-500);
+      }
+
+      .preventivo fieldset {
+        display: grid;
+        gap: 14px;
+        margin: 0;
+        padding: 18px;
+        border: 1px solid var(--grigio-200);
+        border-radius: 16px;
+      }
+
+      .preventivo legend {
+        padding: 0 8px;
+        font-weight: 800;
+        color: var(--blu-900);
+      }
+
+      .preventivo [hidden] {
+        display: none;
+      }
+
+      .campi {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+        gap: 12px;
+      }
+
+      .aggiungi {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: flex-end;
+      }
+
+      .aggiungi label {
+        flex: 1 1 280px;
+      }
+
+      .suggerimento,
+      .vuoto-voci {
+        margin: 0;
+        font-size: 0.88rem;
+        color: var(--grigio-500);
+      }
+
+      .voci {
+        display: grid;
+        gap: 10px;
+      }
+
+      .voci :global(.voce) {
+        display: grid;
+        grid-template-columns: minmax(0, 1fr) 96px 60px 100px 76px 96px auto;
+        gap: 8px;
+        align-items: end;
+        padding: 12px;
+        border-radius: 12px;
+        background: var(--grigio-100);
+      }
+
+      .voci :global(label > span),
+      .voci :global(.voce__importo span) {
+        display: block;
+        margin-bottom: 6px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        color: var(--grigio-700);
+        white-space: nowrap;
+      }
+
+      .voci :global(.voce input) {
+        width: 100%;
+        min-width: 0;
+        padding: 9px 10px;
+        font: inherit;
+        font-size: 0.95rem;
+        border: 1px solid var(--grigio-300);
+        border-radius: 10px;
+        background: var(--bianco);
+      }
+
+      .voci :global(.voce__importo) {
+        text-align: right;
+      }
+
+      .voci :global(.voce__importo strong) {
+        display: block;
+        padding: 9px 0;
+        white-space: nowrap;
+      }
+
+      .voci :global(.voce__comandi) {
+        display: flex;
+        gap: 4px;
+      }
+
+      .voci :global(.voce__comandi button) {
+        width: 30px;
+        height: 38px;
+        border: 1px solid var(--grigio-300);
+        border-radius: 8px;
+        background: var(--bianco);
+        font: inherit;
+        cursor: pointer;
+      }
+
+      .voci :global(.voce__comandi button:disabled) {
+        opacity: 0.35;
+        cursor: default;
+      }
+
+      .voci :global(.voce__comandi [data-togli]) {
+        color: #b42318;
+      }
+
+      @media (max-width: 760px) {
+        .voci :global(.voce) {
+          grid-template-columns: repeat(6, 1fr);
+        }
+
+        .voci :global(.voce__titolo) {
+          grid-column: 1 / -1;
+        }
+
+        .voci :global(.voce__codice) {
+          grid-column: span 4;
+        }
+
+        .voci :global(.voce__q) {
+          grid-column: span 2;
+        }
+
+        .voci :global(.voce__prezzo) {
+          grid-column: span 3;
+        }
+
+        .voci :global(.voce__sconto) {
+          grid-column: span 3;
+        }
+
+        .voci :global(.voce__importo) {
+          grid-column: span 3;
+          text-align: left;
+        }
+
+        .voci :global(.voce__comandi) {
+          grid-column: span 3;
+          justify-content: flex-end;
+        }
+      }
+
+      .riepilogo {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px 24px;
+        justify-content: flex-end;
+        align-items: baseline;
+        padding: 16px 18px;
+        border-radius: 16px;
+        background: var(--blu-900);
+        color: var(--grigio-300);
+      }
+
+      .riepilogo :global(strong) {
+        color: var(--bianco);
+      }
+
+      .riepilogo :global(.riepilogo__totale) {
+        font-size: 1.25rem;
+      }
+
+      .riepilogo :global(.riepilogo__totale strong) {
+        color: var(--accento);
+      }
+
+      .invio {
+        display: grid;
+        gap: 12px;
+      }
+
+      .azioni-preventivo {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 10px;
+        align-items: center;
+      }
+
+      .azioni-preventivo .elimina {
+        margin-left: auto;
+        color: #b42318;
+      }
+
+      .preventivo .esito[data-errore='true'] {
+        color: #b42318;
       }
 
       .avviso-sicurezza {
