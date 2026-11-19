@@ -772,7 +772,7 @@ import { sito } from '../../lib/sito';
               </ol>
               <form class="modulo rispondi" data-rispondi="${escape(r.numero)}">
                 <label><span class="solo-lettori">Scrivi un messaggio</span><textarea name="nota" rows="2" required maxlength="3000" placeholder="${r.stato === 'chiusa' ? 'Il problema si è ripresentato? Scrivici qui' : 'Aggiungi un messaggio'}"></textarea></label>
-                <button class="pulsante pulsante--contorno piccolo" type="submit">Invia</button>
+                <button class="pulsante pulsante--primario" type="submit">Invia</button>
                 <p class="messaggio" role="alert" data-messaggio hidden></p>
               </form>
             </article>`,
@@ -1217,6 +1217,16 @@ import { sito } from '../../lib/sito';
 
   .modulo--griglia {
     grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  }
+
+  /* pulsante e messaggio sempre su una riga a sé: niente pulsanti deformati dal testo accanto */
+  .modulo--griglia > button[type='submit'],
+  .modulo--griglia > .messaggio {
+    grid-column: 1 / -1;
+  }
+
+  .modulo--griglia > button[type='submit'] {
+    justify-self: start;
   }
 
   .modulo p {
@@ -1743,8 +1753,39 @@ import { sito } from '../../lib/sito';
   }
 
   .pannello :global(.rispondi) {
+    display: grid;
     grid-template-columns: 1fr auto;
+    gap: 10px;
     align-items: end;
+    margin-top: 14px;
+  }
+
+  .pannello :global(.rispondi label) {
+    display: block;
+  }
+
+  .pannello :global(.rispondi textarea) {
+    display: block;
+    width: 100%;
+    min-height: 52px;
+    padding: 12px 14px;
+    font: inherit;
+    color: var(--grigio-900);
+    border: 1px solid var(--grigio-300);
+    border-radius: 12px;
+    background: var(--bianco);
+    resize: vertical;
+  }
+
+  .pannello :global(.rispondi textarea:focus) {
+    outline: 2px solid var(--blu-600);
+    outline-offset: 1px;
+    border-color: transparent;
+  }
+
+  .pannello :global(.rispondi button) {
+    min-height: 52px;
+    padding-inline: 26px;
   }
 
   .pannello :global(.rispondi .messaggio) {

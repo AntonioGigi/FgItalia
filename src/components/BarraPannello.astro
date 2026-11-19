@@ -20,7 +20,7 @@ const voci = [
 
 <header class="barra-pannello">
   <a class="barra-pannello__logo" href="/" title="Vai al sito">
-    <img src="/favicon.svg" alt="" width="30" height="30" />
+    <img src={sito.logo || '/favicon.png'} alt="" width="60" height="40" />
     <span>{sito.nome_breve} <small>Pannello</small></span>
   </a>
   <nav aria-label="Sezioni del pannello">
@@ -65,7 +65,10 @@ const voci = [
   }
 
   .barra-pannello__logo img {
-    border-radius: 8px;
+    height: 48px;
+    width: auto;
+    padding: 1px 4px;
+    border-radius: 10px;
     background: #fff;
   }
 
