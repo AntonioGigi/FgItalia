@@ -47,6 +47,9 @@ npm run build    # controlli + test + sito in dist/
    4. Su Netlify aggiungi la variabile `GITHUB_CMS_TOKEN` con il token e ripubblica. Alla scadenza crea un token nuovo e sostituiscilo.
 4. **Dominio:** in *Domain management* aggiungi `fgitalia.it` e `www.fgitalia.it`, poi presso il registrar del dominio imposta i DNS indicati da Netlify. Il certificato HTTPS è automatico. Tutti i vecchi indirizzi WordPress (prodotti, categorie, pagine) sono reindirizzati alle nuove pagine in `public/_redirects`.
 
+### Crediti Netlify
+Sul piano gratuito ogni pubblicazione in produzione consuma crediti: **ogni salvataggio dal pannello `/admin/` è una pubblicazione**. Conviene fare più modifiche e salvarle insieme. Se i crediti finiscono il sito resta online, ma le modifiche non vengono pubblicate fino al mese successivo (o fino al passaggio a un piano a pagamento). Ordini, messaggi, preventivi e assistenza non ne risentono: non richiedono pubblicazioni.
+
 ## Attivare pagamenti, ordini e avvisi
 
 Tutte le chiavi vanno in Netlify, *Site configuration → Environment variables* (mai nel codice).
@@ -75,7 +78,7 @@ Per provare senza soldi veri usa prima le chiavi "di test" di Stripe e la carta 
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | facoltative: accesso con Google per i clienti (vedi sotto) |
 | `SESSION_SECRET` | chiave segreta per l'area clienti: una frase lunga e casuale (almeno 32 caratteri). Se la cambi, tutti i clienti devono rifare l'accesso |
 | `INSTAGRAM_TOKEN` | facoltativo: mostra gli ultimi post Instagram in home |
-| `NETLIFY_BUILD_HOOK` | indirizzo di un *build hook* (Netlify → *Site configuration → Build & deploy → Build hooks → Add build hook*, nome "Ogni notte"): il sito si ripubblica ogni notte, così le promozioni iniziano e finiscono da sole il giorno giusto |
+| `NETLIFY_BUILD_HOOK` | indirizzo di un *build hook* (Netlify → *Site configuration → Build & deploy → Build hooks → Add build hook*, nome "Ogni notte"): ogni notte il sito controlla se una promozione inizia o finisce (o un corso è appena passato) e solo in quei giorni si ripubblica, così le date scattano da sole senza consumare crediti Netlify inutilmente |
 
 ### Promozioni
 Dal pannello `/admin/` → *Promozioni*: percentuale di sconto, su tutto / alcune categorie / alcuni prodotti, date di inizio e fine. Quando è attiva, i prezzi scontati valgono ovunque (schede, carrello, pagamento Stripe, preventivi, feed Google Shopping), compaiono la striscia rossa in cima al sito, la pagina `/offerte/` e la sezione "In offerta" in home. Con *Avvisa via email gli iscritti* parte una sola email alla lista Brevo.
