@@ -68,7 +68,10 @@ textarea,
 }
 
 .barra-pannello__logo img {
-  border-radius: 8px;
+  height: 48px;
+  width: auto;
+  padding: 1px 4px;
+  border-radius: 10px;
   background: #fff;
 }
 
