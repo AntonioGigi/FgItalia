@@ -1,16 +1,16 @@
 @import '@fontsource-variable/plus-jakarta-sans';
 
 :root {
-  /* colori del logo FGItalia: blu reale e giallo */
-  --blu-900: #08163f;
-  --blu-800: #0c2566;
-  --blu-700: #003098;
-  --blu-600: #1d4fd1;
-  --blu-100: #e6edfc;
-  --blu-50: #f4f7fe;
-  --accento: #f8c800;
-  --accento-testo: #1d4fd1;
-  --accento-chiaro: #fff3c4;
+  /* colori del logo FGItalia: blu notte e oro */
+  --blu-900: #0f2138;
+  --blu-800: #1b3557;
+  --blu-700: #24466f;
+  --blu-600: #2f5d8f;
+  --blu-100: #e7edf4;
+  --blu-50: #f4f7fa;
+  --accento: #e0a030;
+  --accento-testo: #2f5d8f;
+  --accento-chiaro: #fbeed3;
   --grigio-900: #14212b;
   --grigio-700: #3d4d59;
   --grigio-500: #6b7b87;

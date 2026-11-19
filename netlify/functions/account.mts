@@ -142,7 +142,7 @@ async function profilo(c: Cliente, req: Request) {
     })),
     preventivi: preventivi
       .filter((p): p is Preventivo => !!p)
-      .map((p) => ({ numero: p.numero, creato: p.creato, validoFino: p.validoFino, totaleCent: p.totaleCent, righe: p.righe }))
+      .map((p) => ({ numero: p.numero, creato: p.creato, validoFino: p.validoFino, totaleCent: p.totaleCent, righe: p.righe, daFgitalia: p.autore === 'fgitalia' }))
       .reverse(),
     assistenza: assistenza.filter((r): r is RichiestaAssistenza => !!r).reverse(),
   };

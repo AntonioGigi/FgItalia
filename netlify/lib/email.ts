@@ -85,22 +85,22 @@ export async function inviaCampagna(nome: string, oggetto: string, html: string)
 // ——— Modelli ———
 
 export function pagina(titolo: string, contenuto: string): string {
-  return `<!doctype html><html lang="it"><body style="margin:0;background:#f4f7fe;font-family:Arial,Helvetica,sans-serif;color:#14212b">
+  return `<!doctype html><html lang="it"><body style="margin:0;background:#f4f7fa;font-family:Arial,Helvetica,sans-serif;color:#14212b">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden">
-<tr><td style="padding:20px 28px;border-bottom:4px solid #f8c800"><img src="${urlSito()}${sito.logo || '/apple-touch-icon.png'}" alt="${escape(sito.nome_breve)}" height="44" style="display:block;height:44px"></td></tr>
+<tr><td style="padding:20px 28px;border-bottom:4px solid #e0a030"><img src="${urlSito()}${sito.logo || '/apple-touch-icon.png'}" alt="${escape(sito.nome_breve)}" height="60" style="display:block;height:60px"></td></tr>
 <tr><td style="padding:28px">
-<h1 style="margin:0 0 16px;font-size:22px;color:#08163f">${escape(titolo)}</h1>
+<h1 style="margin:0 0 16px;font-size:22px;color:#0f2138">${escape(titolo)}</h1>
 ${contenuto}
 </td></tr>
-<tr><td style="padding:18px 28px;background:#08163f;color:#c9d3da;font-size:12px;line-height:1.6">
+<tr><td style="padding:18px 28px;background:#0f2138;color:#c9d3da;font-size:12px;line-height:1.6">
 ${escape(sito.ragione_sociale)} · ${escape(sito.indirizzo)}, ${escape(sito.cap)} ${escape(sito.citta)} (${escape(sito.provincia)}) · P.IVA ${escape(sito.piva)}<br>
-${sito.telefono ? `Tel. ${escape(sito.telefono)} · ` : ''}${escape(sito.email)} · <a href="${urlSito()}" style="color:#f8c800">${escape(urlSito().replace(/^https?:\/\//, ''))}</a>
+${sito.telefono ? `Tel. ${escape(sito.telefono)} · ` : ''}${escape(sito.email)} · <a href="${urlSito()}" style="color:#e0a030">${escape(urlSito().replace(/^https?:\/\//, ''))}</a>
 </td></tr></table></td></tr></table></body></html>`;
 }
 
 const pulsante = (testo: string, link: string) =>
-  `<p style="margin:24px 0"><a href="${escape(link)}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#f8c800;color:#08163f;font-weight:bold;text-decoration:none">${escape(testo)}</a></p>`;
+  `<p style="margin:24px 0"><a href="${escape(link)}" style="display:inline-block;padding:12px 22px;border-radius:999px;background:#e0a030;color:#0f2138;font-weight:bold;text-decoration:none">${escape(testo)}</a></p>`;
 
 const indirizzo = (i: Ordine['spedizione']) =>
   [i.nome, i.via, i.via2, [i.cap, i.citta, i.provincia && `(${i.provincia})`].filter(Boolean).join(' ')]
@@ -176,7 +176,7 @@ export function emailAggiornamentoStato(o: Ordine, nota?: string) {
     oggetto: `Ordine ${o.numero}: ${STATI[o.stato].toLowerCase()}`,
     html: pagina(
       `Ordine ${o.numero}: ${STATI[o.stato]}`,
-      `<p>${testi[o.stato] ?? `Lo stato del tuo ordine è ora: ${STATI[o.stato]}.`}</p>${nota ? `<p style="padding:12px 16px;background:#f4f7fe;border-radius:10px">${escape(nota)}</p>` : ''}${tracking}${pulsante('Vedi il tuo ordine', linkStato(o))}`,
+      `<p>${testi[o.stato] ?? `Lo stato del tuo ordine è ora: ${STATI[o.stato]}.`}</p>${nota ? `<p style="padding:12px 16px;background:#f4f7fa;border-radius:10px">${escape(nota)}</p>` : ''}${tracking}${pulsante('Vedi il tuo ordine', linkStato(o))}`,
     ),
   };
 }
@@ -264,7 +264,7 @@ ${pulsante('Vai ai tuoi ordini', linkAccount('ordini'))}`,
 }
 
 const schedaRichiesta = (r: RichiestaAssistenza) =>
-  `<p style="padding:12px 16px;background:#f4f7fe;border-radius:10px;line-height:1.6"><strong>Pratica:</strong> ${escape(r.numero)}<br>
+  `<p style="padding:12px 16px;background:#f4f7fa;border-radius:10px;line-height:1.6"><strong>Pratica:</strong> ${escape(r.numero)}<br>
 <strong>Tipo:</strong> ${escape(TIPI_ASSISTENZA[r.tipo])}${r.fermo ? ' · <strong style="color:#b42318">studio fermo</strong>' : ''}<br>
 ${r.dispositivo ? `<strong>Dispositivo:</strong> ${escape(r.dispositivo.titolo)}${r.dispositivo.matricola ? ` (matricola ${escape(r.dispositivo.matricola)})` : ''}<br>` : ''}
 <strong>Descrizione:</strong> ${escape(r.descrizione).replace(/\n/g, '<br>')}</p>`;
@@ -296,7 +296,7 @@ export function emailAggiornamentoRichiesta(r: RichiestaAssistenza, nota?: strin
     oggetto: `Assistenza ${r.numero}: ${STATI_ASSISTENZA[r.stato].toLowerCase()}`,
     html: pagina(
       `Assistenza ${r.numero}: ${STATI_ASSISTENZA[r.stato]}`,
-      `${nota ? `<p style="padding:12px 16px;background:#f4f7fe;border-radius:10px">${escape(nota).replace(/\n/g, '<br>')}</p>` : `<p>Lo stato della tua richiesta è ora: ${escape(STATI_ASSISTENZA[r.stato])}.</p>`}
+      `${nota ? `<p style="padding:12px 16px;background:#f4f7fa;border-radius:10px">${escape(nota).replace(/\n/g, '<br>')}</p>` : `<p>Lo stato della tua richiesta è ora: ${escape(STATI_ASSISTENZA[r.stato])}.</p>`}
 ${pulsante('Vedi la richiesta', linkAccount('assistenza'))}`,
     ),
   };
@@ -314,6 +314,23 @@ export function emailNuovoPreventivoNegozio(p: Preventivo) {
 ${p.righe.map((r) => `<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8ec">${r.quantita} × ${escape(r.titolo)}</td><td align="right" style="border-bottom:1px solid #e2e8ec">${euro(r.totaleNettoCent)} + IVA</td></tr>`).join('')}
 <tr><td style="padding:8px 0;font-weight:bold">Totale IVA inclusa</td><td align="right" style="font-weight:bold">${euro(p.totaleCent)}</td></tr></table>
 ${p.note ? `<p><strong>Note del cliente:</strong> ${escape(p.note)}</p>` : ''}`,
+    ),
+  };
+}
+
+export function emailPreventivoCliente(p: Preventivo, messaggio?: string) {
+  const intestato = p.cliente.fatturazione.ragioneSociale || p.cliente.nome;
+  return {
+    oggetto: `Preventivo ${p.numero} – ${sito.nome_breve}`,
+    html: pagina(
+      `Il tuo preventivo`,
+      `<p>Gentile ${escape(intestato)},</p>
+<p>${messaggio ? escape(messaggio).replace(/\n/g, '<br>') : 'come d’accordo, in allegato trovi il nostro preventivo in PDF.'}</p>
+<table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="font-size:14px">
+${p.righe.map((r) => `<tr><td style="padding:6px 0;border-bottom:1px solid #e2e8ec">${r.quantita} × ${escape(r.titolo)}</td><td align="right" style="border-bottom:1px solid #e2e8ec;white-space:nowrap">${euro(r.totaleNettoCent)} + IVA</td></tr>`).join('')}
+<tr><td style="padding:8px 0;font-weight:bold">Totale IVA inclusa</td><td align="right" style="font-weight:bold">${euro(p.totaleCent)}</td></tr></table>
+<p>L’offerta è valida fino al ${dataBreve(p.validoFino)}. Per confermare basta rispondere a questa email${sito.telefono ? ` o chiamarci al ${escape(sito.telefono)}` : ''}.</p>
+${p.cliente.id ? pulsante('Vedi i tuoi preventivi', linkAccount('preventivi')) : ''}`,
     ),
   };
 }

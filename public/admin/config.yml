@@ -14,7 +14,7 @@ backend:
 locale: it
 site_url: https://www.fgitalia.it
 display_url: https://www.fgitalia.it
-logo_url: /favicon.svg
+logo_url: /uploads/logo-fgitalia.png
 media_folder: public/uploads
 public_folder: /uploads
 slug:

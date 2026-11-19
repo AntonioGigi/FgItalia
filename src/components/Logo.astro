@@ -11,7 +11,7 @@ const { chiaro = false } = Astro.props;
 <a href="/" class:list={['logo', { 'logo--chiaro': chiaro, 'logo--immagine': sito.logo }]} aria-label={`${sito.nome_breve} – torna alla home`}>
   {
     sito.logo ? (
-      <img src={sito.logo} alt={sito.nome_breve} height="44" />
+      <img src={sito.logo} alt={sito.nome_breve} width="600" height="398" />
     ) : (
       <>
         <span class="logo__segno" aria-hidden="true">
@@ -45,8 +45,14 @@ const { chiaro = false } = Astro.props;
   }
 
   .logo img {
-    height: 46px;
+    height: 62px;
     width: auto;
+  }
+
+  @media (max-width: 640px) {
+    .logo img {
+      height: 52px;
+    }
   }
 
   /* il logo originale è blu e giallo: su fondo scuro lo appoggio su una targhetta bianca */

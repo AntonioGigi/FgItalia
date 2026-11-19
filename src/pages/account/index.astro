@@ -415,6 +415,7 @@ import { sito } from '../../lib/sito';
     validoFino: string;
     totaleCent: number;
     righe: { id: string; titolo: string; quantita: number }[];
+    daFgitalia?: boolean;
   }
   interface Profilo {
     account: Account;
@@ -791,7 +792,7 @@ import { sito } from '../../lib/sito';
               <strong class="preventivi__totale">${euro(p.totaleCent)}</strong>
               <div class="azioni">
                 <a class="pulsante pulsante--scuro piccolo" href="${linkDocumento('preventivo', p.numero)}" target="_blank"><span aria-hidden="true">⬇</span> PDF</a>
-                <button class="pulsante pulsante--contorno piccolo" type="button" data-preventivo-carrello="${escape(p.numero)}">Rimetti nel carrello</button>
+                ${p.daFgitalia ? '' : `<button class="pulsante pulsante--contorno piccolo" type="button" data-preventivo-carrello="${escape(p.numero)}">Rimetti nel carrello</button>`}
               </div>
             </li>`;
           })

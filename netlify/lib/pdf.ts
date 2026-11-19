@@ -13,28 +13,44 @@ export interface RigaDocumento {
   quantita: number;
   unitarioCent: number;
   totaleCent: number;
+  /** importo prima dello sconto, mostrato barrato */
+  listinoTotaleCent?: number;
+  /** sconto in percentuale */
+  sconto?: number;
 }
 
 export interface DatiDocumento {
   titolo: string;
   numero: string;
   data: string;
-  /** righe in cima a destra sotto numero e data, es. "Valido fino al …" */
-  dettagli?: string[];
+  /** coppie etichetta/valore nel riquadro a destra del destinatario, es. "Valido fino al" */
+  dettagli?: { etichetta: string; valore: string }[];
   intestatario: string[];
   colonnaPrezzo: string;
   righe: RigaDocumento[];
+  /** riepilogo IVA in basso a sinistra, come nei preventivi */
+  iva?: { aliquota: string; imponibileCent: number; impostaCent: number };
   totali: { etichetta: string; cent: number; forte?: boolean }[];
   note?: string[];
 }
 
-const BLU = rgb(8 / 255, 22 / 255, 63 / 255);
-const GRIGIO = rgb(0.42, 0.48, 0.53);
-const LINEA = rgb(0.886, 0.91, 0.925);
-const GIALLO = rgb(248 / 255, 200 / 255, 0);
-const MARGINE = 50;
+type Colore = ReturnType<typeof rgb>;
+const hex = (h: string) => rgb(parseInt(h.slice(1, 3), 16) / 255, parseInt(h.slice(3, 5), 16) / 255, parseInt(h.slice(5, 7), 16) / 255);
+// colori del logo: blu notte e oro
+const BLU = hex('#1b3557');
+const BLU_SCURO = hex('#0f2138');
+const ORO = hex('#e0a030');
+const ORO_CHIARO = hex('#fbeed3');
+const TESTO = hex('#1f2a37');
+const GRIGIO = hex('#6b7b87');
+const LINEA = hex('#e2e8ec');
+const FONDO = hex('#f4f7fa');
+const BIANCO = rgb(1, 1, 1);
+const MARGINE = 42;
 const LARGHEZZA = 595.28;
 const ALTEZZA = 841.89;
+const DESTRA = LARGHEZZA - MARGINE;
+const PIEDE = 64;
 
 // Caratteri disponibili nei font standard (WinAnsi): Latin-1 più i simboli tipografici più comuni
 const EXTRA = new Set('€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ');
@@ -63,119 +79,211 @@ function aCapo(testo: string, font: PDFFont, dimensione: number, larghezza: numb
   return righe.length ? righe : [''];
 }
 
-async function caricaLogo(pdf: PDFDocument): Promise<PDFImage | undefined> {
+/** Il logo si legge dal sito che ha ricevuto la richiesta (anche le anteprime), altrimenti dal dominio principale */
+async function caricaLogo(pdf: PDFDocument, origine?: string): Promise<PDFImage | undefined> {
   if (!sito.logo) return undefined;
-  try {
-    const risposta = await fetch(`${urlSito()}${sito.logo}`);
-    if (!risposta.ok) return undefined;
-    const byte = new Uint8Array(await risposta.arrayBuffer());
-    return /\.png$/i.test(sito.logo) ? await pdf.embedPng(byte) : await pdf.embedJpg(byte);
-  } catch {
-    return undefined; // senza logo il documento resta valido
+  for (const base of new Set([origine, urlSito()].filter((b): b is string => !!b))) {
+    try {
+      const risposta = await fetch(`${base}${sito.logo}`);
+      if (!risposta.ok) continue;
+      const byte = new Uint8Array(await risposta.arrayBuffer());
+      return /\.png$/i.test(sito.logo) ? await pdf.embedPng(byte) : await pdf.embedJpg(byte);
+    } catch {
+      // provo l'indirizzo successivo; senza logo il documento resta valido
+    }
   }
+  return undefined;
 }
 
-export async function creaPdf(d: DatiDocumento): Promise<Uint8Array> {
+export async function creaPdf(d: DatiDocumento, origine?: string): Promise<Uint8Array> {
   const pdf = await PDFDocument.create();
   pdf.setTitle(`${d.titolo} ${d.numero}`);
   pdf.setAuthor(sito.ragione_sociale);
   pdf.setCreator(sito.nome_breve);
   const normale = await pdf.embedFont(StandardFonts.Helvetica);
   const grassetto = await pdf.embedFont(StandardFonts.HelveticaBold);
-  const logo = await caricaLogo(pdf);
+  const logo = await caricaLogo(pdf, origine);
 
   let pagina!: PDFPage;
   let y = 0;
-  const scrivi = (testo: string, x: number, yy: number, opzioni: { font?: PDFFont; dimensione?: number; colore?: typeof BLU; destra?: boolean } = {}) => {
-    const font = opzioni.font ?? normale;
-    const dimensione = opzioni.dimensione ?? 9.5;
+  type Opzioni = { font?: PDFFont; dimensione?: number; colore?: Colore; allinea?: 'sinistra' | 'destra' | 'centro'; spaziatura?: number };
+  const larghezzaTesto = (t: string, font: PDFFont, dimensione: number, spaziatura = 0) =>
+    font.widthOfTextAtSize(t, dimensione) + spaziatura * Math.max(0, t.length - 1);
+  const scrivi = (testo: string, x: number, yy: number, o: Opzioni = {}) => {
+    const font = o.font ?? normale;
+    const dimensione = o.dimensione ?? 9.5;
     const t = pulito(testo);
-    const larghezza = font.widthOfTextAtSize(t, dimensione);
-    pagina.drawText(t, { x: opzioni.destra ? x - larghezza : x, y: yy, size: dimensione, font, color: opzioni.colore ?? BLU });
+    const l = larghezzaTesto(t, font, dimensione, o.spaziatura);
+    const xx = o.allinea === 'destra' ? x - l : o.allinea === 'centro' ? x - l / 2 : x;
+    if (o.spaziatura) {
+      // lettere spaziate per le etichette in maiuscolo
+      let cx = xx;
+      for (const c of t) {
+        pagina.drawText(c, { x: cx, y: yy, size: dimensione, font, color: o.colore ?? TESTO });
+        cx += font.widthOfTextAtSize(c, dimensione) + o.spaziatura;
+      }
+    } else pagina.drawText(t, { x: xx, y: yy, size: dimensione, font, color: o.colore ?? TESTO });
+    return l;
   };
-
-  const colonne = { quantita: 370, prezzo: 455, totale: LARGHEZZA - MARGINE };
-  const intestazioneTabella = () => {
-    pagina.drawRectangle({ x: MARGINE, y: y - 6, width: LARGHEZZA - 2 * MARGINE, height: 20, color: rgb(0.957, 0.969, 0.996) });
-    scrivi('Descrizione', MARGINE + 6, y, { font: grassetto, dimensione: 8.5 });
-    scrivi('Q.tà', colonne.quantita, y, { font: grassetto, dimensione: 8.5, destra: true });
-    scrivi(d.colonnaPrezzo, colonne.prezzo, y, { font: grassetto, dimensione: 8.5, destra: true });
-    scrivi('Totale', colonne.totale - 6, y, { font: grassetto, dimensione: 8.5, destra: true });
-    y -= 22;
-  };
-
-  const nuovaPagina = (prima: boolean) => {
-    pagina = pdf.addPage([LARGHEZZA, ALTEZZA]);
-    pagina.drawRectangle({ x: 0, y: ALTEZZA - 6, width: LARGHEZZA, height: 6, color: GIALLO });
-    y = ALTEZZA - MARGINE;
-    if (logo) {
-      const scala = Math.min(150 / logo.width, 46 / logo.height);
-      pagina.drawImage(logo, { x: MARGINE, y: y - logo.height * scala + 8, width: logo.width * scala, height: logo.height * scala });
-    } else scrivi(sito.ragione_sociale, MARGINE, y - 10, { font: grassetto, dimensione: 14 });
-
-    const azienda = [
-      sito.ragione_sociale,
-      `${sito.indirizzo} – ${sito.cap} ${sito.citta} (${sito.provincia})`,
-      `P.IVA ${sito.piva}`,
-      [sito.telefono && `Tel. ${sito.telefono}`, sito.email].filter(Boolean).join(' · '),
-      urlSito().replace(/^https?:\/\//, ''),
-    ];
-    azienda.forEach((r, i) =>
-      scrivi(r, LARGHEZZA - MARGINE, y - i * 11, { font: i ? normale : grassetto, dimensione: i ? 8 : 9, colore: i ? GRIGIO : BLU, destra: true }),
+  const etichetta = (t: string, x: number, yy: number, o: Opzioni = {}) =>
+    scrivi(t.toUpperCase(), x, yy, { font: grassetto, dimensione: 7, colore: GRIGIO, spaziatura: 0.8, ...o });
+  /** rettangolo con gli angoli arrotondati; (x, y) è l'angolo in basso a sinistra */
+  const riquadro = (x: number, yy: number, w: number, h: number, r: number, colore: Colore, bordo?: Colore) =>
+    pagina.drawSvgPath(
+      `M ${r} 0 H ${w - r} A ${r} ${r} 0 0 1 ${w} ${r} V ${h - r} A ${r} ${r} 0 0 1 ${w - r} ${h} H ${r} A ${r} ${r} 0 0 1 0 ${h - r} V ${r} A ${r} ${r} 0 0 1 ${r} 0 Z`,
+      { x, y: yy + h, color: colore, ...(bordo && { borderColor: bordo, borderWidth: 0.8 }) },
     );
-    y -= 80;
-    if (!prima) {
-      scrivi(`${d.titolo} ${d.numero} (segue)`, MARGINE, y, { font: grassetto, dimensione: 10 });
-      y -= 24;
-      intestazioneTabella();
+
+  // colonne della tabella: lo sconto compare solo se almeno una riga è scontata
+  const conSconto = d.righe.some((r) => r.sconto);
+  const col = conSconto
+    ? { quantita: 318, prezzo: 404, sconto: 448, importo: DESTRA - 10 }
+    : { quantita: 360, prezzo: 450, sconto: 0, importo: DESTRA - 10 };
+  const larghezzaDescrizione = col.quantita - 30 - (MARGINE + 12);
+
+  const intestazioneTabella = () => {
+    riquadro(MARGINE, y - 9, DESTRA - MARGINE, 24, 5, BLU);
+    const o: Opzioni = { colore: BIANCO, dimensione: 7, spaziatura: 0.7 };
+    etichetta('Descrizione', MARGINE + 12, y, o);
+    etichetta('Q.tà', col.quantita, y, { ...o, allinea: 'centro' });
+    etichetta(d.colonnaPrezzo, col.prezzo, y, { ...o, allinea: 'destra' });
+    if (conSconto) etichetta('Sconto', col.sconto, y, { ...o, allinea: 'centro' });
+    etichetta('Importo', col.importo, y, { ...o, allinea: 'destra' });
+    y -= 24;
+  };
+
+  const nuovaPagina = (prima: boolean, conTabella = true) => {
+    pagina = pdf.addPage([LARGHEZZA, ALTEZZA]);
+    pagina.drawRectangle({ x: 0, y: ALTEZZA - 5, width: LARGHEZZA, height: 5, color: BLU });
+    pagina.drawRectangle({ x: 0, y: ALTEZZA - 7, width: LARGHEZZA, height: 2, color: ORO });
+    const alto = ALTEZZA - 30;
+    if (prima) {
+      if (logo) {
+        const scala = Math.min(130 / logo.width, 86 / logo.height);
+        pagina.drawImage(logo, { x: MARGINE - 4, y: alto - logo.height * scala, width: logo.width * scala, height: logo.height * scala });
+      } else scrivi(sito.ragione_sociale, MARGINE, alto - 30, { font: grassetto, dimensione: 16, colore: BLU });
+
+      const azienda = [
+        `${sito.indirizzo} - ${sito.cap} ${sito.citta} (${sito.provincia})`,
+        `P.IVA ${sito.piva}`,
+        sito.telefono && `Tel. ${sito.telefono}`,
+        sito.email,
+        urlSito().replace(/^https?:\/\/(www\.)?/, 'www.'),
+      ].filter((r): r is string => !!r);
+      scrivi(sito.ragione_sociale.toUpperCase(), DESTRA, alto - 22, { font: grassetto, dimensione: 10, colore: BLU, allinea: 'destra' });
+      azienda.forEach((r, i) => scrivi(r, DESTRA, alto - 36 - i * 11.5, { dimensione: 8.5, colore: GRIGIO, allinea: 'destra' }));
+      y = alto - 122;
+    } else {
+      if (logo) {
+        const scala = Math.min(70 / logo.width, 46 / logo.height);
+        pagina.drawImage(logo, { x: MARGINE - 2, y: alto - logo.height * scala, width: logo.width * scala, height: logo.height * scala });
+      }
+      scrivi(`${d.titolo} n. ${d.numero}`, DESTRA, alto - 20, { font: grassetto, dimensione: 10, colore: BLU, allinea: 'destra' });
+      scrivi('segue', DESTRA, alto - 33, { dimensione: 8.5, colore: GRIGIO, allinea: 'destra' });
+      y = alto - 70;
+      if (conTabella) intestazioneTabella();
     }
   };
 
   nuovaPagina(true);
 
-  // titolo, numero e intestatario
-  scrivi(d.titolo, MARGINE, y, { font: grassetto, dimensione: 20 });
-  const destra = [`N. ${d.numero}`, `Data: ${d.data}`, ...(d.dettagli ?? [])];
-  destra.forEach((r, i) => scrivi(r, LARGHEZZA - MARGINE, y - i * 13 + 4, { font: i ? normale : grassetto, dimensione: i ? 9 : 11, destra: true }));
-  y -= Math.max(36, destra.length * 13 + 12);
+  // titolo
+  const lTitolo = scrivi(d.titolo.toUpperCase(), MARGINE, y, { font: grassetto, dimensione: 22, colore: BLU, spaziatura: 1.2 });
+  pagina.drawRectangle({ x: MARGINE, y: y - 10, width: Math.min(lTitolo, 60), height: 3, color: ORO });
+  scrivi(`n. `, MARGINE + lTitolo + 12, y, { dimensione: 12, colore: GRIGIO });
+  const lN = normale.widthOfTextAtSize('n. ', 12);
+  const lNumero = scrivi(d.numero, MARGINE + lTitolo + 12 + lN, y, { font: grassetto, dimensione: 12, colore: BLU });
+  scrivi(`del ${d.data}`, MARGINE + lTitolo + 12 + lN + lNumero + 6, y, { dimensione: 12, colore: GRIGIO });
+  y -= 34;
 
-  const altezzaBox = 22 + d.intestatario.length * 12;
-  pagina.drawRectangle({ x: MARGINE, y: y - altezzaBox + 12, width: 280, height: altezzaBox, borderColor: LINEA, borderWidth: 1 });
-  scrivi('INTESTATO A', MARGINE + 10, y, { font: grassetto, dimensione: 7.5, colore: GRIGIO });
-  d.intestatario.forEach((r, i) => scrivi(r, MARGINE + 10, y - 14 - i * 12, { font: i ? normale : grassetto, dimensione: 9.5 }));
-  y -= altezzaBox + 18;
+  // destinatario e dettagli, in due riquadri affiancati
+  const larghezzaSinistra = 300;
+  const righeIntestatario = d.intestatario.flatMap((r, i) => aCapo(r, i ? normale : grassetto, i ? 9 : 11, larghezzaSinistra - 28).map((t) => ({ t, i })));
+  const dettagli = [{ etichetta: 'Data', valore: d.data }, ...(d.dettagli ?? [])];
+  const altezzaBox = Math.max(32 + righeIntestatario.length * 12.5, 26 + dettagli.length * 26);
+  riquadro(MARGINE, y - altezzaBox, larghezzaSinistra, altezzaBox, 8, FONDO);
+  pagina.drawRectangle({ x: MARGINE, y: y - altezzaBox + 10, width: 3, height: altezzaBox - 20, color: ORO });
+  etichetta('Destinatario', MARGINE + 16, y - 18);
+  righeIntestatario.forEach(({ t, i }, n) =>
+    scrivi(t, MARGINE + 16, y - 34 - n * 12.5 - (i ? 2 : 0), { font: i ? normale : grassetto, dimensione: i ? 9 : 11, colore: i ? TESTO : BLU }),
+  );
+  const xDettagli = MARGINE + larghezzaSinistra + 14;
+  riquadro(xDettagli, y - altezzaBox, DESTRA - xDettagli, altezzaBox, 8, BIANCO, LINEA);
+  dettagli.forEach((v, i) => {
+    etichetta(v.etichetta, xDettagli + 16, y - 18 - i * 26);
+    scrivi(v.valore, xDettagli + 16, y - 30 - i * 26, { font: grassetto, dimensione: 10, colore: BLU });
+  });
+  y -= altezzaBox + 22;
 
+  // righe
   intestazioneTabella();
-  for (const r of d.righe) {
-    const descrizione = aCapo(r.descrizione, normale, 9.5, colonne.quantita - MARGINE - 50);
-    const altezza = descrizione.length * 12 + (r.codice ? 11 : 0) + 8;
-    if (y - altezza < 150) nuovaPagina(false);
-    descrizione.forEach((t, i) => scrivi(t, MARGINE + 6, y - i * 12));
-    if (r.codice) scrivi(`Cod. ${r.codice}`, MARGINE + 6, y - descrizione.length * 12, { dimensione: 8, colore: GRIGIO });
-    scrivi(String(r.quantita), colonne.quantita, y, { destra: true });
-    scrivi(euro(r.unitarioCent), colonne.prezzo, y, { destra: true });
-    scrivi(euro(r.totaleCent), colonne.totale - 6, y, { destra: true });
+  d.righe.forEach((r, indice) => {
+    const descrizione = aCapo(r.descrizione, grassetto, 9.5, larghezzaDescrizione);
+    const altezzaTesto = descrizione.length * 12 + (r.codice ? 11 : 0);
+    const altezza = Math.max(altezzaTesto, r.listinoTotaleCent ? 21 : 12) + 10;
+    if (y - altezza < PIEDE + 20) nuovaPagina(false);
+    if (indice % 2 === 0) riquadro(MARGINE, y - altezza + 8, DESTRA - MARGINE, altezza, 4, FONDO);
+    const yy = y - 3;
+    descrizione.forEach((t, i) => scrivi(t, MARGINE + 12, yy - i * 12, { font: grassetto, dimensione: 9.5, colore: BLU_SCURO }));
+    if (r.codice) scrivi(`Cod. ${r.codice}`, MARGINE + 12, yy - descrizione.length * 12, { dimensione: 7.5, colore: GRIGIO });
+    scrivi(String(r.quantita), col.quantita, yy, { allinea: 'centro' });
+    scrivi(euro(r.unitarioCent), col.prezzo, yy, { allinea: 'destra' });
+    if (conSconto && r.sconto) {
+      const testo = `-${String(r.sconto).replace('.', ',')}%`;
+      const l = grassetto.widthOfTextAtSize(testo, 8);
+      riquadro(col.sconto - l / 2 - 6, yy - 4, l + 12, 14, 7, ORO_CHIARO);
+      scrivi(testo, col.sconto, yy, { font: grassetto, dimensione: 8, colore: hex('#8a5a00'), allinea: 'centro' });
+    }
+    scrivi(euro(r.totaleCent), col.importo, yy, { font: grassetto, dimensione: 10, colore: BLU_SCURO, allinea: 'destra' });
+    if (r.listinoTotaleCent) {
+      const l = scrivi(euro(r.listinoTotaleCent), col.importo, yy - 11, { dimensione: 8, colore: GRIGIO, allinea: 'destra' });
+      pagina.drawLine({ start: { x: col.importo - l, y: yy - 8.3 }, end: { x: col.importo, y: yy - 8.3 }, thickness: 0.7, color: GRIGIO });
+    }
     y -= altezza;
-    pagina.drawLine({ start: { x: MARGINE, y: y + 8 }, end: { x: LARGHEZZA - MARGINE, y: y + 8 }, thickness: 0.6, color: LINEA });
-  }
+  });
 
-  if (y - d.totali.length * 16 - 40 < 110) nuovaPagina(false);
-  y -= 8;
-  for (const t of d.totali) {
-    const font = t.forte ? grassetto : normale;
-    const dimensione = t.forte ? 12 : 9.5;
-    scrivi(t.etichetta, colonne.prezzo, y, { font, dimensione, destra: true });
-    scrivi(euro(t.cent), colonne.totale - 6, y, { font, dimensione, destra: true });
-    y -= t.forte ? 20 : 15;
+  // riepilogo IVA a sinistra, totali a destra
+  const altezzaTotali = 26 + d.totali.filter((t) => !t.forte).length * 16 + 56;
+  if (y - altezzaTotali - 20 < PIEDE + 10) nuovaPagina(false, false);
+  y -= 14;
+  pagina.drawLine({ start: { x: MARGINE, y }, end: { x: DESTRA, y }, thickness: 0.8, color: LINEA });
+  y -= 22;
+  const xTotali = 340;
+  if (d.iva) {
+    etichetta('Riepilogo IVA', MARGINE, y);
+    const c = [MARGINE, MARGINE + 110, MARGINE + 200];
+    etichetta('Aliquota', c[0], y - 18, { dimensione: 6.5 });
+    etichetta('Imponibile', c[1], y - 18, { dimensione: 6.5, allinea: 'destra' });
+    etichetta('Imposta', c[2], y - 18, { dimensione: 6.5, allinea: 'destra' });
+    scrivi(d.iva.aliquota, c[0], y - 32);
+    scrivi(euro(d.iva.imponibileCent), c[1], y - 32, { allinea: 'destra' });
+    scrivi(euro(d.iva.impostaCent), c[2], y - 32, { allinea: 'destra' });
   }
+  let yt = y;
+  for (const t of d.totali.filter((t) => !t.forte)) {
+    scrivi(t.etichetta, xTotali, yt, { colore: GRIGIO });
+    scrivi(euro(t.cent), col.importo, yt, { allinea: 'destra' });
+    yt -= 16;
+  }
+  const forte = d.totali.find((t) => t.forte);
+  if (forte) {
+    yt -= 8;
+    riquadro(xTotali - 12, yt - 34, DESTRA - xTotali + 12, 46, 8, BLU);
+    etichetta(forte.etichetta, xTotali, yt - 6, { colore: ORO, dimensione: 8 });
+    scrivi(euro(forte.cent), col.importo, yt - 22, { font: grassetto, dimensione: 20, colore: BIANCO, allinea: 'destra' });
+    yt -= 46;
+  }
+  y = Math.min(yt, y - 40) - 22;
 
   if (d.note?.length) {
-    y -= 14;
+    if (y < PIEDE + 40) nuovaPagina(false, false);
+    etichetta('Note e condizioni', MARGINE, y);
+    y -= 15;
     for (const nota of d.note) {
-      for (const riga of aCapo(nota, normale, 8.5, LARGHEZZA - 2 * MARGINE)) {
-        if (y < 70) nuovaPagina(false);
+      for (const riga of aCapo(nota, normale, 8.5, DESTRA - MARGINE)) {
+        if (y < PIEDE + 14) nuovaPagina(false, false);
         scrivi(riga, MARGINE, y, { dimensione: 8.5, colore: GRIGIO });
-        y -= 11;
+        y -= 11.5;
       }
       y -= 4;
     }
@@ -184,8 +292,12 @@ export async function creaPdf(d: DatiDocumento): Promise<Uint8Array> {
   const pagine = pdf.getPages();
   pagine.forEach((p, i) => {
     pagina = p;
-    scrivi(`${sito.ragione_sociale} · P.IVA ${sito.piva}`, MARGINE, 30, { dimensione: 7.5, colore: GRIGIO });
-    scrivi(`Pagina ${i + 1} di ${pagine.length}`, LARGHEZZA - MARGINE, 30, { dimensione: 7.5, colore: GRIGIO, destra: true });
+    pagina.drawLine({ start: { x: MARGINE, y: 46 }, end: { x: DESTRA, y: 46 }, thickness: 0.8, color: LINEA });
+    pagina.drawRectangle({ x: MARGINE, y: 45.4, width: 40, height: 1.8, color: ORO });
+    scrivi(sito.ragione_sociale, MARGINE, 30, { font: grassetto, dimensione: 7.5, colore: BLU });
+    const lRagione = grassetto.widthOfTextAtSize(pulito(sito.ragione_sociale), 7.5);
+    scrivi(`  ·  ${[sito.email, sito.telefono].filter(Boolean).join('  ·  ')}`, MARGINE + lRagione, 30, { dimensione: 7.5, colore: GRIGIO });
+    scrivi(`${d.titolo} n. ${d.numero}  ·  ${i + 1} / ${pagine.length}`, DESTRA, 30, { dimensione: 7.5, colore: GRIGIO, allinea: 'destra' });
   });
 
   return pdf.save();
