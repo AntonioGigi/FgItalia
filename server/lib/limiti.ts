@@ -1,9 +1,9 @@
-import { getStore } from '@netlify/blobs';
+import { getStore } from './archivio';
 import { createHash } from 'node:crypto';
 
 /**
  * Limiti di frequenza contro i tentativi a raffica (password indovinate, spam di
- * registrazioni, ricerche di ordini altrui). I contatori stanno su Netlify Blobs con
+ * registrazioni, ricerche di ordini altrui). I contatori stanno nell'archivio dati (R2) con
  * chiavi "impronta" (sha256): nell'archivio non finiscono indirizzi IP né email in chiaro.
  */
 interface Contatore {
@@ -18,9 +18,9 @@ const impronta = (chiave: string) => createHash('sha256').update(chiave).digest(
 export const MINUTI = 60 * 1000;
 export const ORE = 60 * MINUTI;
 
-/** Indirizzo del visitatore (Netlify lo passa nel context o nell'intestazione x-nf-client-connection-ip) */
+/** Indirizzo del visitatore (Cloudflare lo passa nell'intestazione cf-connecting-ip, che il visitatore non può falsificare) */
 export function ipRichiesta(req: Request, context?: { ip?: string }): string {
-  return context?.ip || req.headers.get('x-nf-client-connection-ip') || req.headers.get('x-forwarded-for')?.split(',')[0].trim() || 'sconosciuto';
+  return context?.ip || req.headers.get('cf-connecting-ip') || 'sconosciuto';
 }
 
 async function leggi(chiave: string, adesso: number): Promise<Contatore> {

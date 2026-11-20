@@ -1,4 +1,4 @@
-import { getStore } from '@netlify/blobs';
+import { getStore } from './archivio';
 import { createHash, createHmac, randomBytes, scrypt as scryptCallback, timingSafeEqual } from 'node:crypto';
 import { promisify } from 'node:util';
 import { variabile } from './ambiente';
@@ -6,7 +6,7 @@ import type { DueFattori } from './dueFattori';
 import { archivioOrdini, type Indirizzo, type Ordine } from './ordini';
 
 /**
- * Area clienti: account con email e password, salvati su Netlify Blobs.
+ * Area clienti: account con email e password, salvati nell'archivio dati (Cloudflare R2).
  * Le password non vengono mai salvate in chiaro (scrypt con sale casuale).
  * La sessione è un cookie firmato con SESSION_SECRET, valido 30 giorni.
  */

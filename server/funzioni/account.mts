@@ -1,4 +1,4 @@
-import type { Config, Context } from '@netlify/functions';
+import type { Config, Context } from '../lib/tipi';
 import { errore, json, urlSito } from '../lib/ambiente';
 import { leggiCatalogo, leggiSchede } from '../lib/catalogo';
 import {
@@ -156,12 +156,12 @@ export default async (req: Request, context?: Context) => {
   try {
     return await gestisci(req, ipRichiesta(req, context));
   } catch (e) {
-    // il dettaglio dell'errore resta nei log di Netlify (cercando il codice); al visitatore non si mostrano dati interni
+    // il dettaglio dell'errore resta nei log di Cloudflare (cercando il codice); al visitatore non si mostrano dati interni
     const codice = Math.random().toString(36).slice(2, 8).toUpperCase();
     console.error(`Area clienti: errore ${codice}`, e);
     const messaggio = e instanceof Error ? e.message : String(e);
     if (messaggio.includes('SESSION_SECRET'))
-      return errore('Area clienti non ancora configurata: manca la variabile SESSION_SECRET su Netlify.', 500);
+      return errore('Area clienti non ancora configurata: manca la variabile SESSION_SECRET su Cloudflare.', 500);
     return errore(`Non è stato possibile completare l’operazione. Riprova o contattaci indicando il codice ${codice}.`, 500);
   }
 };

@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// ——— finti servizi esterni: archivio Netlify Blobs, Stripe, Brevo e sito pubblicato ———
+// ——— finti servizi esterni: archivio dati, Stripe, Brevo e sito pubblicato ———
 const archivi = new Map<string, Map<string, unknown>>();
-vi.mock('@netlify/blobs', () => ({
+vi.mock('../server/lib/archivio', () => ({
   getStore: ({ name }: { name: string }) => {
     if (!archivi.has(name)) archivi.set(name, new Map());
     const a = archivi.get(name)!;
@@ -19,7 +19,7 @@ vi.mock('@netlify/blobs', () => ({
 const sessioniCreate: Record<string, any>[] = [];
 const clientiStripe: Record<string, any>[] = [];
 let eventoWebhook: unknown;
-vi.mock('../netlify/lib/stripe', () => ({
+vi.mock('../server/lib/stripe', () => ({
   stripe: () => ({
     customers: {
       create: async (d: Record<string, unknown>) => (clientiStripe.push(d), { id: `cus_${clientiStripe.length}` }),
@@ -81,14 +81,14 @@ Object.assign(process.env, {
   SESSION_SECRET: 'segreto-di-prova-abbastanza-lungo',
 });
 
-const { default: account } = await import('../netlify/functions/account.mts');
-const { default: documento } = await import('../netlify/functions/account-documento.mts');
-const { default: checkout } = await import('../netlify/functions/checkout.mts');
-const { default: webhook } = await import('../netlify/functions/stripe-webhook.mts');
-const { default: gestione } = await import('../netlify/functions/gestione-ordini.mts');
-const { default: promemoria } = await import('../netlify/functions/promemoria-manutenzione.mts');
-const { aggiungiMesi, creaSessione, leggiSessione, clienteDaEmail, salvaCliente } = await import('../netlify/lib/clienti');
-const { pulito } = await import('../netlify/lib/pdf');
+const { default: account } = await import('../server/funzioni/account.mts');
+const { default: documento } = await import('../server/funzioni/account-documento.mts');
+const { default: checkout } = await import('../server/funzioni/checkout.mts');
+const { default: webhook } = await import('../server/funzioni/stripe-webhook.mts');
+const { default: gestione } = await import('../server/funzioni/gestione-ordini.mts');
+const { default: promemoria } = await import('../server/funzioni/promemoria-manutenzione.mts');
+const { aggiungiMesi, creaSessione, leggiSessione, clienteDaEmail, salvaCliente } = await import('../server/lib/clienti');
+const { pulito } = await import('../server/lib/pdf');
 
 const json = (corpo: unknown, intestazioni: Record<string, string> = {}) => ({
   method: 'POST',
@@ -498,32 +498,6 @@ describe('errori imprevisti', () => {
       expect((await r.json()).errore).toContain('SESSION_SECRET');
     } finally {
       process.env.SESSION_SECRET = segreto;
-    }
-  });
-
-  it('legge il catalogo dall’indirizzo e con le credenziali della richiesta', async () => {
-    const cookie = await registra();
-    const chiesti: string[] = [];
-    const intestazioni: Record<string, string>[] = [];
-    const originale = globalThis.fetch;
-    vi.stubGlobal('fetch', async (url: string, opzioni?: RequestInit) => {
-      chiesti.push(url);
-      intestazioni.push((opzioni?.headers ?? {}) as Record<string, string>);
-      return originale(url, opzioni);
-    });
-    try {
-      const r = await account(
-        new Request(
-          'https://anteprima.netlify.app/api/account',
-          json({ azione: 'preventivo', carrello: [{ id: 'genesy', quantita: 1 }] }, { cookie, authorization: 'Basic cHJvdmE6cHJvdmE=' }),
-        ),
-      );
-      expect(r.status).toBe(200);
-      expect(chiesti).toContain('https://anteprima.netlify.app/api/catalogo.json');
-      // sito protetto da password: cookie e credenziali del visitatore passano alla lettura del catalogo
-      expect(intestazioni[0]).toMatchObject({ cookie, authorization: 'Basic cHJvdmE6cHJvdmE=' });
-    } finally {
-      vi.stubGlobal('fetch', originale);
     }
   });
 });

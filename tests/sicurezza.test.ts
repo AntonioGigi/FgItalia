@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// ——— finti servizi esterni: archivio Netlify Blobs e Brevo ———
+// ——— finti servizi esterni: archivio dati e Brevo ———
 const archivi = new Map<string, Map<string, unknown>>();
-vi.mock('@netlify/blobs', () => ({
+vi.mock('../server/lib/archivio', () => ({
   getStore: ({ name }: { name: string }) => {
     if (!archivi.has(name)) archivi.set(name, new Map());
     const a = archivi.get(name)!;
@@ -32,17 +32,17 @@ Object.assign(process.env, {
   SESSION_SECRET: 'segreto-di-prova',
 });
 
-const { default: account } = await import('../netlify/functions/account.mts');
-const { default: gestione } = await import('../netlify/functions/gestione-ordini.mts');
-const { default: statoOrdine } = await import('../netlify/functions/ordine.mts');
-const { passwordDebole } = await import('../netlify/lib/clienti');
-const { conta, bloccato, superaLimite } = await import('../netlify/lib/limiti');
+const { default: account } = await import('../server/funzioni/account.mts');
+const { default: gestione } = await import('../server/funzioni/gestione-ordini.mts');
+const { default: statoOrdine } = await import('../server/funzioni/ordine.mts');
+const { passwordDebole } = await import('../server/lib/clienti');
+const { conta, bloccato, superaLimite } = await import('../server/lib/limiti');
 
 const chiamata = (url: string, corpo: unknown, ip = '1.1.1.1') =>
   new Request(url, {
     method: 'POST',
     body: JSON.stringify(corpo),
-    headers: { 'content-type': 'application/json', 'x-nf-client-connection-ip': ip },
+    headers: { 'content-type': 'application/json', 'cf-connecting-ip': ip },
   });
 const api = (corpo: Record<string, unknown>, ip?: string) => account(chiamata('https://www.fgitalia.it/api/account', corpo, ip));
 
@@ -152,7 +152,7 @@ describe('pannello ordini', () => {
 describe('ricerca ordini', () => {
   it('chi prova numeri d’ordine a caso viene fermato', async () => {
     const cerca = () =>
-      statoOrdine(new Request('https://x/api/ordine?n=FG-261026-AAAA&e=a@b.it', { headers: { 'x-nf-client-connection-ip': '9.9.9.9' } }));
+      statoOrdine(new Request('https://x/api/ordine?n=FG-261026-AAAA&e=a@b.it', { headers: { 'cf-connecting-ip': '9.9.9.9' } }));
     for (let i = 0; i < 20; i++) expect((await cerca()).status).toBe(404);
     expect((await cerca()).status).toBe(429);
   });
@@ -160,13 +160,13 @@ describe('ricerca ordini', () => {
 
 describe('accesso al pannello dei contenuti (/admin/)', () => {
   it('dà il token GitHub solo a chi è entrato nel pannello ordini', async () => {
-    const { default: cmsToken } = await import('../netlify/functions/cms-token.mts');
-    const { creaGettone } = await import('../netlify/lib/accesso');
+    const { default: cmsToken } = await import('../server/funzioni/cms-token.mts');
+    const { creaGettone } = await import('../server/lib/accesso');
     const chiedi = (gettone?: string) =>
       cmsToken(
         new Request('https://x/api/cms-token', {
           method: 'POST',
-          headers: { 'x-nf-client-connection-ip': '12.0.0.1', ...(gettone && { authorization: `Bearer ${gettone}` }) },
+          headers: { 'cf-connecting-ip': '12.0.0.1', ...(gettone && { authorization: `Bearer ${gettone}` }) },
         }),
       );
     expect((await chiedi()).status).toBe(401);

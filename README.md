@@ -2,7 +2,7 @@
 
 Nuovo sito di **FGItalia di Francesco Gieri** (prodotti per la fisioterapia, Acireale), riscritto da zero.
 
-- **Tecnologia:** [Astro](https://astro.build) (sito statico velocissimo) + funzioni server Netlify per il negozio.
+- **Tecnologia:** [Astro](https://astro.build) (sito statico velocissimo) + funzioni server su Cloudflare Workers per il negozio.
 - **Pannello contenuti** su `/admin/` ([Decap CMS](https://decapcms.org)): prodotti, prezzi, disponibilità, corsi, novità, categorie, marchi, contatti, spedizione.
 - **Negozio:** carrello, pagamento sicuro con [Stripe](https://stripe.com) (carta, PayPal, Apple Pay, Google Pay), oppure ordine su WhatsApp.
 - **Ordini:** email a FGItalia per ogni ordine, email di conferma al cliente, pagina `/ordine/` dove il cliente segue lo stato, pannello `/gestione-ordini/` per segnare "in lavorazione", "spedito" (con tracking) e "consegnato": il cliente riceve un'email a ogni passaggio.
@@ -22,8 +22,8 @@ Nuovo sito di **FGItalia di Francesco Gieri** (prodotti per la fisioterapia, Aci
 | Foto prodotti, schede tecniche PDF, foto dello showroom | `public/uploads/` |
 | Pagine | `src/pages/` |
 | Conti del negozio (IVA, spedizione) | `src/lib/negozio.ts` |
-| Funzioni server (pagamento, ordini, email, avvisi, area clienti) | `netlify/functions/`, `netlify/lib/` |
-| Area clienti | `src/pages/account/`, `netlify/functions/account*.mts`, `netlify/lib/clienti.ts` |
+| Funzioni server (pagamento, ordini, email, avvisi, area clienti) | `server/funzioni/`, `server/lib/`, `server/worker.ts` |
+| Area clienti | `src/pages/account/`, `server/funzioni/account*.mts`, `server/lib/clienti.ts` |
 | Test automatici | `tests/` (`npm test`) |
 | Configurazione del pannello | `public/admin/config.yml` |
 
@@ -36,23 +36,29 @@ npm test         # test automatici di conti, pagamenti e ordini
 npm run build    # controlli + test + sito in dist/
 ```
 
-## Messa online (Netlify, gratuito)
+## Messa online (Cloudflare)
 
-1. Su [netlify.com](https://www.netlify.com), *Add new site → Import from GitHub* e scegli questo repository (ramo `main`). Le impostazioni di build sono già in `netlify.toml`.
-2. **Moduli contatti e corsi:** arrivano nel pannello, scheda *Messaggi*, e per email a `EMAIL_NOTIFICHE` (rispondendo si scrive al cliente). Non serve configurare Netlify Forms.
-3. **Pannello `/admin/` (prodotti e contenuti):** si entra con la **stessa password del pannello ordini** (`ADMIN_PASSWORD`, più il codice della verifica in due passaggi se attiva), non serve un account GitHub. Il pannello salva le modifiche nel repository con un token GitHub limitato:
+Il sito gira su **Cloudflare Workers** (piano *Workers Paid*, circa 5 $ al mese): pagine e immagini sono serviti direttamente da Cloudflare, gli indirizzi `/api/…` dalle funzioni in `server/funzioni/` (vedi `server/worker.ts` e `wrangler.jsonc`). Ordini, clienti, preventivi, messaggi e fatture sono nell'archivio **R2** `fgitalia-dati`. Le pubblicazioni non hanno crediti da consumare.
+
+La pubblicazione è automatica con **GitHub Actions** (`.github/workflows/pubblica.yml`): a ogni modifica del ramo `main`, compresi i salvataggi del pannello `/admin/`, il sito viene controllato, testato e pubblicato in 2-3 minuti. Ogni notte si ripubblica da solo **solo** se quel giorno una promozione inizia o finisce o un corso diventa "già svolto".
+
+1. **Account Cloudflare:** registrati su [dash.cloudflare.com](https://dash.cloudflare.com), poi *Workers & Pages → Plans* → **Workers Paid**. Attiva anche **R2** (*R2 Object Storage* → attiva; lo spazio incluso basta e avanza).
+2. **Chiave per GitHub:** *My Profile → API Tokens → Create Token* → modello **Edit Cloudflare Workers** → *Continue → Create Token*. Copia il token e l'**Account ID** (in *Workers & Pages*, colonna a destra).
+3. **Su GitHub**, repository → *Settings → Secrets and variables → Actions → New repository secret*: `CLOUDFLARE_API_TOKEN` (il token) e `CLOUDFLARE_ACCOUNT_ID`. Poi *Actions → Pubblica su Cloudflare → Run workflow*: il sito compare su `https://fgitalia.<tuo-sottodominio>.workers.dev`.
+4. **Variabili e segreti:** su Cloudflare, *Workers & Pages → fgitalia → Settings → Variables and Secrets*, aggiungi tutte le voci della tabella più sotto come **Secret**, più `URL` (testo normale) con l'indirizzo del sito, es. `https://www.fgitalia.it`.
+5. **Pannello `/admin/` (prodotti e contenuti):** si entra con la **stessa password del pannello ordini** (`ADMIN_PASSWORD`, più il codice della verifica in due passaggi se attiva). Il pannello salva le modifiche nel repository con un token GitHub limitato:
    1. GitHub → foto profilo → *Settings → Developer settings → Personal access tokens → Fine-grained tokens → Generate new token*.
    2. Nome "FGItalia pannello", scadenza la più lunga disponibile, *Repository access: Only select repositories* → `FgItalia`.
    3. *Permissions → Repository permissions → Contents: Read and write*. Genera e copia il token.
-   4. Su Netlify aggiungi la variabile `GITHUB_CMS_TOKEN` con il token e ripubblica. Alla scadenza crea un token nuovo e sostituiscilo.
-4. **Dominio:** in *Domain management* aggiungi `fgitalia.it` e `www.fgitalia.it`, poi presso il registrar del dominio imposta i DNS indicati da Netlify. Il certificato HTTPS è automatico. Tutti i vecchi indirizzi WordPress (prodotti, categorie, pagine) sono reindirizzati alle nuove pagine in `public/_redirects`.
+   4. Su Cloudflare aggiungi il segreto `GITHUB_CMS_TOKEN` con il token. Alla scadenza crea un token nuovo e sostituiscilo.
+6. **Moduli contatti e corsi:** arrivano nel pannello, scheda *Messaggi*, e per email a `EMAIL_NOTIFICHE` (rispondendo si scrive al cliente).
+7. **Dominio:** su Cloudflare *Add a domain* → `fgitalia.it` (piano Free): Cloudflare copia i record DNS esistenti. **Controlla che ci siano tutti i record della posta Aruba** (MX, `mail`, `pop3`, `smtp`, `imap`, i TXT di SPF/DMARC e i record di Brevo) prima di cambiare i *name server* presso Aruba con quelli indicati da Cloudflare. Poi in *Workers & Pages → fgitalia → Settings → Domains & Routes → Add → Custom domain* aggiungi `www.fgitalia.it` e `fgitalia.it`. I vecchi indirizzi WordPress sono reindirizzati in `public/_redirects`; le intestazioni di sicurezza sono in `public/_headers`.
 
-### Crediti Netlify
-Sul piano gratuito ogni pubblicazione in produzione consuma crediti: **ogni salvataggio dal pannello `/admin/` è una pubblicazione**. Conviene fare più modifiche e salvarle insieme. Se i crediti finiscono il sito resta online, ma le modifiche non vengono pubblicate fino al mese successivo (o fino al passaggio a un piano a pagamento). Ordini, messaggi, preventivi e assistenza non ne risentono: non richiedono pubblicazioni.
+Prova in locale con le funzioni vere: `npm run build && npx wrangler dev` (le variabili di prova vanno in un file `.dev.vars`, escluso da git).
 
 ## Attivare pagamenti, ordini e avvisi
 
-Tutte le chiavi vanno in Netlify, *Site configuration → Environment variables* (mai nel codice).
+Tutte le chiavi vanno su Cloudflare, *Workers & Pages → fgitalia → Settings → Variables and Secrets*, come **Secret** (mai nel codice).
 
 ### Stripe (pagamenti)
 1. Crea l'account su [stripe.com](https://stripe.com) con i dati di FGItalia (P.IVA, IBAN per gli accrediti).
@@ -78,13 +84,12 @@ Per provare senza soldi veri usa prima le chiavi "di test" di Stripe e la carta 
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | facoltative: accesso con Google per i clienti (vedi sotto) |
 | `SESSION_SECRET` | chiave segreta per l'area clienti: una frase lunga e casuale (almeno 32 caratteri). Se la cambi, tutti i clienti devono rifare l'accesso |
 | `INSTAGRAM_TOKEN` | facoltativo: mostra gli ultimi post Instagram in home |
-| `NETLIFY_BUILD_HOOK` | indirizzo di un *build hook* (Netlify → *Site configuration → Build & deploy → Build hooks → Add build hook*, nome "Ogni notte"): ogni notte il sito controlla se una promozione inizia o finisce (o un corso è appena passato) e solo in quei giorni si ripubblica, così le date scattano da sole senza consumare crediti Netlify inutilmente |
 
 ### Promozioni
 Dal pannello `/admin/` → *Promozioni*: percentuale di sconto, su tutto / alcune categorie / alcuni prodotti, date di inizio e fine. Quando è attiva, i prezzi scontati valgono ovunque (schede, carrello, pagamento Stripe, preventivi, feed Google Shopping), compaiono la striscia rossa in cima al sito, la pagina `/offerte/` e la sezione "In offerta" in home. Con *Avvisa via email gli iscritti* parte una sola email alla lista Brevo.
 
 ### Area clienti
-Gli account dei clienti, i preventivi e le richieste di assistenza sono salvati su Netlify (Blobs), come gli ordini: non servono altri servizi.
+Gli account dei clienti, i preventivi e le richieste di assistenza sono salvati nell'archivio R2 su Cloudflare, come gli ordini: non servono altri servizi.
 
 1. Aggiungi la variabile `SESSION_SECRET` (vedi tabella sopra). Per generarla puoi usare un gestore di password o il comando `openssl rand -base64 48`.
 2. **Fatture:** dopo aver emesso la fattura elettronica, apri l'ordine in `/gestione-ordini/` e carica la copia PDF. Il cliente la riceve per email e la ritrova nel suo account.
@@ -98,8 +103,8 @@ Gli account dei clienti, i preventivi e le richieste di assistenza sono salvati 
 
 1. Su [console.cloud.google.com](https://console.cloud.google.com) crea un progetto "FGItalia".
 2. *API e servizi → Schermata consenso OAuth*: tipo **Esterno**, nome "FGItalia", email di assistenza, dominio autorizzato `fgitalia.it`, link alla privacy `https://www.fgitalia.it/privacy/`. Lascia gli ambiti di base (email, profilo) e premi **Pubblica app**.
-3. *Credenziali → Crea credenziali → ID client OAuth → Applicazione web*. In **URI di reindirizzamento autorizzati** aggiungi `https://www.fgitalia.it/api/account/google/ritorno` (e, per le prove, `https://NOME-SITO.netlify.app/api/account/google/ritorno`).
-4. Copia **ID client** e **Client secret** su Netlify nelle variabili `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`, poi ripubblica.
+3. *Credenziali → Crea credenziali → ID client OAuth → Applicazione web*. In **URI di reindirizzamento autorizzati** aggiungi `https://www.fgitalia.it/api/account/google/ritorno` (e, per le prove, `https://fgitalia.NOME.workers.dev/api/account/google/ritorno`).
+4. Copia **ID client** e **Client secret** su Cloudflare nei segreti `GOOGLE_CLIENT_ID` e `GOOGLE_CLIENT_SECRET`.
 5. Nel pannello `/admin/`, *Impostazioni del sito*, attiva **Accesso con Google nell'area clienti**.
 
 Chi entra con Google per la prima volta completa la registrazione con professione e dichiarazione di operatore del settore. Se l'email coincide con un account esistente, i due si collegano (Google ha già verificato l'email).
@@ -107,20 +112,20 @@ Chi entra con Google per la prima volta completa la registrazione con profession
 ## Sicurezza
 
 Cosa fa il sito:
-- **HTTPS ovunque** (certificato automatico di Netlify, `Strict-Transport-Security`).
-- **Content Security Policy** in ogni pagina (`astro.config.mjs`): il browser esegue solo gli script del sito, riconosciuti dalla loro impronta SHA-256. Insieme a `X-Frame-Options`, `Permissions-Policy` e `Cross-Origin-Opener-Policy` (in `netlify.toml`) protegge da codice iniettato e da pagine false che incorniciano il sito.
+- **HTTPS ovunque** (certificato automatico di Cloudflare, `Strict-Transport-Security`).
+- **Content Security Policy** in ogni pagina (`astro.config.mjs`): il browser esegue solo gli script del sito, riconosciuti dalla loro impronta SHA-256. Insieme a `X-Frame-Options`, `Permissions-Policy` e `Cross-Origin-Opener-Policy` (in `public/_headers`) protegge da codice iniettato e da pagine false che incorniciano il sito.
 - **Pagamenti:** i dati di carta e PayPal restano su Stripe (PCI DSS); il sito ricalcola i prezzi lato server e accetta solo notifiche di pagamento firmate da Stripe.
-- **Verifica in due passaggi (codici TOTP a 6 cifre, app tipo Google Authenticator):** per il pannello ordini (sezione *Sicurezza*) e, facoltativa, per i clienti (*I miei dati*). Segreto cifrato AES-256-GCM, codici usabili una volta sola, 8 codici di recupero salvati solo come impronta, 5 tentativi sbagliati ogni 15 minuti. Vale anche per chi entra con Google. Se si perdono telefono e codici del pannello: su Netlify, *Blobs → sicurezza*, cancellare `pannello-due-fattori`.
+- **Verifica in due passaggi (codici TOTP a 6 cifre, app tipo Google Authenticator):** per il pannello ordini (sezione *Sicurezza*) e, facoltativa, per i clienti (*I miei dati*). Segreto cifrato AES-256-GCM, codici usabili una volta sola, 8 codici di recupero salvati solo come impronta, 5 tentativi sbagliati ogni 15 minuti. Vale anche per chi entra con Google. Se si perdono telefono e codici del pannello: su Cloudflare, *R2 → fgitalia-dati*, cancellare `sicurezza/pannello-due-fattori`.
 - **Area clienti:** password con scrypt e sale casuale, password troppo comuni rifiutate, sessione in cookie firmato `HttpOnly`/`Secure`/`SameSite`, cambio password che chiude le altre sessioni, richieste accettate solo dal sito stesso.
-- **Limiti contro i tentativi a raffica** (`netlify/lib/limiti.ts`): accesso clienti (8 errori per account, 20 per connessione ogni 15 minuti), pannello ordini (5 errori per connessione ogni 15 minuti, 30 in tutto ogni ora), recupero password (3 email all'ora per indirizzo), registrazioni, ricerca ordini, pagamenti e iscrizioni. I contatori usano impronte: niente IP o email in chiaro.
+- **Limiti contro i tentativi a raffica** (`server/lib/limiti.ts`): accesso clienti (8 errori per account, 20 per connessione ogni 15 minuti), pannello ordini (5 errori per connessione ogni 15 minuti, 30 in tutto ogni ora), recupero password (3 email all'ora per indirizzo), registrazioni, ricerca ordini, pagamenti e iscrizioni. I contatori usano impronte: niente IP o email in chiaro.
 - **Documenti:** fatture, preventivi e ordini si scaricano solo dal titolare; le pagine con dati personali non vanno in cache né su Google.
-- **Errori:** al visitatore solo un codice, il dettaglio resta nei log di Netlify.
+- **Errori:** al visitatore solo un codice, il dettaglio resta nei log di Cloudflare (*Workers & Pages → fgitalia → Logs*).
 
 Cosa deve fare chi gestisce il sito:
-- Attivare la **verifica in due passaggi (2FA)** su GitHub, Netlify, Stripe, Brevo e Aruba: chi entra in uno di questi account vede tutti i dati.
+- Attivare la **verifica in due passaggi (2FA)** su GitHub, Cloudflare, Stripe, Brevo e Aruba: chi entra in uno di questi account vede tutti i dati.
 - Usare password lunghe e diverse per `ADMIN_PASSWORD`, `SESSION_SECRET` (almeno 32 caratteri casuali) e gli account dei servizi.
 - In GitHub, *Settings → Code security*: attivare **Dependabot security updates** per ricevere le correzioni di sicurezza delle librerie.
-- Se una chiave finisce dove non deve (chat, email, foto): rigenerarla subito sul servizio e aggiornarla su Netlify.
+- Se una chiave finisce dove non deve (chat, email, foto): rigenerarla subito sul servizio e aggiornarla su Cloudflare.
 
 ### Google
 - [Google Search Console](https://search.google.com/search-console): aggiungi il sito e invia la sitemap `https://www.fgitalia.it/sitemap.xml`.

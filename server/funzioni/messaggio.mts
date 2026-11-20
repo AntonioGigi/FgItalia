@@ -1,4 +1,4 @@
-import type { Config, Context } from '@netlify/functions';
+import type { Config, Context } from '../lib/tipi';
 import { urlSito } from '../lib/ambiente';
 import { emailNegozio, escape, inviaEmail, pagina } from '../lib/email';
 import { ipRichiesta, ORE, superaLimite } from '../lib/limiti';

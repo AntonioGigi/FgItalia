@@ -1,4 +1,4 @@
-import { getStore } from '@netlify/blobs';
+import { getStore } from './archivio';
 import { ALIQUOTA_IVA, calcolaTotali, centesimi, type Catalogo, type RigaCarrello } from '../../src/lib/negozio';
 import type { Cliente, DatiFatturazione } from './clienti';
 

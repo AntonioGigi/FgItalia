@@ -1,4 +1,4 @@
-import type { Config, Context } from '@netlify/functions';
+import type { Config, Context } from '../lib/tipi';
 import { calcolaTotali } from '../../src/lib/negozio';
 import { errore, json, urlSito } from '../lib/ambiente';
 import { leggiCatalogo } from '../lib/catalogo';

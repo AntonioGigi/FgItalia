@@ -1,4 +1,4 @@
-import type { Config, Context } from '@netlify/functions';
+import type { Config, Context } from '../lib/tipi';
 import { createHash, createHmac, randomBytes, timingSafeEqual } from 'node:crypto';
 import { variabile, variabileFacoltativa } from '../lib/ambiente';
 import {

@@ -1,5 +1,5 @@
-import type { Config, Context } from '@netlify/functions';
-import { getStore } from '@netlify/blobs';
+import type { Config, Context } from '../lib/tipi';
+import { getStore } from '../lib/archivio';
 import { errore, json, variabile } from '../lib/ambiente';
 import { creaGettone, gettoneDaRichiesta, gettoneValido, passwordCorretta } from '../lib/accesso';
 import { leggiCatalogo, leggiSchede } from '../lib/catalogo';
@@ -86,12 +86,12 @@ function datiPreventivo(corpo: Record<string, unknown>) {
   };
 }
 
-/** Le funzioni Netlify accettano richieste fino a 6 MB: il PDF in base64 pesa un terzo in più */
+/** Limite prudente per il PDF della fattura (in base64 pesa un terzo in più) */
 const FATTURA_MASSIMA = 4 * 1024 * 1024;
 
 const pausa = (ms: number) => new Promise((r) => setTimeout(r, ms));
 
-/** Verifica in due passaggi del pannello: un solo segreto, salvato cifrato su Netlify Blobs */
+/** Verifica in due passaggi del pannello: un solo segreto, salvato cifrato nell'archivio dati */
 const archivioSicurezza = () => getStore({ name: 'sicurezza', consistency: 'strong' });
 const CHIAVE_2FA = 'pannello-due-fattori';
 const leggi2fa = async () => (await archivioSicurezza().get(CHIAVE_2FA, { type: 'json' })) as DueFattori | null;
@@ -113,7 +113,7 @@ export default async (req: Request, context?: Context) => {
   if (corpo.azione === 'accedi') {
     // 5 errori per connessione ogni 15 minuti, 30 in tutto ogni ora (anche da connessioni diverse)
     if (await bloccato(`admin-ip:${ip}`, 5))
-      return errore('Troppi tentativi con la password sbagliata: per sicurezza l’accesso è bloccato per 15 minuti. Intanto controlla la password su Netlify (variabile ADMIN_PASSWORD).', 429);
+      return errore('Troppi tentativi con la password sbagliata: per sicurezza l’accesso è bloccato per 15 minuti. Intanto controlla la password su Cloudflare (variabile ADMIN_PASSWORD).', 429);
     if (await bloccato('admin-tutti', 30))
       return errore('Troppi tentativi con la password sbagliata da più connessioni: per sicurezza l’accesso è bloccato per un’ora.', 429);
     if (!passwordCorretta(corpo.password, password)) {

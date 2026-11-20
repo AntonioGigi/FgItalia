@@ -1,4 +1,4 @@
-import type { Config } from '@netlify/functions';
+import type { Config } from '../lib/tipi';
 import type Stripe from 'stripe';
 import { errore, json, variabile } from '../lib/ambiente';
 import { emailAggiornamentoStato, emailConfermaCliente, emailNegozio, emailNuovoOrdineNegozio, inviaEmail } from '../lib/email';

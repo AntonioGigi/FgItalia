@@ -1,5 +1,6 @@
-import { getStore } from '@netlify/blobs';
-import { urlSito } from '../lib/ambiente';
+import type { Config } from '../lib/tipi';
+import { getStore } from '../lib/archivio';
+import { richiestaAlSito } from '../lib/ambiente';
 import { emailNuovoCorso, emailPromozione, inviaCampagna } from '../lib/email';
 
 interface Corso {
@@ -32,7 +33,7 @@ interface Avviso {
 }
 
 async function leggi<T>(percorso: string): Promise<T[]> {
-  const risposta = await fetch(`${urlSito()}${percorso}`);
+  const risposta = await richiestaAlSito(percorso);
   if (!risposta.ok) {
     console.error(`${percorso} non disponibile (${risposta.status})`);
     return [];
@@ -59,7 +60,7 @@ async function annuncia(archivio: string, avvisi: Avviso[]) {
 }
 
 /**
- * Parte da sola dopo ogni pubblicazione del sito (il nome del file è l'evento Netlify):
+ * Parte da sola ogni ora (vedi wrangler.jsonc → triggers.crons), quindi poco dopo ogni pubblicazione:
  * se c'è un corso nuovo o una promozione appena iniziata con "Avvisa gli iscritti",
  * invia un'email a tutti gli iscritti agli avvisi.
  */
@@ -79,3 +80,6 @@ export default async () => {
   );
   return new Response('ok');
 };
+
+// ogni ora: annuncia i corsi e le promozioni pubblicati da poco (una sola volta ciascuno)
+export const config: Config = { schedule: '17 * * * *' };

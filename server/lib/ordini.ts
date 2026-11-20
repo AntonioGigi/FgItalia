@@ -1,4 +1,4 @@
-import { getStore } from '@netlify/blobs';
+import { getStore } from './archivio';
 import { randomBytes } from 'node:crypto';
 
 export const STATI = {

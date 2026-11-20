@@ -1,4 +1,4 @@
-import type { Config, Context } from '@netlify/functions';
+import type { Config, Context } from '../lib/tipi';
 import { timingSafeEqual } from 'node:crypto';
 import { errore, json } from '../lib/ambiente';
 import { bloccato, conta, ipRichiesta, MINUTI } from '../lib/limiti';
