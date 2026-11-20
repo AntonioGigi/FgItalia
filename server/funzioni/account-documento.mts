@@ -1,4 +1,4 @@
-import type { Config } from '@netlify/functions';
+import type { Config } from '../lib/tipi';
 import { errore } from '../lib/ambiente';
 import { clienteDaRichiesta, numeriOrdini, numeroPraticaValido } from '../lib/clienti';
 import { pdfPreventivo, pdfRiepilogo } from '../lib/documenti';

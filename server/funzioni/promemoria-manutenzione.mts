@@ -1,4 +1,4 @@
-import type { Config } from '@netlify/functions';
+import type { Config } from '../lib/tipi';
 import { leggiSchede } from '../lib/catalogo';
 import { dispositiviDaRicordare, elencoClienti, oggiIso, ordiniCliente, prossimaManutenzione, salvaCliente, sincronizzaDispositivi } from '../lib/clienti';
 import { emailPromemoriaManutenzione, inviaEmail } from '../lib/email';

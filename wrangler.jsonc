@@ -1,0 +1,25 @@
+// Configurazione del sito su Cloudflare (Worker + file statici). Vedi README → "Messa online".
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fgitalia",
+  "main": "server/worker.ts",
+  "compatibility_date": "2026-11-01",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    // il sito generato da Astro (npm run build)
+    "directory": "./dist",
+    "binding": "ASSETS",
+    // gli indirizzi /api/… passano prima dalle funzioni; il resto è servito direttamente
+    "run_worker_first": ["/api/*"],
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "404-page"
+  },
+  // archivio di ordini, clienti, preventivi, messaggi, fatture
+  "r2_buckets": [{ "binding": "DATI", "bucket_name": "fgitalia-dati" }],
+  // funzioni programmate (orari UTC): promemoria manutenzione e annunci di corsi/promozioni
+  "triggers": { "crons": ["0 7 * * *", "17 * * * *"] },
+  // le variabili impostate dal pannello Cloudflare restano anche dopo ogni pubblicazione
+  "keep_vars": true,
+  "observability": { "enabled": true },
+  "upload_source_maps": true
+}

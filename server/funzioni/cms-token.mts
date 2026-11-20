@@ -1,4 +1,4 @@
-import type { Config, Context } from '@netlify/functions';
+import type { Config, Context } from '../lib/tipi';
 import { errore, json, variabile, variabileFacoltativa } from '../lib/ambiente';
 import { gettoneDaRichiesta, gettoneValido } from '../lib/accesso';
 import { ipRichiesta, MINUTI, superaLimite } from '../lib/limiti';
@@ -8,7 +8,7 @@ import { ipRichiesta, MINUTI, superaLimite } from '../lib/limiti';
  * (e verifica in due passaggi) del pannello ordini, al posto dell'account GitHub.
  * Chi ha un gettone valido del pannello ordini riceve il token GitHub con cui Decap
  * salva prodotti e pagine nel repository: un token "fine-grained" limitato a questo
- * repository e ai soli contenuti, salvato su Netlify in GITHUB_CMS_TOKEN.
+ * repository e ai soli contenuti, salvato su Cloudflare in GITHUB_CMS_TOKEN.
  */
 export default async (req: Request, context?: Context) => {
   if (req.method !== 'POST') return errore('Metodo non consentito', 405);
@@ -18,7 +18,7 @@ export default async (req: Request, context?: Context) => {
 
   const token = variabileFacoltativa('GITHUB_CMS_TOKEN');
   if (!token)
-    return errore('Il pannello dei contenuti non è ancora collegato a GitHub: manca la variabile GITHUB_CMS_TOKEN su Netlify.', 503);
+    return errore('Il pannello dei contenuti non è ancora collegato a GitHub: manca la variabile GITHUB_CMS_TOKEN su Cloudflare.', 503);
   return json({ token });
 };
 

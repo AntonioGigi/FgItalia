@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// ——— finti servizi esterni: archivio Netlify Blobs, Brevo e Google ———
+// ——— finti servizi esterni: archivio dati, Brevo e Google ———
 const archivi = new Map<string, Map<string, unknown>>();
-vi.mock('@netlify/blobs', () => ({
+vi.mock('../server/lib/archivio', () => ({
   getStore: ({ name }: { name: string }) => {
     if (!archivi.has(name)) archivi.set(name, new Map());
     const a = archivi.get(name)!;
@@ -39,11 +39,11 @@ Object.assign(process.env, {
   GOOGLE_CLIENT_SECRET: 'segreto-google',
 });
 
-const { default: account } = await import('../netlify/functions/account.mts');
-const { default: google } = await import('../netlify/functions/account-google.mts');
-const { default: gestione } = await import('../netlify/functions/gestione-ordini.mts');
-const { codice, daBase32, passoAttuale, passoDelCodice, base32, nuoviCodiciRecupero } = await import('../netlify/lib/dueFattori');
-const { controllaDatiGoogle } = await import('../netlify/lib/google');
+const { default: account } = await import('../server/funzioni/account.mts');
+const { default: google } = await import('../server/funzioni/account-google.mts');
+const { default: gestione } = await import('../server/funzioni/gestione-ordini.mts');
+const { codice, daBase32, passoAttuale, passoDelCodice, base32, nuoviCodiciRecupero } = await import('../server/lib/dueFattori');
+const { controllaDatiGoogle } = await import('../server/lib/google');
 
 /** Cookie del "browser" di prova */
 let cookie = new Map<string, string>();
@@ -59,7 +59,7 @@ function salvaCookie(r: Response) {
 const intestazioni = () => ({
   'content-type': 'application/json',
   cookie: [...cookie].map(([k, v]) => `${k}=${v}`).join('; '),
-  'x-nf-client-connection-ip': '1.2.3.4',
+  'cf-connecting-ip': '1.2.3.4',
 });
 const api = async (corpo: Record<string, unknown>) =>
   salvaCookie(await account(new Request('https://www.fgitalia.it/api/account', { method: 'POST', body: JSON.stringify(corpo), headers: intestazioni() })));
@@ -246,7 +246,7 @@ describe('verifica in due passaggi del pannello ordini', () => {
       new Request('https://x/api/gestione-ordini', {
         method: 'POST',
         body: JSON.stringify(corpo),
-        headers: { 'x-nf-client-connection-ip': '4.3.2.1', ...(gettone && { authorization: `Bearer ${gettone}` }) },
+        headers: { 'cf-connecting-ip': '4.3.2.1', ...(gettone && { authorization: `Bearer ${gettone}` }) },
       }),
     );
 

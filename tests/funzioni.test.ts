@@ -1,8 +1,8 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 
-// ——— finti servizi esterni: archivio Netlify Blobs, Stripe, Brevo e sito pubblicato ———
+// ——— finti servizi esterni: archivio dati, Stripe, Brevo e sito pubblicato ———
 const archivi = new Map<string, Map<string, unknown>>();
-vi.mock('@netlify/blobs', () => ({
+vi.mock('../server/lib/archivio', () => ({
   getStore: ({ name }: { name: string }) => {
     if (!archivi.has(name)) archivi.set(name, new Map());
     const a = archivi.get(name)!;
@@ -18,7 +18,7 @@ vi.mock('@netlify/blobs', () => ({
 
 const sessioniCreate: Record<string, unknown>[] = [];
 let eventoWebhook: unknown;
-vi.mock('../netlify/lib/stripe', () => ({
+vi.mock('../server/lib/stripe', () => ({
   stripe: () => ({
     checkout: {
       sessions: {
@@ -77,14 +77,14 @@ Object.assign(process.env, {
   ADMIN_PASSWORD: 'una-password-lunga',
 });
 
-const { default: checkout } = await import('../netlify/functions/checkout.mts');
-const { default: webhook } = await import('../netlify/functions/stripe-webhook.mts');
-const { default: statoOrdine } = await import('../netlify/functions/ordine.mts');
-const { default: gestione } = await import('../netlify/functions/gestione-ordini.mts');
-const { default: iscrizione } = await import('../netlify/functions/iscrizione.mts');
-const { default: dopoPubblicazione } = await import('../netlify/functions/deploy-succeeded.mts');
-const { creaGettone, gettoneValido } = await import('../netlify/lib/accesso');
-const { nuovoNumeroOrdine, numeroValido } = await import('../netlify/lib/ordini');
+const { default: checkout } = await import('../server/funzioni/checkout.mts');
+const { default: webhook } = await import('../server/funzioni/stripe-webhook.mts');
+const { default: statoOrdine } = await import('../server/funzioni/ordine.mts');
+const { default: gestione } = await import('../server/funzioni/gestione-ordini.mts');
+const { default: iscrizione } = await import('../server/funzioni/iscrizione.mts');
+const { default: dopoPubblicazione } = await import('../server/funzioni/annunci.mts');
+const { creaGettone, gettoneValido } = await import('../server/lib/accesso');
+const { nuovoNumeroOrdine, numeroValido } = await import('../server/lib/ordini');
 
 const post = (url: string, corpo: unknown, intestazioni: Record<string, string> = {}) =>
   new Request(url, { method: 'POST', body: JSON.stringify(corpo), headers: intestazioni });
