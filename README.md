@@ -54,6 +54,8 @@ La pubblicazione è automatica con **GitHub Actions** (`.github/workflows/pubbli
 6. **Moduli contatti e corsi:** arrivano nel pannello, scheda *Messaggi*, e per email a `EMAIL_NOTIFICHE` (rispondendo si scrive al cliente).
 7. **Dominio:** su Cloudflare *Add a domain* → `fgitalia.it` (piano Free): Cloudflare copia i record DNS esistenti. **Controlla che ci siano tutti i record della posta Aruba** (MX, `mail`, `pop3`, `smtp`, `imap`, i TXT di SPF/DMARC e i record di Brevo) prima di cambiare i *name server* presso Aruba con quelli indicati da Cloudflare. Poi in *Workers & Pages → fgitalia → Settings → Domains & Routes → Add → Custom domain* aggiungi `www.fgitalia.it` e `fgitalia.it`. I vecchi indirizzi WordPress sono reindirizzati in `public/_redirects`; le intestazioni di sicurezza sono in `public/_headers`.
 
+**Periodo di passaggio:** finché il dominio punta ancora a Netlify, lo stesso codice gira anche lì (`netlify.toml`): le funzioni di `server/netlify/` richiamano quelle di `server/funzioni/` con l'archivio su Netlify Blobs (`server/lib/archivio-netlify.ts`). Dopo lo spostamento del dominio si possono cancellare `netlify.toml`, `server/netlify/`, `server/lib/archivio-netlify.ts` e il pacchetto `@netlify/blobs`.
+
 Prova in locale con le funzioni vere: `npm run build && npx wrangler dev` (le variabili di prova vanno in un file `.dev.vars`, escluso da git).
 
 ## Attivare pagamenti, ordini e avvisi
