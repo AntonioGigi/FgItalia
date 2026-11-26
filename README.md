@@ -86,6 +86,7 @@ Per provare senza soldi veri usa prima le chiavi "di test" di Stripe e la carta 
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | facoltative: accesso con Google per i clienti (vedi sotto) |
 | `SESSION_SECRET` | chiave segreta per l'area clienti: una frase lunga e casuale (almeno 32 caratteri). Se la cambi, tutti i clienti devono rifare l'accesso |
 | `INSTAGRAM_TOKEN` | facoltativo: mostra gli ultimi post Instagram in home |
+| `LOGO_EMAIL` | facoltativo: indirizzo del logo nelle email. Di default è il file del logo nel repository pubblico su GitHub, sempre raggiungibile da Brevo (se il repository diventa privato, impostala, es. `https://www.fgitalia.it/uploads/logo-fgitalia.png`) |
 
 ### Promozioni
 Dal pannello `/admin/` → *Promozioni*: percentuale di sconto, su tutto / alcune categorie / alcuni prodotti, date di inizio e fine. Quando è attiva, i prezzi scontati valgono ovunque (schede, carrello, pagamento Stripe, preventivi, feed Google Shopping), compaiono la striscia rossa in cima al sito, la pagina `/offerte/` e la sezione "In offerta" in home. Con *Avvisa via email gli iscritti* parte una sola email alla lista Brevo.
