@@ -38,6 +38,9 @@ export interface Allegato {
   contenuto: string;
 }
 
+/** Più indirizzi separati da virgola (es. EMAIL_NOTIFICHE="papa@virgilio.it, commerciale@fgitalia.it") */
+export const indirizzi = (testo: string) => [...new Set(testo.split(/[,;\s]+/).map((e) => e.trim()).filter(Boolean))];
+
 export async function inviaEmail(
   destinatario: { email: string; nome?: string },
   { oggetto, html }: Messaggio,
@@ -46,7 +49,7 @@ export async function inviaEmail(
 ) {
   await chiamaBrevo('/smtp/email', {
     sender: mittente(),
-    to: [{ email: destinatario.email, ...(destinatario.nome && { name: destinatario.nome }) }],
+    to: indirizzi(destinatario.email).map((email) => ({ email, ...(destinatario.nome && { name: destinatario.nome }) })),
     replyTo: rispondiA
       ? { email: rispondiA.email, ...(rispondiA.nome && { name: rispondiA.nome }) }
       : { email: sito.email || variabile('EMAIL_MITTENTE'), name: sito.nome_breve },
@@ -56,7 +59,8 @@ export async function inviaEmail(
   });
 }
 
-/** Indirizzo a cui arrivano le notifiche dei nuovi ordini (di default l'email del sito) */
+/** Indirizzi a cui arrivano le notifiche di ordini, messaggi, preventivi e assistenza (di default l'email del sito).
+ * Se ne possono mettere più di uno, separati da virgola. */
 export const emailNegozio = () => variabileFacoltativa('EMAIL_NOTIFICHE') ?? sito.email;
 
 export async function aggiungiIscritto(email: string, nome: string | undefined) {

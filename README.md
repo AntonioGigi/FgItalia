@@ -80,7 +80,7 @@ Per provare senza soldi veri usa prima le chiavi "di test" di Stripe e la carta 
 | Variabile | A cosa serve |
 | --- | --- |
 | `EMAIL_MITTENTE` | indirizzo verificato su Brevo da cui partono le email |
-| `EMAIL_NOTIFICHE` | dove ricevere gli avvisi dei nuovi ordini (se vuota: l'email del sito) |
+| `EMAIL_NOTIFICHE` | dove ricevere gli avvisi di ordini, messaggi, preventivi e assistenza; più indirizzi separati da virgola, es. `francescogieri@virgilio.it, commerciale@fgitalia.it` (se vuota: l'email del sito) |
 | `ADMIN_PASSWORD` | password del pannello ordini `/gestione-ordini/` e del pannello contenuti `/admin/` (lunga, almeno 12 caratteri) |
 | `GITHUB_CMS_TOKEN` | token GitHub "fine-grained" con cui `/admin/` salva prodotti e pagine (vedi "Messa online") |
 | `GOOGLE_CLIENT_ID`, `GOOGLE_CLIENT_SECRET` | facoltative: accesso con Google per i clienti (vedi sotto) |
