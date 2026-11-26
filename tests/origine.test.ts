@@ -23,7 +23,7 @@ vi.stubGlobal('fetch', async (url: string, opzioni?: RequestInit) => {
 // il dominio non punta ancora al sito nuovo: URL dice www.fgitalia.it, ma il sito risponde dall'indirizzo Netlify
 Object.assign(process.env, { URL: 'https://www.fgitalia.it', ADMIN_PASSWORD: 'una-password-lunga', BREVO_API_KEY: 'x', EMAIL_MITTENTE: 'commerciale@fgitalia.it', EMAIL_NOTIFICHE: 'papa@example.com' });
 
-it('logo e link delle email usano l’indirizzo da cui il sito sta rispondendo', async () => {
+it('logo sempre raggiungibile nelle email, link dall’indirizzo da cui il sito sta rispondendo', async () => {
   const { default: gestione } = await import('../server/netlify/gestione-ordini.mts');
   const chiedi = (corpo: unknown, gettone = '') =>
     gestione(
@@ -36,5 +36,7 @@ it('logo e link delle email usano l’indirizzo da cui il sito sta rispondendo',
     );
   const { gettone } = await (await chiedi({ azione: 'accedi', password: 'una-password-lunga' })).json();
   expect(await (await chiedi({ azione: 'prova-email' }, gettone)).json()).toMatchObject({ inviata: true });
-  expect(email[0]).toContain('src="https://luminous-figolla-66d919.netlify.app/uploads/logo-fgitalia.png"');
+  expect(email[0]).toContain('src="https://raw.githubusercontent.com/AntonioGigi/FgItalia/main/public/uploads/logo-fgitalia.png"');
+  const { urlSito } = await import('../server/lib/ambiente');
+  expect(urlSito()).toBe('https://luminous-figolla-66d919.netlify.app');
 });
