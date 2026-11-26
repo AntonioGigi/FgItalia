@@ -8,11 +8,15 @@ export function variabile(nome: string): string {
 export const variabileFacoltativa = (nome: string): string | undefined => process.env[nome] || undefined;
 
 let origineRichiesta: string | undefined;
-/** Il worker la imposta a ogni richiesta: serve finché la variabile URL non è impostata */
+/** Il worker (e su Netlify la funzione) la imposta a ogni richiesta con l'indirizzo che il visitatore sta usando */
 export const impostaOrigine = (origine: string) => void (origineRichiesta = origine);
 
-/** Indirizzo pubblico del sito: la variabile URL, altrimenti l'indirizzo da cui arriva la richiesta */
-export const urlSito = (): string => (process.env.URL || origineRichiesta || 'https://www.fgitalia.it').replace(/\/$/, '');
+/**
+ * Indirizzo pubblico del sito, per link e immagini nelle email, pagamenti e accesso con Google.
+ * Prima l'indirizzo da cui arriva la richiesta (così funziona anche prima che il dominio punti al
+ * sito nuovo), poi la variabile URL, per le funzioni programmate che non hanno una richiesta.
+ */
+export const urlSito = (): string => (origineRichiesta || process.env.URL || 'https://www.fgitalia.it').replace(/\/$/, '');
 
 type LettoreSito = (richiesta: Request) => Promise<Response>;
 let lettoreSito: LettoreSito | undefined;
