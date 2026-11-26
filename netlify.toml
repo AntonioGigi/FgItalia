@@ -1,0 +1,14 @@
+# Configurazione per Netlify, usata finché il dominio non passa a Cloudflare (vedi README).
+# Le funzioni sono le stesse di Cloudflare (server/funzioni), con l'archivio su Netlify Blobs.
+[build]
+  command = "npm run build"
+  publish = "dist"
+
+[build.environment]
+  NODE_VERSION = "22"
+
+[functions]
+  directory = "server/netlify"
+  node_bundler = "esbuild"
+
+# Le intestazioni di sicurezza sono in public/_headers, i reindirizzamenti in public/_redirects
