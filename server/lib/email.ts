@@ -92,7 +92,7 @@ export function pagina(titolo: string, contenuto: string): string {
   return `<!doctype html><html lang="it"><body style="margin:0;background:#f4f7fa;font-family:Arial,Helvetica,sans-serif;color:#14212b">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0"><tr><td align="center" style="padding:24px 12px">
 <table role="presentation" width="100%" cellpadding="0" cellspacing="0" style="max-width:600px;background:#ffffff;border-radius:16px;overflow:hidden">
-<tr><td style="padding:20px 28px;border-bottom:4px solid #e0a030"><img src="${urlSito()}${sito.logo || '/apple-touch-icon.png'}" alt="${escape(sito.nome_breve)}" height="60" style="display:block;height:60px"></td></tr>
+<tr><td style="padding:20px 28px;border-bottom:4px solid #e0a030"><img src="${urlSito()}${sito.logo || '/apple-touch-icon.png'}" alt="${escape(sito.nome_breve)}" width="90" height="60" style="display:block;width:90px;height:60px;border:0"></td></tr>
 <tr><td style="padding:28px">
 <h1 style="margin:0 0 16px;font-size:22px;color:#0f2138">${escape(titolo)}</h1>
 ${contenuto}

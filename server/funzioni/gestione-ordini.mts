@@ -12,6 +12,7 @@ import {
   emailNegozio,
   emailPreventivoCliente,
   inviaEmail,
+  pagina,
 } from '../lib/email';
 import { rispostaPdf } from '../lib/pdf';
 import { nuoviCodiciRecupero, prepara, verifica, type DueFattori } from '../lib/dueFattori';
@@ -256,7 +257,10 @@ export default async (req: Request, context?: Context) => {
       // per controllare la configurazione di Brevo: manda un'email di prova e riporta l'errore esatto
       const destinatario = emailNegozio();
       try {
-        await inviaEmail({ email: destinatario }, { oggetto: 'Prova email dal sito', html: '<p>Se leggi questa email, l’invio dal sito funziona.</p>' });
+        await inviaEmail(
+          { email: destinatario },
+          { oggetto: 'Prova email dal sito', html: pagina('Prova email dal sito', '<p>Se leggi questa email, l’invio dal sito funziona.</p>') },
+        );
         return json({ inviata: true, destinatario });
       } catch (e) {
         return json({ inviata: false, destinatario, errore: e instanceof Error ? e.message : String(e) });
