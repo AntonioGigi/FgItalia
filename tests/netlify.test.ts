@@ -38,3 +38,19 @@ describe('versione Netlify (finché il dominio non passa a Cloudflare)', () => {
     expect(archivi.get('limiti')?.size).toBeGreaterThan(0);
   });
 });
+
+describe('indirizzi delle funzioni su Netlify', () => {
+  it('ogni funzione Netlify dichiara per esteso lo stesso indirizzo/orario della funzione originale', async () => {
+    const { readdirSync, readFileSync } = await import('node:fs');
+    const cartella = new URL('../server/netlify/', import.meta.url);
+    const file = readdirSync(cartella).filter((f) => f.endsWith('.mts'));
+    expect(file.sort()).toEqual(readdirSync(new URL('../server/funzioni/', import.meta.url)).filter((f) => f.endsWith('.mts')).sort());
+    for (const nome of file) {
+      // Netlify legge solo un oggetto scritto nel file stesso, non una configurazione importata
+      expect(readFileSync(new URL(nome, cartella), 'utf8'), nome).toMatch(/^export const config = \{[^}]+\};$/m);
+      const netlify = await import(`../server/netlify/${nome}`);
+      const originale = await import(`../server/funzioni/${nome}`);
+      expect(netlify.config, nome).toEqual(originale.config);
+    }
+  });
+});
