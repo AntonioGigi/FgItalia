@@ -1,13 +1,14 @@
 /**
- * Dati del simulatore Winback BACK4 (pagina prodotto). Correnti, frequenze, modalità e
- * accessori vengono dalla scheda tecnica ufficiale (public/uploads/schede/BACK4.pdf) e dalla
- * brochure Winback sulle profondità d'azione. È una DIMOSTRAZIONE: non sostituisce il software
- * del dispositivo, né i protocolli della libreria Academy.
+ * Dati del simulatore Winback BACK4 (pagina prodotto), sul modello dell'interfaccia BACK4 2.0.
+ * Correnti, frequenze e accessori vengono dalla scheda tecnica ufficiale
+ * (public/uploads/schede/BACK4.pdf) e dalla brochure Winback sulle profondità d'azione.
+ * È una DIMOSTRAZIONE: non sostituisce il software del dispositivo né i protocolli Academy.
  */
 
 export type IdCorrente = 'cet' | 'ret' | 'tens' | 'ems' | 'mix';
 /** strati dei tessuti, dal più superficiale al più profondo (come nella brochure Winback) */
 export type Strato = 'cute' | 'nervi' | 'molli' | 'duri';
+export type Livello = 'low' | 'medium' | 'high';
 
 export interface Modalita {
   id: string;
@@ -22,10 +23,24 @@ export interface Corrente {
   id: IdCorrente;
   nome: string;
   colore: string;
+  /** colore più scuro per il fondo "liquido" della colonna */
+  scuro: string;
   tipo: 'tecar' | 'stimolazione';
+  /** le due vie indipendenti del dispositivo: 1 = TECAR, 2 = stimolazioni */
+  via: 1 | 2;
   descrizione: string;
   modalita: Modalita[];
+  /** seconda riga della colonna (Low / Medium / High) */
+  livelli?: boolean;
+  /** frequenze da scegliere a parte (cerchi del Hi-TENS, Hz del MIX) */
+  frequenzeScelta?: string[];
 }
+
+export const LIVELLI: { id: Livello; nome: string }[] = [
+  { id: 'low', nome: 'Low' },
+  { id: 'medium', nome: 'Medium' },
+  { id: 'high', nome: 'High' },
+];
 
 export const STRATI: { id: Strato; nome: string; dettaglio: string }[] = [
   { id: 'cute', nome: 'Tessuti cutanei e sottocutanei', dettaglio: 'pelle, fascia, cicatrici' },
@@ -38,60 +53,58 @@ export const CORRENTI: Corrente[] = [
   {
     id: 'cet',
     nome: 'CET',
-    colore: '#f97316',
+    colore: '#f2733a',
+    scuro: '#5a2414',
     tipo: 'tecar',
+    via: 1,
+    livelli: true,
     descrizione: 'TECAR capacitiva: elettrodo isolato, azione sui tessuti ricchi d’acqua (muscoli, sistema linfatico).',
     modalita: [
       { id: 'soft', nome: 'Soft', frequenze: ['500 kHz'], strati: ['cute'], descrizione: 'Azione superficiale su pelle e fascia.' },
       { id: 'deep', nome: 'Deep', frequenze: ['300 kHz'], strati: ['molli'], descrizione: 'Azione profonda su muscoli e tessuti molli.' },
-      {
-        id: 'dynamic',
-        nome: 'Dynamic',
-        frequenze: ['300 kHz', '500 kHz'],
-        strati: ['cute', 'molli'],
-        descrizione: 'Alterna 300 e 500 kHz: dalla superficie ai tessuti molli.',
-      },
+      { id: 'dynamic', nome: 'Dynamic', frequenze: ['300 kHz', '500 kHz'], strati: ['cute', 'molli'], descrizione: 'Alterna 300 e 500 kHz.' },
     ],
   },
   {
     id: 'ret',
     nome: 'RET',
-    colore: '#3b6fe0',
+    colore: '#4f46e5',
+    scuro: '#1e1b6b',
     tipo: 'tecar',
+    via: 1,
+    livelli: true,
     descrizione: 'TECAR resistiva: elettrodo metallico, azione sui tessuti più resistenti (tendini, legamenti, articolazioni).',
     modalita: [
-      { id: 'med', nome: 'Med', frequenze: ['500 kHz'], strati: ['molli', 'duri'], descrizione: 'Azione su tessuti molli e duri.' },
-      {
-        id: 'dyn',
-        nome: 'Dyn',
-        frequenze: ['300 kHz', '500 kHz'],
-        strati: ['molli', 'duri'],
-        descrizione: 'Alterna 300 e 500 kHz per tutta la profondità.',
-      },
-      { id: 'focal', nome: 'Focal', frequenze: ['300 kHz'], strati: ['duri'], descrizione: 'Concentrata su ossa, legamenti e articolazioni.' },
+      { id: 'soft', nome: 'Soft', frequenze: ['500 kHz'], strati: ['molli', 'duri'], descrizione: 'Tessuti molli e duri.' },
+      { id: 'deep', nome: 'Deep', frequenze: ['300 kHz'], strati: ['duri'], descrizione: 'Concentrata su ossa, legamenti e articolazioni.' },
+      { id: 'dynamic', nome: 'Dynamic', frequenze: ['300 kHz', '500 kHz'], strati: ['molli', 'duri'], descrizione: 'Alterna 300 e 500 kHz.' },
     ],
   },
   {
     id: 'tens',
     nome: 'Hi-TENS',
-    colore: '#14b8a6',
+    colore: '#2dd4bf',
+    scuro: '#0f3d3a',
     tipo: 'stimolazione',
-    descrizione: 'Stimolazione antalgica ad alta tensione sul sistema nervoso.',
+    via: 2,
+    frequenzeScelta: ['25 Hz', '5 Hz', '2 Hz'],
+    descrizione: 'Stimolazione antalgica ad alta tensione sul sistema nervoso (2, 5 e 25 Hz).',
     modalita: [
-      { id: 'acute', nome: 'Acute', frequenze: ['25 Hz'], strati: ['cute', 'nervi'], descrizione: 'Per il dolore acuto.' },
-      { id: 'chronic', nome: 'Chronic', frequenze: ['2 Hz'], strati: ['nervi'], descrizione: 'Per il dolore cronico.' },
-      { id: 'manual', nome: 'Manual', frequenze: ['2 Hz', '5 Hz', '25 Hz'], strati: ['cute', 'nervi'], descrizione: 'Frequenza scelta dal terapista.' },
+      { id: 'static', nome: 'Static', frequenze: [], strati: ['cute', 'nervi'], descrizione: 'Frequenza fissa scelta sullo schermo.' },
+      { id: 'dynamic', nome: 'Dynamic', frequenze: ['2 Hz', '5 Hz', '25 Hz'], strati: ['cute', 'nervi'], descrizione: 'Le frequenze si alternano.' },
     ],
   },
   {
     id: 'ems',
     nome: 'Hi-EMS',
-    colore: '#60a5fa',
+    colore: '#4f8ff7',
+    scuro: '#15305e',
     tipo: 'stimolazione',
-    descrizione: 'Stimolazione muscolare ad alta frequenza: tono, drenaggio, rilassamento.',
+    via: 2,
+    descrizione: 'Stimolazione muscolare ad alta frequenza (1500 e 4000 Hz): tono, drenaggio, rilassamento.',
     modalita: [
-      { id: 'focal', nome: 'Focal', frequenze: ['4000 Hz'], strati: ['molli'], descrizione: 'Contrazione concentrata sotto l’elettrodo.' },
       { id: 'radial', nome: 'Radial', frequenze: ['1500 Hz'], strati: ['molli'], descrizione: 'Contrazione diffusa sulla zona.' },
+      { id: 'focal', nome: 'Focal', frequenze: ['4000 Hz'], strati: ['molli'], descrizione: 'Contrazione concentrata sotto l’elettrodo.' },
       { id: 'drain', nome: 'Drain', frequenze: ['1500 Hz'], strati: ['molli'], descrizione: 'Effetto pompa per il drenaggio.' },
       { id: 'dynamic', nome: 'Dynamic', frequenze: ['1500 Hz', '4000 Hz'], strati: ['molli'], descrizione: 'Alterna 1500 e 4000 Hz.' },
     ],
@@ -99,9 +112,13 @@ export const CORRENTI: Corrente[] = [
   {
     id: 'mix',
     nome: 'MIX',
-    colore: '#22c55e',
+    colore: '#4ade80',
+    scuro: '#14432a',
     tipo: 'tecar',
-    descrizione: 'Multifrequenza a 1000 kHz per pelle, fascia e cicatrici.',
+    via: 1,
+    livelli: true,
+    frequenzeScelta: ['5 Hz', '25 Hz', '2 Hz'],
+    descrizione: 'Multifrequenza a 1000 kHz, pulsata: pelle, fascia e cicatrici.',
     modalita: [{ id: 'pulse', nome: 'Pulse', frequenze: ['1000 kHz'], strati: ['cute'], descrizione: 'Erogazione pulsata superficiale.' }],
   },
 ];
@@ -117,13 +134,14 @@ export interface Canale {
   intensita: number;
   /** durata in secondi */
   durata: number;
-  /** solo Hi-TENS Manual: frequenza scelta */
+  livello?: Livello;
+  /** Hi-TENS e MIX: frequenza scelta */
   frequenza?: string;
 }
 
 export const INTENSITA_MAX = 100;
 export const DURATA_MAX = 30 * 60;
-export const PASSO_DURATA = 10;
+export const PASSO_DURATA = 30;
 
 export const limita = (v: number, min: number, max: number) => Math.min(max, Math.max(min, Math.round(v)));
 export const tempo = (secondi: number) => {
@@ -131,19 +149,52 @@ export const tempo = (secondi: number) => {
   return `${String(Math.floor(s / 60)).padStart(2, '0')}:${String(s % 60).padStart(2, '0')}`;
 };
 
-/** Durata della seduta: i canali lavorano in parallelo sulle due vie, conta il più lungo */
-export const durataSeduta = (canali: Partial<Record<IdCorrente, Canale>>) =>
-  Math.max(0, ...Object.values(canali).map((c) => (c?.attivo ? c.durata : 0)));
+/** Frequenze effettive del canale (quella scelta per Hi-TENS statico e MIX) */
+export function frequenzeCanale(id: IdCorrente, k: Canale): string[] {
+  const m = modalita(id, k.modalita);
+  if (id === 'tens') return m.id === 'static' ? [k.frequenza ?? '25 Hz'] : m.frequenze;
+  if (id === 'mix') return [...m.frequenze, k.frequenza ?? '5 Hz'];
+  return m.frequenze;
+}
 
-/** Quanto ogni strato è raggiunto dai canali attivi (0-1, in base alla potenza) */
-export function profondita(canali: Partial<Record<IdCorrente, Canale>>): Record<Strato, { livello: number; colori: string[] }> {
+/**
+ * Durata della seduta. BACK4 ha due vie indipendenti: sulla via 1 le correnti TECAR
+ * (CET, RET, MIX) si susseguono, sulla via 2 le stimolazioni (Hi-TENS, Hi-EMS); le due vie
+ * lavorano in parallelo, quindi conta la più lunga.
+ */
+export function durataSeduta(canali: Partial<Record<IdCorrente, Canale>>) {
+  const vie = [0, 0];
+  for (const c of CORRENTI) if (canali[c.id]?.attivo) vie[c.via - 1] += canali[c.id]!.durata;
+  return Math.max(...vie);
+}
+
+/** Quale canale sta lavorando su ciascuna via dopo `trascorsi` secondi (in ordine da sinistra) */
+export function inErogazione(canali: Partial<Record<IdCorrente, Canale>>, trascorsi: number): { via1?: IdCorrente; via2?: IdCorrente; restanti: Record<IdCorrente, number> } {
+  const restanti = { cet: 0, ret: 0, tens: 0, ems: 0, mix: 0 } as Record<IdCorrente, number>;
+  const esito: { via1?: IdCorrente; via2?: IdCorrente; restanti: Record<IdCorrente, number> } = { restanti };
+  for (const via of [1, 2] as const) {
+    let t = trascorsi;
+    for (const c of CORRENTI.filter((x) => x.via === via)) {
+      const k = canali[c.id];
+      if (!k?.attivo) continue;
+      const usato = Math.min(k.durata, Math.max(0, t));
+      restanti[c.id] = k.durata - usato;
+      if (restanti[c.id] > 0 && !esito[`via${via}`]) esito[`via${via}`] = c.id;
+      t -= k.durata;
+    }
+  }
+  return esito;
+}
+
+/** Quanto ogni strato è raggiunto dai canali indicati (0-1, in base alla potenza) */
+export function profondita(canali: Partial<Record<IdCorrente, Canale>>, soloIn?: IdCorrente[]): Record<Strato, { livello: number; colori: string[] }> {
   const esito = Object.fromEntries(STRATI.map((s) => [s.id, { livello: 0, colori: [] as string[] }])) as Record<
     Strato,
     { livello: number; colori: string[] }
   >;
   for (const c of CORRENTI) {
     const canale = canali[c.id];
-    if (!canale?.attivo || canale.intensita <= 0) continue;
+    if (!canale?.attivo || canale.intensita <= 0 || (soloIn && !soloIn.includes(c.id))) continue;
     for (const s of modalita(c.id, canale.modalita).strati) {
       esito[s].livello = Math.max(esito[s].livello, canale.intensita / INTENSITA_MAX);
       esito[s].colori.push(c.colore);
@@ -156,37 +207,13 @@ export function profondita(canali: Partial<Record<IdCorrente, Canale>>): Record<
 
 export type IdConfigurazione = 'piastra' | 'due-tx' | 'tx-ritorno' | 'bracciali' | 'delta' | 'catena';
 
-export const CONFIGURAZIONI: { id: IdConfigurazione; nome: string; descrizione: string }[] = [
-  {
-    id: 'piastra',
-    nome: 'Manipolo + piastra di ritorno',
-    descrizione: 'Configurazione classica: il manipolo TX eroga, la piastra di ritorno chiude il circuito.',
-  },
-  {
-    id: 'due-tx',
-    nome: 'Due manipoli TX, senza piastra',
-    descrizione: 'La corrente passa tra i due manipoli: azione globale, ideale per iniziare il trattamento.',
-  },
-  {
-    id: 'tx-ritorno',
-    nome: 'Un manipolo fa da piastra',
-    descrizione: 'Un manipolo TX resta fermo e fa da ritorno, l’altro eroga e si muove sulla zona da trattare.',
-  },
-  {
-    id: 'bracciali',
-    nome: 'Bracciali RET',
-    descrizione: 'I due bracciali RET al polso: le mani del terapista diventano l’elettrodo durante la terapia manuale.',
-  },
-  {
-    id: 'delta',
-    nome: 'Tre zone – DELTA',
-    descrizione: 'Configurazione in parallelo: aumenta l’intensità, non la tensione. Concentra la diatermia.',
-  },
-  {
-    id: 'catena',
-    nome: 'Tre zone – CHAIN SERIES',
-    descrizione: 'Configurazione a catena: aumenta la tensione, non l’intensità. Accumula la diatermia.',
-  },
+export const CONFIGURAZIONI: { id: IdConfigurazione; nome: string; descrizione: string; piastra: boolean; tx: number }[] = [
+  { id: 'piastra', nome: 'Manipolo + piastra', piastra: true, tx: 1, descrizione: 'Configurazione classica: il manipolo TX eroga, la piastra di ritorno chiude il circuito.' },
+  { id: 'due-tx', nome: 'Due TX senza piastra', piastra: false, tx: 2, descrizione: 'La corrente passa tra i due manipoli: azione globale, ideale per iniziare il trattamento.' },
+  { id: 'tx-ritorno', nome: 'Un TX fa da piastra', piastra: false, tx: 2, descrizione: 'Un manipolo resta fermo e fa da ritorno, l’altro eroga e si muove sulla zona.' },
+  { id: 'bracciali', nome: 'Bracciali RET', piastra: true, tx: 0, descrizione: 'I bracciali RET al polso: le mani del terapista diventano l’elettrodo durante la terapia manuale.' },
+  { id: 'delta', nome: '3 zone DELTA', piastra: true, tx: 2, descrizione: 'In parallelo: aumenta l’intensità, non la tensione. Concentra la diatermia.' },
+  { id: 'catena', nome: '3 zone CHAIN SERIES', piastra: true, tx: 2, descrizione: 'A catena: aumenta la tensione, non l’intensità. Accumula la diatermia.' },
 ];
 
 // ——— modalità Academy (esempi dimostrativi) ———
@@ -206,42 +233,42 @@ export const ZONE = [
 export type IdZona = (typeof ZONE)[number]['id'];
 
 export const FASI = [
-  { id: 'acuta', nome: 'Fase acuta', descrizione: 'Dolore e infiammazione recenti: priorità a drenaggio e controllo del dolore.' },
-  { id: 'subacuta', nome: 'Fase subacuta', descrizione: 'Riparazione dei tessuti: circolazione e recupero della mobilità.' },
-  { id: 'cronica', nome: 'Fase cronica', descrizione: 'Dolore persistente e rigidità: azione profonda e ripresa funzionale.' },
+  { id: 'acuta', nome: 'Fase acuta', descrizione: 'Dolore e infiammazione recenti: drenaggio e controllo del dolore.' },
+  { id: 'subacuta', nome: 'Fase subacuta', descrizione: 'Riparazione dei tessuti: circolazione e mobilità.' },
+  { id: 'cronica', nome: 'Fase cronica', descrizione: 'Dolore persistente e rigidità: azione profonda.' },
 ] as const;
 export type IdFase = (typeof FASI)[number]['id'];
 
-/** zone dove prevalgono articolazioni e tendini (RET in primo piano) */
 const ARTICOLARI: IdZona[] = ['spalla', 'gomito', 'polso', 'ginocchio', 'caviglia', 'anca'];
 
 /**
  * Programma di ESEMPIO per la demo, costruito con le correnti della scheda tecnica.
  * I protocolli veri sono nella libreria Academy del dispositivo e vanno scelti dal professionista.
  */
-export function programmaEsempio(zona: IdZona, fase: IdFase): Partial<Record<IdCorrente, Canale>> {
+export function programmaEsempio(zona: IdZona, fase: IdFase): Record<IdCorrente, Canale> {
   const articolare = ARTICOLARI.includes(zona);
-  const spento = (modalita: string): Canale => ({ attivo: false, modalita, intensita: 0, durata: 0 });
+  const spento = (modalita: string, extra: Partial<Canale> = {}): Canale => ({ attivo: false, modalita, intensita: 0, durata: 150, ...extra });
   const canali: Record<IdCorrente, Canale> = {
-    cet: spento('soft'),
-    ret: spento('med'),
-    tens: spento('acute'),
-    ems: spento('drain'),
-    mix: spento('pulse'),
+    cet: spento('soft', { livello: 'low' }),
+    ret: spento('deep', { livello: 'medium' }),
+    tens: spento('static', { frequenza: '25 Hz' }),
+    ems: spento('radial'),
+    mix: spento('pulse', { livello: 'medium', frequenza: '5 Hz' }),
   };
   if (fase === 'acuta') {
-    canali.cet = { attivo: true, modalita: 'soft', intensita: 30, durata: 180 };
-    canali.tens = { attivo: true, modalita: 'acute', intensita: 40, durata: 240 };
-    canali.ems = { attivo: true, modalita: 'drain', intensita: 25, durata: 180 };
+    Object.assign(canali.cet, { attivo: true, modalita: 'soft', livello: 'low', intensita: 40, durata: 180 });
+    Object.assign(canali.tens, { attivo: true, modalita: 'static', frequenza: '25 Hz', intensita: 45, durata: 180 });
+    Object.assign(canali.ems, { attivo: true, modalita: 'drain', intensita: 35, durata: 120 });
   } else if (fase === 'subacuta') {
-    canali.cet = { attivo: true, modalita: 'dynamic', intensita: 50, durata: 240 };
-    canali.ret = { attivo: true, modalita: articolare ? 'dyn' : 'med', intensita: 40, durata: 180 };
-    canali.tens = { attivo: true, modalita: 'manual', intensita: 35, durata: 180, frequenza: '5 Hz' };
+    Object.assign(canali.cet, { attivo: true, modalita: 'dynamic', livello: 'medium', intensita: 60, durata: 150 });
+    Object.assign(canali.ret, { attivo: true, modalita: articolare ? 'dynamic' : 'soft', livello: 'medium', intensita: 50, durata: 150 });
+    Object.assign(canali.tens, { attivo: true, modalita: 'static', frequenza: '5 Hz', intensita: 40, durata: 150 });
+    Object.assign(canali.ems, { attivo: true, modalita: 'radial', intensita: 50, durata: 150 });
   } else {
-    canali.cet = { attivo: true, modalita: 'deep', intensita: 60, durata: 240 };
-    canali.ret = { attivo: true, modalita: articolare ? 'focal' : 'dyn', intensita: 70, durata: 300 };
-    canali.tens = { attivo: true, modalita: 'chronic', intensita: 40, durata: 240 };
-    canali.mix = { attivo: !articolare, modalita: 'pulse', intensita: 40, durata: 120 };
+    Object.assign(canali.cet, { attivo: true, modalita: 'deep', livello: 'high', intensita: 70, durata: 150 });
+    Object.assign(canali.ret, { attivo: true, modalita: 'deep', livello: 'high', intensita: 80, durata: 180 });
+    Object.assign(canali.tens, { attivo: true, modalita: 'static', frequenza: '2 Hz', intensita: 45, durata: 150 });
+    Object.assign(canali.mix, { attivo: !articolare, intensita: 50, durata: 120 });
   }
   return canali;
 }
