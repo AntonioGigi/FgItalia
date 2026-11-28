@@ -1,10 +1,21 @@
 ---
 /**
- * Simulatore interattivo dello schermo della Winback BACK4 (solo dimostrazione).
- * Dati in src/lib/back4.ts. Nessuno stile inline: la Content Security Policy li bloccherebbe,
- * i colori dinamici si impostano da script con le variabili CSS.
+ * Simulatore interattivo dello schermo Winback BACK4 (interfaccia 2.0), dentro la foto vera
+ * del dispositivo. Solo dimostrazione: dati in src/lib/back4.ts.
+ * Niente attributi style inline (li bloccherebbe la Content Security Policy): i valori dinamici
+ * si impostano da script con le variabili CSS.
  */
-import { CORRENTI, CONFIGURAZIONI, FASI, STRATI, ZONE } from '../lib/back4';
+import { CORRENTI, CONFIGURAZIONI, FASI, LIVELLI, STRATI, ZONE } from '../lib/back4';
+
+const sagoma = [
+  'M50 2.5a6.5 6.5 0 1 1 0 13a6.5 6.5 0 1 1 0-13z',
+  'M46.5 14.5h7v5h-7z',
+  'M36 20h28c3 0 5 2 5 5l-2 26c0 2-1.5 3.5-3.5 3.5h-27C34.5 54.5 33 53 33 51l-2-26c0-3 2-5 5-5z',
+  'M31 22c-3 1-4.5 3-5.2 6L21 50c-.4 2 .8 3.5 2.6 3.6 1.4.1 2.5-.8 2.9-2.1l6.2-22z',
+  'M69 22c3 1 4.5 3 5.2 6L79 50c.4 2-.8 3.5-2.6 3.6-1.4.1-2.5-.8-2.9-2.1l-6.2-22z',
+  'M36.5 54h12l-1 48c0 2-1.5 3-3.2 3h-2.6c-1.7 0-3-1.2-3.1-2.9z',
+  'M51.5 54h12l-2.1 48.1c-.1 1.7-1.4 2.9-3.1 2.9h-2.6c-1.7 0-3.2-1-3.2-3z',
+];
 ---
 
 <section class="sim" id="simulatore" aria-labelledby="sim-titolo" data-sim>
@@ -13,225 +24,321 @@ import { CORRENTI, CONFIGURAZIONI, FASI, STRATI, ZONE } from '../lib/back4';
       <span class="sopratitolo">Prova lo schermo</span>
       <h2 id="sim-titolo">Simulatore BACK4</h2>
       <p class="testo-intro">
-        Tocca lo schermo come sul dispositivo vero: scegli tra <strong>Academy</strong> e <strong>Expert</strong>, attiva le correnti,
-        regola potenza e tempi, prova i manipoli, i bracciali e le configurazioni a tre zone.
+        Lo schermo della BACK4, da toccare come quello vero: scegli <strong>Academy</strong> o <strong>Expert</strong>, trascina la potenza su
+        e giù, cambia modalità e frequenze, avvia la seduta e guarda cosa succede nei tessuti.
       </p>
     </div>
 
-    <div class="sim__griglia">
-      <!-- ——— il dispositivo ——— -->
-      <div class="dispositivo">
-        <div class="dispositivo__marchio" aria-hidden="true"><small>WINBACK</small>BACK<span>4</span></div>
+    <div class="dispositivo" data-dispositivo>
+      <img class="dispositivo__foto" src="/uploads/prodotti/back4-schermo.webp" alt="" width="750" height="540" loading="lazy" />
 
-        <div class="schermo" data-schermo>
-          <!-- schermata iniziale -->
-          <div class="vista vista--home" data-vista="home">
-            <div class="onde" aria-hidden="true"><span></span><span></span><span></span></div>
-            <div class="home__scelte">
-              <button type="button" class="home__scelta" data-vai="academy">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 4 2 9l10 5 10-5-10-5zm-6 7.5V16c0 1.7 2.7 3 6 3s6-1.3 6-3v-4.5" /></svg>
-                <strong>ACADEMY</strong><small>MODE</small>
-              </button>
-              <button type="button" class="home__scelta" data-vai="expert">
-                <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M6 3v8m0 4v6M12 3v4m0 4v10M18 3v10m0 4v4M4 13h4M10 9h4M16 15h4" /></svg>
-                <strong>EXPERT</strong><small>MODE</small>
-              </button>
-            </div>
+      <div class="schermo" data-schermo>
+        <!-- ——— schermata iniziale ——— -->
+        <div class="vista home" data-vista="home">
+          <svg class="home__onde" viewBox="0 0 300 200" preserveAspectRatio="none" aria-hidden="true">
+            <defs>
+              <linearGradient id="onda-arancio" x1="0" x2="1">
+                <stop offset="0" stop-color="#ff7a3d" />
+                <stop offset="1" stop-color="#b42318" stop-opacity="0" />
+              </linearGradient>
+              <linearGradient id="onda-viola" x1="0" x2="1">
+                <stop offset="0" stop-color="#5b5bd6" stop-opacity="0" />
+                <stop offset=".5" stop-color="#6d5bd6" />
+                <stop offset="1" stop-color="#3b82f6" stop-opacity="0" />
+              </linearGradient>
+              <linearGradient id="onda-verde" x1="1" x2="0">
+                <stop offset="0" stop-color="#4fb8a0" />
+                <stop offset="1" stop-color="#0f766e" stop-opacity="0" />
+              </linearGradient>
+            </defs>
+            <g class="home__banda home__banda--a">
+              <path d="M0 78C40 60 70 100 110 92S170 70 190 80V112C160 104 130 128 100 122S40 96 0 112z" fill="url(#onda-arancio)" />
+              <path d="M0 96C35 84 70 118 105 110S160 92 185 100V118C150 112 120 134 90 130S35 108 0 122z" fill="url(#onda-arancio)" opacity=".7" />
+            </g>
+            <g class="home__banda home__banda--b">
+              <path d="M90 74C130 64 160 90 200 82S250 66 280 74V92C250 86 220 104 190 98S130 82 90 92z" fill="url(#onda-viola)" opacity=".8" />
+            </g>
+            <g class="home__banda home__banda--c">
+              <path d="M140 92C180 80 210 110 250 100S290 86 300 90V124C270 116 240 132 210 126S170 108 140 116z" fill="url(#onda-verde)" />
+              <path d="M160 110C190 102 220 124 255 118S290 106 300 108V128C275 124 250 138 220 134S185 122 160 128z" fill="url(#onda-verde)" opacity=".6" />
+            </g>
+          </svg>
+          <div class="home__scelte">
+            <button type="button" class="home__scelta" data-vai="academy">
+              <svg viewBox="0 0 24 24" aria-hidden="true" class="pieno"><path d="M12 3 1 8.5 12 14l9-4.5V16h2V8.5z" /><path d="M5 12.2V16c0 1.9 3.1 3.5 7 3.5s7-1.6 7-3.5v-3.8l-7 3.5z" /></svg>
+              <strong>ACADEMY</strong><small>MODE</small>
+            </button>
+            <button type="button" class="home__scelta" data-vai="expert">
+              <svg viewBox="0 0 24 24" aria-hidden="true">
+                <path d="M6 2v20M12 2v20M18 2v20" /><circle cx="6" cy="15" r="2.4" /><circle cx="12" cy="8" r="2.4" /><circle cx="18" cy="13" r="2.4" />
+              </svg>
+              <strong>EXPERT</strong><small>MODE</small>
+            </button>
           </div>
+        </div>
 
-          <!-- modalità Academy: zona → fase → programma -->
-          <div class="vista vista--academy" data-vista="academy" hidden>
-            <div class="barra-schermo">
-              <button type="button" class="barra-schermo__home" data-vai="home" aria-label="Torna alla schermata iniziale">⌂</button>
-              <strong>ACADEMY</strong>
-              <span class="barra-schermo__passo" data-passo-academy>1/3 · Zona del corpo</span>
-            </div>
-            <div class="academy" data-academy-passo="1">
-              <p class="academy__domanda">Quale zona vuoi trattare?</p>
-              <div class="academy__scelte academy__scelte--zone">
-                {ZONE.map((z) => (
-                  <button type="button" data-zona={z.id}>
-                    {z.nome}
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div class="academy" data-academy-passo="2" hidden>
-              <p class="academy__domanda">In che fase è il problema?</p>
-              <div class="academy__scelte">
-                {FASI.map((f) => (
-                  <button type="button" data-fase={f.id}>
-                    <strong>{f.nome}</strong>
-                    <small>{f.descrizione}</small>
-                  </button>
-                ))}
-              </div>
-            </div>
-            <div class="academy" data-academy-passo="3" hidden>
-              <p class="academy__domanda" data-academy-riepilogo></p>
-              <ol class="academy__programma" data-academy-programma></ol>
-              <div class="academy__azioni">
-                <button type="button" class="tasto-schermo" data-academy-indietro>Cambia</button>
-                <button type="button" class="tasto-schermo tasto-schermo--primario" data-academy-avvia>Carica il programma ▶</button>
-              </div>
-              <p class="academy__nota">Programma di esempio per la dimostrazione: sul dispositivo trovi la libreria di protocolli Academy.</p>
-            </div>
+        <!-- ——— Academy ——— -->
+        <div class="vista academy" data-vista="academy" hidden>
+          <div class="testata">
+            <button type="button" class="testata__icona" data-academy-indietro aria-label="Indietro">‹</button>
+            <span class="testata__titolo" data-titolo-academy>Seleziona la zona da trattare</span>
+            <button type="button" class="testata__icona" data-vai="expert" aria-label="Passa a Expert mode">⚙︎</button>
           </div>
-
-          <!-- modalità Expert -->
-          <div class="vista vista--expert" data-vista="expert" hidden>
-            <div class="barra-schermo">
-              <button type="button" class="barra-schermo__home" data-vai="home" aria-label="Torna alla schermata iniziale">⌂</button>
-              <div class="schede-correnti" role="group" aria-label="Correnti attive">
-                {CORRENTI.map((c) => (
-                  <button type="button" class="scheda-corrente" data-attiva={c.id} aria-pressed="false">
-                    {c.nome}
-                  </button>
-                ))}
-              </div>
-              <button type="button" class="scheda-corrente scheda-corrente--swap" data-swap aria-pressed="false" title="Alternanza tra RET e Hi-TENS">
-                SWAP
-              </button>
-              <span class="barra-schermo__wifi" aria-hidden="true">
-                <svg viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0" /><circle cx="12" cy="19.5" r="1.2" /></svg>
-              </span>
-            </div>
-
-            <div class="canali">
-              {CORRENTI.map((c) => (
-                <div class="canale" data-canale={c.id}>
-                  <div class="canale__modi" role="group" aria-label={`Modalità ${c.nome}`}>
-                    {c.modalita.map((m, i) => (
-                      <button type="button" data-modo={m.id} aria-pressed={i === 0 ? 'true' : 'false'}>
-                        {m.nome}
-                      </button>
-                    ))}
-                  </div>
-                  <div class="canale__frequenza" data-frequenza />
-                  <div class="canale__potenza">
-                    <output data-valore>0%</output>
-                    <div class="cursore">
-                      <div class="cursore__traccia" aria-hidden="true">
-                        <div class="cursore__livello" data-livello />
-                      </div>
-                      <input
-                        type="range"
-                        min="0"
-                        max="100"
-                        step="1"
-                        value="0"
-                        data-intensita
-                        aria-label={`Potenza ${c.nome}`}
-                        class="cursore__input"
-                      />
-                    </div>
-                    <div class="canale__piu-meno">
-                      <button type="button" data-passo="-1" aria-label={`Diminuisci potenza ${c.nome}`}>
-                        −
-                      </button>
-                      <button type="button" data-passo="1" aria-label={`Aumenta potenza ${c.nome}`}>
-                        +
-                      </button>
-                    </div>
-                  </div>
-                  <div class="canale__tempo">
-                    <button type="button" data-tempo="-1" aria-label={`Meno tempo ${c.nome}`}>
-                      ‹
+          <div class="academy__corpo">
+            <svg class="academy__sagoma" viewBox="12 0 76 108" aria-label="Zone del corpo">
+              <g class="academy__figura">{sagoma.map((d) => <path d={d} />)}</g>
+              {
+                ZONE.map((z) => (
+                  <g class="academy__punto" data-zona={z.id} role="button" tabindex="0" aria-label={z.nome}>
+                    <circle cx={z.x} cy={z.y} r="5" class="academy__alone" />
+                    <circle cx={z.x} cy={z.y} r="2" />
+                  </g>
+                ))
+              }
+            </svg>
+            <div class="academy__lato">
+              <div data-academy-passo="1">
+                <div class="academy__lista">
+                  {ZONE.map((z) => (
+                    <button type="button" data-zona={z.id}>
+                      {z.nome}
                     </button>
-                    <span data-durata>00:00</span>
-                    <button type="button" data-tempo="1" aria-label={`Più tempo ${c.nome}`}>
-                      ›
-                    </button>
-                  </div>
+                  ))}
                 </div>
-              ))}
-            </div>
-
-            <div class="comandi">
-              <span class="comandi__motto">BETTER · FASTER · GENTLER</span>
-              <div class="comandi__tasti">
-                <button type="button" data-avvia aria-label="Avvia">▶</button>
-                <button type="button" data-pausa aria-label="Pausa">❚❚</button>
-                <button type="button" data-ferma aria-label="Ferma">■</button>
               </div>
-              <div class="anello" aria-live="polite">
-                <svg viewBox="0 0 40 40" aria-hidden="true">
-                  <circle cx="20" cy="20" r="17" class="anello__fondo" />
-                  <circle cx="20" cy="20" r="17" class="anello__avanzamento" data-anello />
-                </svg>
-                <span data-totale>0'</span>
+              <div data-academy-passo="2" hidden>
+                <div class="academy__lista academy__lista--fasi">
+                  {FASI.map((f) => (
+                    <button type="button" data-fase={f.id}>
+                      <strong>{f.nome}</strong>
+                      <small>{f.descrizione}</small>
+                    </button>
+                  ))}
+                </div>
+              </div>
+              <div data-academy-passo="3" hidden>
+                <ol class="academy__programma" data-academy-programma></ol>
+                <button type="button" class="academy__avvia" data-academy-avvia>Avvia il protocollo ▶</button>
+                <p class="academy__nota">Protocollo di esempio per la demo</p>
               </div>
             </div>
           </div>
         </div>
 
-        <div class="dispositivo__fondo" aria-hidden="true">
-          <span class="dispositivo__simbolo"><i></i><i></i><i></i></span>
-          <span class="dispositivo__accensione" data-acceso></span>
+        <!-- ——— Expert ——— -->
+        <div class="vista expert" data-vista="expert" hidden>
+          <div class="testata testata--expert">
+            <button type="button" class="testata__icona" data-vai="home" aria-label="Schermata iniziale">‹</button>
+            <span></span>
+            <button type="button" class="testata__icona testata__icona--tenue" data-azzera aria-label="Nuova seduta">+</button>
+          </div>
+
+          <div class="colonne">
+            {
+              CORRENTI.map((c) => (
+                <div class={`col col--${c.id}`} data-canale={c.id}>
+                  <button type="button" class="col__testa" data-attiva aria-pressed="false" aria-label={`${c.nome}: attiva o disattiva`}>
+                    <i class="angolo angolo--a" />
+                    <i class="angolo angolo--b" />
+                    <i class="angolo angolo--c" />
+                    <i class="angolo angolo--d" />
+                    <strong>{c.nome}</strong>
+                  </button>
+                  <button type="button" class="col__tempo" data-apri-tempo aria-label={`Durata ${c.nome}`}>
+                    <span data-durata>02:30</span>
+                  </button>
+                  <div class="col__regola-tempo" data-regola-tempo hidden>
+                    <button type="button" data-tempo="-1" aria-label="Meno tempo">−</button>
+                    <button type="button" data-tempo="1" aria-label="Più tempo">+</button>
+                  </div>
+                  <div class="col__opzioni">
+                    {c.id === 'mix' ? (
+                      <button type="button" data-cicla="frequenza" />
+                    ) : (
+                      <button type="button" data-cicla="modo" />
+                    )}
+                    {c.livelli && <button type="button" data-cicla="livello" />}
+                  </div>
+                  <div
+                    class="col__potenza"
+                    data-potenza
+                    role="slider"
+                    tabindex="0"
+                    aria-label={`Potenza ${c.nome}`}
+                    aria-valuemin="0"
+                    aria-valuemax="100"
+                    aria-valuenow="0"
+                  >
+                    <div class="col__liquido" aria-hidden="true">
+                      <i class="col__onda" />
+                    </div>
+                    <div class="col__tacche" aria-hidden="true" />
+                    {c.frequenzeScelta && c.id === 'tens' ? (
+                      <div class="col__frequenze">
+                        <span class="col__percento" data-pillola>
+                          0%
+                        </span>
+                        {c.frequenzeScelta.map((f) => (
+                          <button type="button" data-frequenza={f} aria-label={f}>
+                            {f.split(' ')[0]}
+                            <small>Hz</small>
+                          </button>
+                        ))}
+                      </div>
+                    ) : (
+                      <span class="col__pillola" data-pillola>
+                        0<small>%</small>
+                      </span>
+                    )}
+                  </div>
+                  {c.id === 'ret' && (
+                    <button type="button" class="swap" data-swap aria-pressed="false" aria-label="SWAP: alterna RET e Hi-TENS">
+                      <svg viewBox="0 0 24 24" aria-hidden="true">
+                        <path d="M19 8a7 7 0 0 0-12.6-2.2L5 7.5" />
+                        <path d="M5 3.5v4h4" />
+                        <path d="M5 16a7 7 0 0 0 12.6 2.2l1.4-1.7" />
+                        <path d="M19 20.5v-4h-4" />
+                      </svg>
+                    </button>
+                  )}
+                </div>
+              ))
+            }
+          </div>
+
+          <div class="fondo">
+            <div class="fondo__accessori">
+              <button type="button" class="accessorio accessorio--piastra" data-accessorio="piastra" aria-label="Piastra di ritorno">
+                <svg viewBox="0 0 30 40" aria-hidden="true">
+                  <rect x="4" y="2" width="22" height="30" rx="4" class="metallo" />
+                  <path d="M15 32v6" class="cavo" />
+                  <circle cx="15" cy="17" r="5" class="spunta-cerchio" />
+                  <path d="m12.6 17 1.7 1.7 3.2-3.4" class="spunta" />
+                </svg>
+              </button>
+              <button type="button" class="accessorio" data-accessorio="tx1" aria-label="Manipolo TX 1">
+                <svg viewBox="0 0 34 40" aria-hidden="true">
+                  <path d="M5 6c0-2 1.5-3.5 3.5-3.5h17C27.5 2.5 29 4 29 6v9c0 3-2.5 5.5-5.5 5.5h-13C7.5 20.5 5 18 5 15z" class="corpo-tx" />
+                  <path d="M10 6h14" class="riflesso" /><path d="M17 20.5v9" class="stelo" /><ellipse cx="17" cy="32" rx="9" ry="3.2" class="base" />
+                </svg>
+              </button>
+              <button type="button" class="accessorio" data-accessorio="tx2" aria-label="Manipolo TX 2">
+                <svg viewBox="0 0 34 40" aria-hidden="true">
+                  <path d="M5 6c0-2 1.5-3.5 3.5-3.5h17C27.5 2.5 29 4 29 6v9c0 3-2.5 5.5-5.5 5.5h-13C7.5 20.5 5 18 5 15z" class="corpo-tx" />
+                  <path d="M10 6h14" class="riflesso" /><path d="M17 20.5v9" class="stelo" /><ellipse cx="17" cy="32" rx="9" ry="3.2" class="base" />
+                </svg>
+              </button>
+            </div>
+
+            <div class="timer">
+              <svg viewBox="0 0 100 100" aria-hidden="true">
+                <circle cx="50" cy="50" r="44" class="timer__tacche" />
+                <circle cx="50" cy="50" r="44" class="timer__fatto" data-anello />
+              </svg>
+              <span class="timer__tempo" data-totale>00:00</span>
+              <div class="timer__tasti">
+                <button type="button" data-avvia aria-label="Avvia o metti in pausa">
+                  <svg viewBox="0 0 24 24" aria-hidden="true" class="icona-avvia"><path d="M8 5v14l11-7z" /></svg>
+                  <svg viewBox="0 0 24 24" aria-hidden="true" class="icona-pausa"><path d="M7 5h3.5v14H7zM13.5 5H17v14h-3.5z" /></svg>
+                </button>
+                <button type="button" data-ferma aria-label="Ferma">
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><rect x="6" y="6" width="12" height="12" rx="1.5" /></svg>
+                </button>
+              </div>
+            </div>
+
+            <div class="fondo__destra">
+              <span class="fondo__wifi" aria-hidden="true">
+                <svg viewBox="0 0 24 24"><path d="M2 9a15 15 0 0 1 20 0M5 12.5a10 10 0 0 1 14 0M8.5 16a5 5 0 0 1 7 0" /><circle cx="12" cy="19.5" r="1.3" /></svg>
+              </span>
+              <button type="button" class="fondo__icona" data-impostazioni aria-label="Impostazioni">
+                <svg viewBox="0 0 24 24" aria-hidden="true">
+                  <path
+                    d="M10.3 2h3.4l.5 2.6 1.9.8 2.2-1.5 2.4 2.4-1.5 2.2.8 1.9 2.6.5v3.4l-2.6.5-.8 1.9 1.5 2.2-2.4 2.4-2.2-1.5-1.9.8-.5 2.6h-3.4l-.5-2.6-1.9-.8-2.2 1.5-2.4-2.4 1.5-2.2-.8-1.9L2 13.7v-3.4l2.6-.5.8-1.9-1.5-2.2 2.4-2.4 2.2 1.5 1.9-.8z"
+                  />
+                  <circle cx="12" cy="12" r="3.2" class="foro" />
+                </svg>
+              </button>
+              <button type="button" class="fondo__academy" data-vai="academy">
+                <svg viewBox="0 0 24 24" aria-hidden="true" class="pieno"><path d="M12 3 1 8.5 12 14l9-4.5V16h2V8.5z" /><path d="M5 12.2V16c0 1.9 3.1 3.5 7 3.5s7-1.6 7-3.5v-3.8l-7 3.5z" /></svg>
+                <strong>ACADEMY</strong><small>MODE</small>
+              </button>
+            </div>
+          </div>
+
+          <div class="foglio" data-foglio hidden>
+            <p class="foglio__titolo">Impostazioni</p>
+            <label><input type="checkbox" data-opzione="suoni" /> Suoni dei tasti</label>
+            <label><input type="checkbox" data-opzione="vibrazione" checked /> Vibrazione (telefono)</label>
+            <button type="button" data-chiudi-foglio>Chiudi</button>
+          </div>
         </div>
       </div>
 
-      <!-- ——— accessori, corpo e profondità ——— -->
+      <button type="button" class="dispositivo__intero" data-schermo-intero>⤢ Schermo intero</button>
+    </div>
+
+    <!-- ——— cosa succede sul paziente ——— -->
+    <div class="pannelli">
       <div class="pannello-sim">
-        <div class="pannello-sim__blocco">
-          <h3>Manipoli e accessori</h3>
-          <div class="configurazioni" role="radiogroup" aria-label="Configurazione degli accessori">
-            {CONFIGURAZIONI.map((c, i) => (
-              <button type="button" role="radio" aria-checked={i === 0 ? 'true' : 'false'} data-configurazione={c.id}>
-                {c.nome}
-              </button>
-            ))}
-          </div>
-          <p class="pannello-sim__spiega" data-spiega-configurazione></p>
-          <button type="button" class="pulsante pulsante--contorno urto" data-urto>
-            ⚡ Urta i due manipoli TX
-          </button>
-          <p class="pannello-sim__nota">Sul dispositivo vero basta far toccare i due TX per passare dall’azione muscolare (CET) a quella articolare (RET).</p>
+        <h3>Manipoli e accessori</h3>
+        <div class="configurazioni" role="radiogroup" aria-label="Configurazione degli accessori">
+          {CONFIGURAZIONI.map((c, i) => (
+            <button type="button" role="radio" aria-checked={i === 0 ? 'true' : 'false'} data-configurazione={c.id}>
+              {c.nome}
+            </button>
+          ))}
         </div>
+        <p class="pannello-sim__spiega" data-spiega-configurazione></p>
+        <p class="pannello-sim__nota">
+          Trascina un manipolo sull’altro per “urtarli”: come sul dispositivo vero, si passa dall’azione muscolare (CET) a quella articolare (RET).
+        </p>
+      </div>
 
-        <div class="pannello-sim__blocco corpo-blocco">
-          <svg class="corpo" viewBox="12 0 76 110" role="img" aria-label="Posizione di manipoli ed elettrodi sul corpo" data-corpo>
-            <g class="corpo__sagoma" aria-hidden="true">
-              <circle cx="50" cy="9" r="6.5" />
-              <rect x="46.5" y="14.5" width="7" height="5" rx="2" />
-              <path d="M36 20h28c3 0 5 2 5 5l-2 26c0 2-1.5 3.5-3.5 3.5h-27C34.5 54.5 33 53 33 51l-2-26c0-3 2-5 5-5z" />
-              <path d="M31 22c-3 1-4.5 3-5.2 6L21 50c-.4 2 .8 3.5 2.6 3.6 1.4.1 2.5-.8 2.9-2.1l6.2-22z" />
-              <path d="M69 22c3 1 4.5 3 5.2 6L79 50c.4 2-.8 3.5-2.6 3.6-1.4.1-2.5-.8-2.9-2.1l-6.2-22z" />
-              <path d="M36.5 54h12l-1 48c0 2-1.5 3-3.2 3h-2.6c-1.7 0-3-1.2-3.1-2.9z" />
-              <path d="M51.5 54h12l-2.1 48.1c-.1 1.7-1.4 2.9-3.1 2.9h-2.6c-1.7 0-3.2-1-3.2-3z" />
-            </g>
-            <g data-zone-corpo>
-              {ZONE.map((z) => <circle class="corpo__zona" cx={z.x} cy={z.y} r="3.2" data-zona-corpo={z.id} />)}
-            </g>
-            <g data-collegamenti></g>
-            <g data-elettrodi></g>
-          </svg>
-          <p class="pannello-sim__nota" data-nota-corpo>Tocca una zona del corpo per spostare i manipoli.</p>
+      <div class="pannello-sim pannello-sim--corpo">
+        <h3>Sul paziente</h3>
+        <svg class="corpo" viewBox="12 0 76 110" role="img" aria-label="Manipoli sul corpo del paziente" data-corpo>
+          <defs>
+            <radialGradient id="calore-grad">
+              <stop offset="0" stop-color="#ff5a1f" stop-opacity=".85" />
+              <stop offset=".55" stop-color="#ffb020" stop-opacity=".35" />
+              <stop offset="1" stop-color="#ffb020" stop-opacity="0" />
+            </radialGradient>
+          </defs>
+          <g class="corpo__sagoma" aria-hidden="true">{sagoma.map((d) => <path d={d} />)}</g>
+          <circle r="9" fill="url(#calore-grad)" class="corpo__calore" data-calore />
+          <g data-collegamenti></g>
+          <g data-elettrodi></g>
+        </svg>
+        <p class="pannello-sim__stato" data-nota-corpo aria-live="polite"></p>
+        <div class="calore">
+          <span>Riscaldamento dei tessuti</span>
+          <span class="calore__barra"><span data-calore-barra></span></span>
         </div>
+      </div>
 
-        <div class="pannello-sim__blocco">
-          <h3>Profondità d’azione</h3>
-          <ul class="strati">
-            {STRATI.map((s) => (
-              <li data-strato={s.id}>
-                <span class="strati__nome">
-                  {s.nome}
-                  <small>{s.dettaglio}</small>
-                </span>
-                <span class="strati__barra">
-                  <span data-strato-livello />
-                </span>
-              </li>
-            ))}
-          </ul>
-          <ul class="legenda" data-legenda></ul>
-        </div>
+      <div class="pannello-sim">
+        <h3>Profondità d’azione</h3>
+        <ul class="strati">
+          {STRATI.map((s) => (
+            <li data-strato={s.id}>
+              <span class="strati__nome">
+                {s.nome}
+                <small>{s.dettaglio}</small>
+              </span>
+              <span class="strati__barra">
+                <span data-strato-livello />
+              </span>
+            </li>
+          ))}
+        </ul>
+        <ul class="legenda" data-legenda></ul>
       </div>
     </div>
 
     <p class="sim__avviso">
-      Simulazione a scopo illustrativo, non è il software ufficiale Winback. Frequenze, modalità e accessori dalla scheda tecnica del
-      dispositivo; i programmi Academy mostrati sono esempi. Il trattamento va sempre scelto da un professionista sanitario.
+      Simulazione a scopo illustrativo, non è il software ufficiale Winback. Correnti, frequenze e accessori dalla scheda tecnica del dispositivo;
+      i protocolli Academy mostrati sono esempi. Il trattamento va sempre scelto da un professionista sanitario.
     </p>
   </div>
 </section>
@@ -242,11 +349,14 @@ import { CORRENTI, CONFIGURAZIONI, FASI, STRATI, ZONE } from '../lib/back4';
     CORRENTI,
     DURATA_MAX,
     FASI,
+    LIVELLI,
     PASSO_DURATA,
     STRATI,
     ZONE,
     corrente,
     durataSeduta,
+    frequenzeCanale,
+    inErogazione,
     limita,
     modalita,
     profondita,
@@ -266,48 +376,81 @@ import { CORRENTI, CONFIGURAZIONI, FASI, STRATI, ZONE } from '../lib/back4';
     const $ = <T extends Element = HTMLElement>(s: string, base: ParentNode = radice) => base.querySelector<T>(s)!;
     const $$ = <T extends Element = HTMLElement>(s: string, base: ParentNode = radice) => [...base.querySelectorAll<T>(s)];
     const SVG = 'http://www.w3.org/2000/svg';
+    const colonna = (id: IdCorrente) => $(`[data-canale="${id}"]`);
 
     // ——— stato ———
-    const canali = Object.fromEntries(
-      CORRENTI.map((c) => [c.id, { attivo: false, modalita: c.modalita[0].id, intensita: 0, durata: 0 } satisfies Canale]),
-    ) as Record<IdCorrente, Canale>;
-    canali.tens.frequenza = '25 Hz';
-    const rimasto: Record<IdCorrente, number> = { cet: 0, ret: 0, tens: 0, ems: 0, mix: 0 };
+    // stato iniziale come sul dispositivo: CET Soft/Low, RET Deep/Medium, Hi-TENS Static 25 Hz, Hi-EMS Radial, MIX 5 Hz/Medium
+    const canali: Record<IdCorrente, Canale> = {
+      cet: { attivo: false, modalita: 'soft', livello: 'low', intensita: 0, durata: 150 },
+      ret: { attivo: false, modalita: 'deep', livello: 'medium', intensita: 0, durata: 150 },
+      tens: { attivo: false, modalita: 'static', frequenza: '25 Hz', intensita: 0, durata: 150 },
+      ems: { attivo: false, modalita: 'radial', intensita: 0, durata: 150 },
+      mix: { attivo: false, modalita: 'pulse', livello: 'medium', frequenza: '5 Hz', intensita: 0, durata: 150 },
+    };
+    const mostrato: Record<IdCorrente, number> = { cet: 0, ret: 0, tens: 0, ems: 0, mix: 0 };
+    let scelto: IdCorrente = 'cet';
+    let trascorsi = 0;
     let inCorso = false;
     let inPausa = false;
     let swap = false;
-    let faseSwap = 0;
     let configurazione: IdConfigurazione = 'piastra';
     let zona: IdZona = 'spalla';
     let fase: IdFase | undefined;
-    let totaleIniziale = 0;
-    let ultimoTick = 0;
+    let calore = 0;
+    let fermoDa = 0;
+    const opzioni = { suoni: false, vibrazione: true };
+    /** posizione dei manipoli sul corpo (coordinate del disegno) */
+    let posizioni: [number, number][] = [];
 
-    // ——— viste dello schermo ———
+    // ——— suoni e vibrazione ———
+    let audio: AudioContext | undefined;
+    function clic(frequenza = 1800, durata = 0.03) {
+      if (!opzioni.suoni) return;
+      try {
+        audio ??= new AudioContext();
+        const o = audio.createOscillator();
+        const g = audio.createGain();
+        o.frequency.value = frequenza;
+        g.gain.setValueAtTime(0.05, audio.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.0001, audio.currentTime + durata);
+        o.connect(g).connect(audio.destination);
+        o.start();
+        o.stop(audio.currentTime + durata);
+      } catch {
+        /* audio non disponibile */
+      }
+    }
+    const vibra = (ms = 8) => opzioni.vibrazione && navigator.vibrate?.(ms);
+
+    // ——— viste ———
     function mostra(vista: 'home' | 'academy' | 'expert') {
       for (const v of $$('[data-vista]')) v.hidden = v.dataset.vista !== vista;
       if (vista === 'academy') passoAcademy(1);
-      $('[data-acceso]').classList.toggle('acceso', vista !== 'home');
+      clic(1200);
     }
 
     // ——— Academy ———
     function passoAcademy(n: 1 | 2 | 3) {
       for (const p of $$('[data-academy-passo]')) p.hidden = p.dataset.academyPasso !== String(n);
-      $('[data-passo-academy]').textContent = ['', '1/3 · Zona del corpo', '2/3 · Fase', '3/3 · Programma'][n];
-      for (const b of $$<HTMLButtonElement>('[data-zona]')) b.setAttribute('aria-pressed', String(b.dataset.zona === zona));
+      for (const z of $$('[data-zona]')) z.classList.toggle('scelta', z.dataset.zona === zona);
+      radice.classList.toggle('sim--scegli-zona', n === 1);
+      const nomeZona = ZONE.find((z) => z.id === zona)!.nome;
+      $('[data-titolo-academy]').textContent =
+        n === 1 ? 'Seleziona la zona da trattare' : n === 2 ? `${nomeZona} · Seleziona la fase` : `${nomeZona} · ${FASI.find((f) => f.id === fase)!.nome}`;
       if (n === 3 && fase) {
         const prog = programmaEsempio(zona, fase);
-        const nomeZona = ZONE.find((z) => z.id === zona)!.nome;
-        const nomeFase = FASI.find((f) => f.id === fase)!.nome;
-        $('[data-academy-riepilogo]').textContent = `${nomeZona} · ${nomeFase}`;
-        const lista = $('[data-academy-programma]');
-        lista.replaceChildren(
-          ...CORRENTI.filter((c) => prog[c.id]?.attivo).map((c) => {
-            const k = prog[c.id]!;
+        $('[data-academy-programma]').replaceChildren(
+          ...CORRENTI.filter((c) => prog[c.id].attivo).map((c) => {
+            const k = prog[c.id];
             const li = document.createElement('li');
             li.style.setProperty('--colore', c.colore);
-            const m = modalita(c.id, k.modalita);
-            li.textContent = `${c.nome} ${m.nome} · ${k.frequenza ?? m.frequenze.join(' / ')} · ${k.intensita}% · ${tempo(k.durata)}`;
+            const nome = document.createElement('strong');
+            nome.textContent = c.nome;
+            const dett = document.createElement('span');
+            dett.textContent = `${modalita(c.id, k.modalita).nome}${k.livello ? ` · ${LIVELLI.find((l) => l.id === k.livello)!.nome}` : ''} · ${frequenzeCanale(c.id, k).join(' / ')}`;
+            const dati = document.createElement('em');
+            dati.textContent = `${k.intensita}% · ${tempo(k.durata)}`;
+            li.append(nome, dett, dati);
             return li;
           }),
         );
@@ -317,56 +460,53 @@ import { CORRENTI, CONFIGURAZIONI, FASI, STRATI, ZONE } from '../lib/back4';
     function caricaProgramma() {
       if (!fase) return;
       ferma();
-      const prog = programmaEsempio(zona, fase);
-      for (const c of CORRENTI) Object.assign(canali[c.id], prog[c.id]);
-      swap = false;
+      Object.assign(canali, programmaEsempio(zona, fase));
       configurazione = zona === 'lombare' || zona === 'dorsale' ? 'due-tx' : 'piastra';
+      posizioni = [];
       mostra('expert');
       aggiornaTutto();
+      avviaSeduta();
     }
 
-    // ——— Expert ———
-    function aggiornaCanale(id: IdCorrente) {
+    // ——— colonne Expert ———
+    function aggiornaColonna(id: IdCorrente, inErog?: ReturnType<typeof inErogazione>) {
       const c = corrente(id);
       const k = canali[id];
-      const col = $(`[data-canale="${id}"]`);
-      col.classList.toggle('canale--attivo', k.attivo);
+      const col = colonna(id);
+      col.classList.toggle('col--attiva', k.attivo);
+      col.classList.toggle('col--scelta', !inCorso && scelto === id && k.attivo);
+      const eroga = !!inErog && inCorso && (inErog.via1 === id || inErog.via2 === id) && !(swap && id === 'tens' && faseSwap() === 0) && !(swap && id === 'ret' && faseSwap() === 1);
+      col.classList.toggle('col--eroga', eroga);
       col.style.setProperty('--colore', c.colore);
-      col.style.setProperty('--livello', String(k.intensita / 100));
-      $(`[data-attiva="${id}"]`).setAttribute('aria-pressed', String(k.attivo));
-      $(`[data-attiva="${id}"]`).style.setProperty('--colore', c.colore);
-      for (const b of $$('[data-modo]', col)) b.setAttribute('aria-pressed', String(b.dataset.modo === k.modalita));
-      const m = modalita(id, k.modalita);
-      const freq = $('[data-frequenza]', col);
-      if (id === 'tens' && k.modalita === 'manual') {
-        freq.replaceChildren(
-          ...m.frequenze.map((f) => {
-            const b = document.createElement('button');
-            b.type = 'button';
-            b.dataset.frequenzaScelta = f;
-            b.textContent = f;
-            b.setAttribute('aria-pressed', String(f === k.frequenza));
-            return b;
-          }),
-        );
-      } else freq.textContent = m.frequenze.join(' ⇄ ');
-      const input = $<HTMLInputElement>('[data-intensita]', col);
-      if (Number(input.value) !== k.intensita) input.value = String(k.intensita);
-      input.setAttribute('aria-valuetext', `${k.intensita}%`);
-      $('[data-valore]', col).textContent = `${k.intensita}%`;
-      $('[data-durata]', col).textContent = tempo(inCorso ? rimasto[id] : k.durata);
+      col.style.setProperty('--scuro', c.scuro);
+      $('[data-attiva]', col).setAttribute('aria-pressed', String(k.attivo));
+      $('[data-durata]', col).textContent = tempo(inCorso && inErog ? inErog.restanti[id] : k.durata);
+      const modo = col.querySelector<HTMLElement>('[data-cicla="modo"]');
+      if (modo) modo.textContent = modalita(id, k.modalita).nome;
+      const liv = col.querySelector<HTMLElement>('[data-cicla="livello"]');
+      if (liv) liv.textContent = LIVELLI.find((l) => l.id === k.livello)?.nome ?? 'Medium';
+      const fr = col.querySelector<HTMLElement>('[data-cicla="frequenza"]');
+      if (fr) fr.textContent = k.frequenza ?? '5 Hz';
+      for (const b of $$('[data-frequenza]', col)) b.setAttribute('aria-pressed', String(k.modalita === 'static' ? b.dataset.frequenza === k.frequenza : true));
+      const potenza = $('[data-potenza]', col);
+      potenza.setAttribute('aria-valuenow', String(k.intensita));
+      potenza.setAttribute('aria-valuetext', `${k.intensita}%`);
+      const pillola = $('[data-pillola]', col);
+      pillola.firstChild!.textContent = id === 'tens' ? `${k.intensita}%` : String(k.intensita);
     }
 
-    function aggiornaTotale() {
-      const restante = inCorso ? Math.max(0, ...CORRENTI.map((c) => (canali[c.id].attivo ? rimasto[c.id] : 0))) : durataSeduta(canali);
-      $('[data-totale]').textContent = restante >= 60 || restante === 0 ? `${Math.ceil(restante / 60)}'` : `${restante}"`;
-      const frazione = inCorso && totaleIniziale ? restante / totaleIniziale : 1;
-      $('[data-anello]').style.setProperty('--avanzamento', String(frazione));
+    const faseSwap = () => Math.floor(trascorsi / 15) % 2;
+
+    function aggiornaTotale(inErog = inErogazione(canali, trascorsi)) {
+      const totale = durataSeduta(canali);
+      const restante = inCorso ? Math.max(0, totale - trascorsi) : totale;
+      $('[data-totale]').textContent = tempo(restante);
+      $('[data-anello]').style.setProperty('--fatto', String(inCorso && totale ? trascorsi / totale : 0));
       radice.classList.toggle('sim--in-corso', inCorso && !inPausa);
+      for (const c of CORRENTI) aggiornaColonna(c.id, inErog);
     }
 
     function aggiornaTutto() {
-      for (const c of CORRENTI) aggiornaCanale(c.id);
       $('[data-swap]').setAttribute('aria-pressed', String(swap));
       aggiornaTotale();
       aggiornaAccessori();
@@ -376,192 +516,277 @@ import { CORRENTI, CONFIGURAZIONI, FASI, STRATI, ZONE } from '../lib/back4';
     function attiva(id: IdCorrente, valore = !canali[id].attivo) {
       const k = canali[id];
       k.attivo = valore;
-      if (valore && k.durata === 0) k.durata = 180;
-      if (valore && k.intensita === 0) k.intensita = 20;
-      if (inCorso) rimasto[id] = valore ? k.durata : 0;
+      if (valore && k.intensita === 0) k.intensita = 30;
+      if (valore && k.durata === 0) k.durata = 150;
       if (!valore && (id === 'ret' || id === 'tens')) swap = false;
+      scelto = id;
+      clic(valore ? 1500 : 900);
+      vibra(12);
       aggiornaTutto();
     }
 
+    let ultimoScatto: Partial<Record<IdCorrente, number>> = {};
     function impostaIntensita(id: IdCorrente, valore: number) {
       const k = canali[id];
-      k.intensita = limita(valore, 0, 100);
-      if (k.intensita > 0 && !k.attivo) {
-        k.attivo = true;
-        if (k.durata === 0) k.durata = 180;
-        if (inCorso) rimasto[id] = k.durata;
+      const nuovo = limita(valore, 0, 100);
+      if (nuovo === k.intensita) return;
+      k.intensita = nuovo;
+      if (nuovo > 0 && !k.attivo) k.attivo = true;
+      scelto = id;
+      // uno scatto ogni 5%, come una manopola
+      const scatto = Math.floor(nuovo / 5);
+      if (scatto !== ultimoScatto[id]) {
+        ultimoScatto[id] = scatto;
+        clic(900 + nuovo * 12, 0.015);
+        vibra(5);
       }
-      aggiornaCanale(id);
+      aggiornaTotale();
       aggiornaAccessori();
       aggiornaProfondita();
-      aggiornaTotale();
     }
 
-    function cambiaDurata(id: IdCorrente, verso: number) {
+    function cicla(id: IdCorrente, cosa: string) {
+      const c = corrente(id);
       const k = canali[id];
-      k.durata = limita(k.durata + verso * PASSO_DURATA, 0, DURATA_MAX);
-      if (inCorso) rimasto[id] = limita(rimasto[id] + verso * PASSO_DURATA, 0, DURATA_MAX);
-      if (k.durata > 0 && !k.attivo) attiva(id, true);
-      else aggiornaCanale(id);
+      const prossimo = <T,>(lista: T[], attuale: T) => lista[(lista.indexOf(attuale) + 1) % lista.length];
+      if (cosa === 'modo') k.modalita = prossimo(c.modalita.map((m) => m.id), k.modalita);
+      if (cosa === 'livello') k.livello = prossimo(LIVELLI.map((l) => l.id), k.livello ?? 'medium');
+      if (cosa === 'frequenza' && c.frequenzeScelta) k.frequenza = prossimo(c.frequenzeScelta, k.frequenza ?? c.frequenzeScelta[0]);
+      if (!k.attivo) k.attivo = true;
+      scelto = id;
+      clic(1600);
       aggiornaTotale();
+      aggiornaProfondita();
     }
 
     // ——— seduta ———
     function avviaSeduta() {
-      if (!CORRENTI.some((c) => canali[c.id].attivo && canali[c.id].durata > 0)) {
-        // nessuna corrente: ne attivo una per mostrare il funzionamento
-        attiva('cet', true);
-      }
+      if (!CORRENTI.some((c) => canali[c.id].attivo)) attiva('cet', true);
       if (!inCorso) {
-        for (const c of CORRENTI) rimasto[c.id] = canali[c.id].attivo ? canali[c.id].durata : 0;
-        totaleIniziale = durataSeduta(canali);
+        trascorsi = 0;
         inCorso = true;
-      }
-      inPausa = false;
-      ultimoTick = performance.now();
+        inPausa = false;
+      } else inPausa = !inPausa;
+      clic(inPausa ? 700 : 2000, 0.06);
+      vibra(20);
       aggiornaTutto();
-    }
-
-    function pausa() {
-      if (inCorso) inPausa = !inPausa;
-      ultimoTick = performance.now();
-      aggiornaTotale();
     }
 
     function ferma() {
       inCorso = false;
       inPausa = false;
+      trascorsi = 0;
+      clic(500, 0.08);
       aggiornaTutto();
     }
 
-    // il tempo scorre 10 volte più veloce: una seduta di 4 minuti si vede in 24 secondi
+    // il tempo scorre 10 volte più veloce: una seduta di 5 minuti si vede in 30 secondi
     const ACCELERAZIONE = 10;
+    let ultimo = performance.now();
     let accumulato = 0;
     function ciclo(adesso: number) {
+      const dt = Math.min(0.1, (adesso - ultimo) / 1000);
+      ultimo = adesso;
+      // la potenza mostrata insegue quella impostata: movimento morbido
+      for (const c of CORRENTI) {
+        const obiettivo = canali[c.id].attivo ? canali[c.id].intensita : 0;
+        const prima = mostrato[c.id];
+        mostrato[c.id] += (obiettivo - mostrato[c.id]) * Math.min(1, dt * 14);
+        if (Math.abs(mostrato[c.id] - prima) > 0.01) colonna(c.id).style.setProperty('--livello', (mostrato[c.id] / 100).toFixed(4));
+      }
       if (inCorso && !inPausa) {
-        accumulato += ((adesso - ultimoTick) / 1000) * ACCELERAZIONE;
-        const secondi = Math.floor(accumulato);
-        if (secondi > 0) {
-          accumulato -= secondi;
-          for (const c of CORRENTI) if (canali[c.id].attivo) rimasto[c.id] = Math.max(0, rimasto[c.id] - secondi);
-          if (swap) faseSwap = Math.floor(adesso / 2500) % 2;
-          if (CORRENTI.every((c) => !canali[c.id].attivo || rimasto[c.id] === 0)) ferma();
-          else {
-            for (const c of CORRENTI) $(`[data-canale="${c.id}"] [data-durata]`).textContent = tempo(rimasto[c.id]);
+        accumulato += dt * ACCELERAZIONE;
+        const s = Math.floor(accumulato);
+        if (s > 0) {
+          accumulato -= s;
+          trascorsi += s;
+          if (trascorsi >= durataSeduta(canali)) {
+            ferma();
+            clic(2200, 0.25);
+            vibra(120);
+          } else {
             aggiornaTotale();
             aggiornaAccessori();
           }
         }
       }
-      ultimoTick = adesso;
+      aggiornaCalore(dt);
       requestAnimationFrame(ciclo);
     }
     requestAnimationFrame(ciclo);
 
-    // ——— accessori e corpo ———
-    const correntiErogate = () =>
-      CORRENTI.filter((c) => {
-        const k = canali[c.id];
-        if (!k.attivo || k.intensita === 0 || (inCorso && rimasto[c.id] === 0)) return false;
-        // SWAP: RET e Hi-TENS si alternano
-        if (swap && inCorso && c.id === 'ret') return faseSwap === 0;
-        if (swap && inCorso && c.id === 'tens') return faseSwap === 1;
-        return true;
+    // ——— corpo del paziente: manipoli trascinabili, calore ———
+    const correntiErogate = () => {
+      if (!inCorso || inPausa) return [];
+      const e = inErogazione(canali, trascorsi);
+      return CORRENTI.filter((c) => {
+        if (canali[c.id].intensita === 0) return false;
+        if (swap && c.id === 'tens') return faseSwap() === 1 && e.restanti.tens > 0;
+        if (swap && c.id === 'ret') return faseSwap() === 0 && e.restanti.ret > 0;
+        return e.via1 === c.id || e.via2 === c.id;
       });
+    };
 
-    function punto(x: number, y: number, classe: string, etichetta: string, colore?: string) {
-      const g = document.createElementNS(SVG, 'g');
-      g.setAttribute('class', `elettrodo ${classe}`);
-      const forma = document.createElementNS(SVG, classe.includes('piastra') ? 'rect' : 'circle');
-      if (forma.tagName === 'rect') {
-        forma.setAttribute('x', String(x - 6));
-        forma.setAttribute('y', String(y - 3.5));
-        forma.setAttribute('width', '12');
-        forma.setAttribute('height', '7');
-        forma.setAttribute('rx', '1.5');
-      } else {
-        forma.setAttribute('cx', String(x));
-        forma.setAttribute('cy', String(y));
-        forma.setAttribute('r', classe.includes('mano') ? '3.4' : '2.6');
+    function posizioniIniziali(): [number, number][] {
+      const z = ZONE.find((x) => x.id === zona)!;
+      switch (configurazione) {
+        case 'piastra':
+          return [[z.x, z.y], [50, z.y > 50 ? 44 : 50]];
+        case 'due-tx':
+          return [[z.x - 6, z.y], [z.x + 6, z.y + 4]];
+        case 'tx-ritorno':
+          return [[z.x, z.y], [z.x + (z.x < 50 ? 9 : -9), z.y + 6]];
+        case 'bracciali':
+          return [[z.x - 4.5, z.y - 1], [z.x + 4.5, z.y + 1], [50, z.y > 50 ? 44 : 50]];
+        default:
+          return [[z.x, z.y - 7], [z.x - 8, z.y + 5], [z.x + 8, z.y + 5]];
       }
-      if (colore) forma.setAttribute('fill', colore);
-      const testo = document.createElementNS(SVG, 'text');
-      testo.setAttribute('x', String(x));
-      testo.setAttribute('y', String(y - 4.5));
-      testo.textContent = etichetta;
-      g.append(forma, testo);
-      return g;
     }
 
-    function linea(a: [number, number], b: [number, number], colore: string, intensita: number, scarto = 0) {
-      const l = document.createElementNS(SVG, 'line');
-      l.setAttribute('x1', String(a[0] + scarto));
-      l.setAttribute('y1', String(a[1] + scarto));
-      l.setAttribute('x2', String(b[0] + scarto));
-      l.setAttribute('y2', String(b[1] + scarto));
-      l.setAttribute('stroke', colore);
-      l.setAttribute('class', 'flusso');
-      l.style.setProperty('--forza', String(0.35 + intensita * 0.65));
-      return l;
-    }
+    const etichette = () =>
+      ({
+        piastra: ['TX', 'Piastra'],
+        'due-tx': ['TX 1', 'TX 2'],
+        'tx-ritorno': ['TX eroga', 'TX ritorno'],
+        bracciali: ['mano', 'mano', 'Piastra'],
+        delta: ['A', 'B', 'C'],
+        catena: ['A', 'B', 'C'],
+      })[configurazione];
 
     function aggiornaAccessori() {
-      const z = ZONE.find((x) => x.id === zona)!;
-      for (const c of $$<SVGElement>('[data-zona-corpo]')) c.classList.toggle('corpo__zona--scelta', c.dataset.zonaCorpo === zona);
+      if (posizioni.length !== etichette().length) posizioni = posizioniIniziali();
+      const conf = CONFIGURAZIONI.find((c) => c.id === configurazione)!;
       for (const b of $$('[data-configurazione]')) b.setAttribute('aria-checked', String(b.dataset.configurazione === configurazione));
-      $('[data-spiega-configurazione]').textContent = CONFIGURAZIONI.find((c) => c.id === configurazione)!.descrizione;
+      $('[data-spiega-configurazione]').textContent = conf.descrizione;
+      $('[data-accessorio="piastra"]').classList.toggle('collegato', conf.piastra);
+      $('[data-accessorio="tx1"]').classList.toggle('collegato', conf.tx >= 1 || configurazione === 'bracciali');
+      $('[data-accessorio="tx2"]').classList.toggle('collegato', conf.tx >= 2);
 
       const erogate = correntiErogate();
       const tecar = erogate.filter((c) => c.tipo === 'tecar');
-      const colorePrincipale = (tecar[0] ?? erogate[0])?.colore ?? '#94a3b8';
-      const lato = z.x < 50 ? 1 : -1;
-      const elettrodi = $('[data-elettrodi]');
-      const collegamenti = $('[data-collegamenti]');
-      const punti: [number, number][] = [];
-      const fig: SVGElement[] = [];
-
-      switch (configurazione) {
-        case 'piastra': {
-          punti.push([z.x, z.y], [50, z.y > 50 ? 44 : 50]);
-          fig.push(punto(...punti[0], '', 'TX', colorePrincipale), punto(...punti[1], 'elettrodo--piastra', 'Piastra'));
-          break;
-        }
-        case 'due-tx':
-          punti.push([z.x - 6, z.y], [z.x + 6, z.y + 4]);
-          fig.push(punto(...punti[0], '', 'TX 1', colorePrincipale), punto(...punti[1], '', 'TX 2', (tecar[1] ?? tecar[0])?.colore ?? colorePrincipale));
-          break;
-        case 'tx-ritorno':
-          punti.push([z.x, z.y], [z.x + lato * 9, z.y + 6]);
-          fig.push(punto(...punti[0], '', 'TX eroga', colorePrincipale), punto(...punti[1], 'elettrodo--ritorno', 'TX ritorno'));
-          break;
-        case 'bracciali':
-          punti.push([z.x - 4.5, z.y - 1], [z.x + 4.5, z.y + 1]);
-          fig.push(punto(...punti[0], 'elettrodo--mano', 'mano', corrente('ret').colore), punto(...punti[1], 'elettrodo--mano', 'mano', corrente('ret').colore));
-          break;
-        case 'delta':
-        case 'catena':
-          punti.push([z.x, z.y - 7], [z.x - 8, z.y + 5], [z.x + 8, z.y + 5]);
-          fig.push(...punti.map((p, i) => punto(...p, '', ['A', 'B', 'C'][i], colorePrincipale)));
-          break;
-      }
+      const colore = (tecar[0] ?? erogate[0])?.colore ?? '#94a3b8';
+      const nomi = etichette();
+      $('[data-elettrodi]').replaceChildren(
+        ...posizioni.map((p, i) => {
+          const g = document.createElementNS(SVG, 'g');
+          const tipo = nomi[i] === 'Piastra' ? 'piastra' : nomi[i] === 'TX ritorno' ? 'ritorno' : nomi[i] === 'mano' ? 'mano' : 'tx';
+          g.setAttribute('class', `elettrodo elettrodo--${tipo}`);
+          g.setAttribute('transform', `translate(${p[0]} ${p[1]})`);
+          g.dataset.elettrodo = String(i);
+          const forma = document.createElementNS(SVG, tipo === 'piastra' ? 'rect' : 'circle');
+          if (tipo === 'piastra') {
+            for (const [a, v] of Object.entries({ x: -6, y: -3.5, width: 12, height: 7, rx: 1.5 })) forma.setAttribute(a, String(v));
+          } else {
+            forma.setAttribute('r', tipo === 'mano' ? '3.4' : '3');
+            if (tipo === 'tx') forma.setAttribute('fill', colore);
+            if (tipo === 'mano') forma.setAttribute('fill', corrente('ret').colore);
+          }
+          const testo = document.createElementNS(SVG, 'text');
+          testo.setAttribute('y', '-5');
+          testo.textContent = nomi[i];
+          g.append(forma, testo);
+          return g;
+        }),
+      );
 
       const coppie: [number, number][] =
-        configurazione === 'delta' ? [[0, 1], [1, 2], [2, 0]] : configurazione === 'catena' ? [[0, 1], [1, 2]] : [[0, 1]];
-      const linee: SVGElement[] = [];
-      // configurazione con i bracciali: solo RET (le mani diventano l'elettrodo)
+        configurazione === 'delta' ? [[0, 1], [1, 2], [2, 0]] : configurazione === 'catena' ? [[0, 1], [1, 2]] : configurazione === 'bracciali' ? [[0, 2], [1, 2]] : [[0, 1]];
       const scorrono = configurazione === 'bracciali' ? erogate.filter((c) => c.id === 'ret') : erogate;
-      scorrono.forEach((c, i) => {
-        for (const [a, b] of coppie) linee.push(linea(punti[a], punti[b], c.colore, canali[c.id].intensita / 100, (i - (scorrono.length - 1) / 2) * 1.2));
-      });
-      collegamenti.replaceChildren(...linee);
-      elettrodi.replaceChildren(...fig);
-      radice.classList.toggle('sim--flusso', inCorso && !inPausa && linee.length > 0);
+      $('[data-collegamenti]').replaceChildren(
+        ...scorrono.flatMap((c, i) =>
+          coppie.map(([a, b]) => {
+            const l = document.createElementNS(SVG, 'line');
+            const scarto = (i - (scorrono.length - 1) / 2) * 1.3;
+            l.setAttribute('x1', String(posizioni[a][0] + scarto));
+            l.setAttribute('y1', String(posizioni[a][1] + scarto));
+            l.setAttribute('x2', String(posizioni[b][0] + scarto));
+            l.setAttribute('y2', String(posizioni[b][1] + scarto));
+            l.setAttribute('stroke', c.colore);
+            l.setAttribute('class', 'flusso');
+            l.style.setProperty('--forza', String(0.3 + (canali[c.id].intensita / 100) * 0.7));
+            return l;
+          }),
+        ),
+      );
+      scriviStato(erogate);
+    }
 
+    function scriviStato(erogate = correntiErogate()) {
       const nota = $('[data-nota-corpo]');
-      if (configurazione === 'bracciali' && !canali.ret.attivo) nota.textContent = 'Con i bracciali lavora la corrente RET: attivala dallo schermo.';
-      else if (canali.cet.attivo && canali.ret.attivo) nota.textContent = 'CET e RET insieme: BACK4 le eroga in simultanea sulle sue due vie indipendenti.';
-      else if (!erogate.length) nota.textContent = 'Attiva una corrente e premi ▶ per vedere il passaggio di corrente. Tocca una zona per spostare i manipoli.';
-      else nota.textContent = `${ZONE.find((x) => x.id === zona)!.nome}: ${erogate.map((c) => c.nome).join(' + ')}`;
+      if (configurazione === 'bracciali' && !canali.ret.attivo) nota.textContent = 'Con i bracciali lavora la corrente RET: attivala sullo schermo.';
+      else if (!inCorso) nota.textContent = 'Trascina i manipoli sulla zona da trattare, poi premi ▶ sullo schermo.';
+      else if (inPausa) nota.textContent = 'Seduta in pausa.';
+      else if (fermoDa > 2.5 && calore > 0.55) nota.textContent = '⚠ Il manipolo è fermo da un po’: muovilo per distribuire il calore.';
+      else nota.textContent = `In erogazione: ${erogate.map((c) => `${c.nome} ${canali[c.id].intensita}%`).join(' + ') || '—'}`;
+    }
+
+    // il calore cresce con la potenza TECAR e il tempo, cala a seduta ferma; il manipolo fermo lo concentra
+    function aggiornaCalore(dt: number) {
+      const tecar = correntiErogate().filter((c) => c.tipo === 'tecar');
+      const potenza = tecar.reduce((s, c) => s + canali[c.id].intensita / 100, 0);
+      const prima = calore;
+      calore = Math.max(0, Math.min(1, calore + dt * (potenza * 0.09 * (fermoDa > 2 ? 1.6 : 1) - 0.035)));
+      if (inCorso && !inPausa) fermoDa += dt;
+      if (Math.abs(prima - calore) > 0.0005) {
+        const c = $<SVGCircleElement>('[data-calore]');
+        const p = posizioni[0] ?? [50, 50];
+        c.setAttribute('cx', String(p[0]));
+        c.setAttribute('cy', String(p[1]));
+        c.style.setProperty('--calore', calore.toFixed(3));
+        $('[data-calore-barra]').style.setProperty('--calore', calore.toFixed(3));
+      }
+      if (Math.floor(prima * 20) !== Math.floor(calore * 20) || (fermoDa > 2.5 && calore > 0.55)) scriviStato();
+    }
+
+    // trascinamento dei manipoli sul corpo
+    const corpo = $<SVGSVGElement>('[data-corpo]');
+    let trascinato: number | undefined;
+    const puntoSvg = (e: PointerEvent): [number, number] => {
+      const p = corpo.createSVGPoint();
+      p.x = e.clientX;
+      p.y = e.clientY;
+      const r = p.matrixTransform(corpo.getScreenCTM()!.inverse());
+      return [limita(r.x, 14, 86), limita(r.y, 2, 106)];
+    };
+    corpo.addEventListener('pointerdown', (e) => {
+      const g = (e.target as Element).closest<SVGGElement>('[data-elettrodo]');
+      if (!g) return;
+      trascinato = Number(g.dataset.elettrodo);
+      corpo.setPointerCapture(e.pointerId);
+      e.preventDefault();
+    });
+    corpo.addEventListener('pointermove', (e) => {
+      if (trascinato === undefined) return;
+      posizioni[trascinato] = puntoSvg(e);
+      fermoDa = 0;
+      // urto: due manipoli TX che si toccano → si passa da CET a RET (e viceversa)
+      const tx = posizioni.filter((_, i) => /^TX/.test(etichette()[i]));
+      if (tx.length === 2 && Math.hypot(tx[0][0] - tx[1][0], tx[0][1] - tx[1][1]) < 4) urto();
+      aggiornaAccessori();
+    });
+    const lascia = () => (trascinato = undefined);
+    corpo.addEventListener('pointerup', lascia);
+    corpo.addEventListener('pointercancel', lascia);
+
+    let ultimoUrto = 0;
+    function urto() {
+      if (performance.now() - ultimoUrto < 1200) return;
+      ultimoUrto = performance.now();
+      const daCet = canali.cet.attivo || !canali.ret.attivo;
+      const [da, a]: IdCorrente[] = daCet ? ['cet', 'ret'] : ['ret', 'cet'];
+      canali[a].intensita = canali[da].intensita || 40;
+      canali[a].durata = canali[da].durata || 150;
+      canali[da].attivo = false;
+      canali[a].attivo = true;
+      // i manipoli si separano dopo l'urto
+      posizioni = posizioniIniziali();
+      clic(300, 0.12);
+      vibra(60);
+      radice.classList.remove('sim--urto');
+      void radice.offsetWidth;
+      radice.classList.add('sim--urto');
+      if ($('[data-vista="expert"]').hidden) mostra('expert');
+      aggiornaTutto();
     }
 
     function aggiornaProfondita() {
@@ -570,141 +795,184 @@ import { CORRENTI, CONFIGURAZIONI, FASI, STRATI, ZONE } from '../lib/back4';
         const barra = $(`[data-strato="${s.id}"] [data-strato-livello]`);
         barra.style.setProperty('--livello', String(p[s.id].livello));
         const colori = p[s.id].colori;
-        barra.style.setProperty(
-          '--sfumatura',
-          colori.length ? `linear-gradient(90deg, ${colori.length > 1 ? colori.join(', ') : `${colori[0]}, ${colori[0]}`})` : 'none',
-        );
+        barra.style.setProperty('--sfumatura', colori.length ? `linear-gradient(90deg, ${(colori.length > 1 ? colori : [colori[0], colori[0]]).join(', ')})` : 'none');
       }
-      const legenda = $('[data-legenda]');
-      legenda.replaceChildren(
+      $('[data-legenda]').replaceChildren(
         ...CORRENTI.filter((c) => canali[c.id].attivo).map((c) => {
           const li = document.createElement('li');
           li.style.setProperty('--colore', c.colore);
           const m = modalita(c.id, canali[c.id].modalita);
-          li.innerHTML = '<strong></strong> <span></span>';
-          li.querySelector('strong')!.textContent = `${c.nome} ${m.nome}`;
-          li.querySelector('span')!.textContent = `${canali[c.id].frequenza && c.id === 'tens' && m.id === 'manual' ? canali[c.id].frequenza : m.frequenze.join(' / ')} — ${m.descrizione}`;
+          const nome = document.createElement('strong');
+          nome.textContent = `${c.nome} ${m.nome}`;
+          li.append(nome, ` ${frequenzeCanale(c.id, canali[c.id]).join(' / ')} — ${m.descrizione}`);
           return li;
         }),
       );
     }
 
-    // ——— eventi ———
-    radice.addEventListener('click', (e) => {
+    // ——— potenza: trascinamento morbido su tutta la colonna ———
+    let trascinaPotenza: { id: IdCorrente; area: HTMLElement } | undefined;
+    const valoreDaY = (area: HTMLElement, y: number) => {
+      const r = area.getBoundingClientRect();
+      return ((r.bottom - y) / r.height) * 100;
+    };
+    radice.addEventListener('pointerdown', (e) => {
       const t = e.target as HTMLElement;
+      if (t.closest('[data-frequenza]')) return;
+      const area = t.closest<HTMLElement>('[data-potenza]');
+      const id = area?.closest<HTMLElement>('[data-canale]')?.dataset.canale as IdCorrente | undefined;
+      if (!area || !id) return;
+      trascinaPotenza = { id, area };
+      area.setPointerCapture(e.pointerId);
+      impostaIntensita(id, valoreDaY(area, e.clientY));
+      e.preventDefault();
+    });
+    radice.addEventListener('pointermove', (e) => {
+      if (trascinaPotenza) impostaIntensita(trascinaPotenza.id, valoreDaY(trascinaPotenza.area, e.clientY));
+    });
+    for (const ev of ['pointerup', 'pointercancel'] as const) radice.addEventListener(ev, () => (trascinaPotenza = undefined));
+    radice.addEventListener(
+      'wheel',
+      (e) => {
+        const area = (e.target as HTMLElement).closest<HTMLElement>('[data-potenza]');
+        const id = area?.closest<HTMLElement>('[data-canale]')?.dataset.canale as IdCorrente | undefined;
+        if (!id) return;
+        e.preventDefault();
+        impostaIntensita(id, canali[id].intensita + (e.deltaY < 0 ? 2 : -2));
+      },
+      { passive: false },
+    );
+    radice.addEventListener('keydown', (e) => {
+      const area = (e.target as HTMLElement).closest<HTMLElement>('[data-potenza]');
+      const id = area?.closest<HTMLElement>('[data-canale]')?.dataset.canale as IdCorrente | undefined;
+      if (!id) return;
+      const passi: Record<string, number> = { ArrowUp: 1, ArrowRight: 1, ArrowDown: -1, ArrowLeft: -1, PageUp: 10, PageDown: -10 };
+      if (e.key in passi) {
+        e.preventDefault();
+        impostaIntensita(id, canali[id].intensita + passi[e.key]);
+      } else if (e.key === 'Home' || e.key === 'End') {
+        e.preventDefault();
+        impostaIntensita(id, e.key === 'Home' ? 0 : 100);
+      }
+    });
+
+    // ——— tocchi ———
+    radice.addEventListener('click', (e) => {
+      const t = e.target as Element;
       const vai = t.closest<HTMLElement>('[data-vai]');
       if (vai) return mostra(vai.dataset.vai as 'home' | 'academy' | 'expert');
       const z = t.closest<HTMLElement>('[data-zona]');
       if (z) {
         zona = z.dataset.zona as IdZona;
+        posizioni = [];
+        clic(1400);
         aggiornaAccessori();
         return passoAcademy(2);
       }
       const f = t.closest<HTMLElement>('[data-fase]');
       if (f) {
         fase = f.dataset.fase as IdFase;
+        clic(1400);
         return passoAcademy(3);
       }
-      if (t.closest('[data-academy-indietro]')) return passoAcademy(1);
+      if (t.closest('[data-academy-indietro]')) {
+        const visibile = $$('[data-academy-passo]').find((p) => !p.hidden)?.dataset.academyPasso;
+        return visibile === '1' ? mostra('home') : passoAcademy(visibile === '3' ? 2 : 1);
+      }
       if (t.closest('[data-academy-avvia]')) return caricaProgramma();
 
-      const scheda = t.closest<HTMLElement>('[data-attiva]');
-      if (scheda) return attiva(scheda.dataset.attiva as IdCorrente);
+      const col = t.closest<HTMLElement>('[data-canale]');
+      const id = col?.dataset.canale as IdCorrente | undefined;
+      if (id && t.closest('[data-attiva]')) return attiva(id);
+      if (id && t.closest('[data-apri-tempo]')) {
+        for (const r of $$('[data-regola-tempo]')) r.hidden = r.closest<HTMLElement>('[data-canale]') !== col || !r.hidden;
+        scelto = id;
+        clic(1300);
+        return aggiornaTotale();
+      }
+      const tempoBtn = t.closest<HTMLElement>('[data-tempo]');
+      if (id && tempoBtn) {
+        const k = canali[id];
+        k.durata = limita(k.durata + Number(tempoBtn.dataset.tempo) * PASSO_DURATA, PASSO_DURATA, DURATA_MAX);
+        if (!k.attivo) k.attivo = true;
+        clic(1500);
+        return aggiornaTotale();
+      }
+      const ciclaBtn = t.closest<HTMLElement>('[data-cicla]');
+      if (id && ciclaBtn) return cicla(id, ciclaBtn.dataset.cicla!);
+      const freq = t.closest<HTMLElement>('[data-frequenza]');
+      if (id && freq) {
+        canali[id].frequenza = freq.dataset.frequenza;
+        canali[id].modalita = 'static';
+        if (!canali[id].attivo) canali[id].attivo = true;
+        if (canali[id].intensita === 0) canali[id].intensita = 30;
+        clic(1700);
+        aggiornaTotale();
+        return aggiornaProfondita();
+      }
       if (t.closest('[data-swap]')) {
         swap = !swap;
         if (swap) {
           if (!canali.ret.attivo) attiva('ret', true);
           if (!canali.tens.attivo) attiva('tens', true);
         }
+        clic(1900);
         return aggiornaTutto();
       }
-      const colonna = t.closest<HTMLElement>('[data-canale]');
-      const id = colonna?.dataset.canale as IdCorrente | undefined;
-      const modo = t.closest<HTMLElement>('[data-modo]');
-      if (modo && id) {
-        canali[id].modalita = modo.dataset.modo!;
-        if (!canali[id].attivo) return attiva(id, true);
-        aggiornaCanale(id);
-        return aggiornaProfondita();
-      }
-      const freq = t.closest<HTMLElement>('[data-frequenza-scelta]');
-      if (freq && id) {
-        canali[id].frequenza = freq.dataset.frequenzaScelta;
-        aggiornaCanale(id);
-        return aggiornaProfondita();
-      }
-      const tempoBtn = t.closest<HTMLElement>('[data-tempo]');
-      if (tempoBtn && id) return cambiaDurata(id, Number(tempoBtn.dataset.tempo));
       if (t.closest('[data-avvia]')) return avviaSeduta();
-      if (t.closest('[data-pausa]')) return pausa();
       if (t.closest('[data-ferma]')) return ferma();
-
+      if (t.closest('[data-azzera]')) {
+        ferma();
+        for (const c of CORRENTI) Object.assign(canali[c.id], { attivo: false, intensita: 0, durata: 150 });
+        swap = false;
+        return aggiornaTutto();
+      }
+      if (t.closest('[data-impostazioni]')) return void ($('[data-foglio]').hidden = false);
+      if (t.closest('[data-chiudi-foglio]')) return void ($('[data-foglio]').hidden = true);
+      const acc = t.closest<HTMLElement>('[data-accessorio]');
+      if (acc) {
+        // dalla barra in basso: piastra sì/no
+        if (acc.dataset.accessorio === 'piastra') configurazione = configurazione === 'piastra' ? 'due-tx' : 'piastra';
+        else configurazione = configurazione === 'due-tx' ? 'tx-ritorno' : 'due-tx';
+        posizioni = [];
+        clic(1300);
+        return aggiornaAccessori();
+      }
       const conf = t.closest<HTMLElement>('[data-configurazione]');
       if (conf) {
         configurazione = conf.dataset.configurazione as IdConfigurazione;
         if (configurazione === 'bracciali' && !canali.ret.attivo) attiva('ret', true);
+        posizioni = [];
         return aggiornaAccessori();
       }
-      if (t.closest('[data-urto]')) {
-        // choc dei due TX: si passa da muscolo (CET) ad articolazione (RET) e viceversa
-        const daCet = canali.cet.attivo || !canali.ret.attivo;
-        const [da, a]: IdCorrente[] = daCet ? ['cet', 'ret'] : ['ret', 'cet'];
-        canali[a].intensita = canali[da].intensita || 30;
-        canali[a].durata = canali[da].durata || 180;
-        if (inCorso) rimasto[a] = rimasto[da] || canali[a].durata;
-        canali[da].attivo = false;
-        canali[a].attivo = true;
-        const bottone = $('[data-urto]');
-        bottone.classList.remove('urto--scossa');
-        void bottone.offsetWidth;
-        bottone.classList.add('urto--scossa');
-        mostra('expert');
-        return aggiornaTutto();
-      }
-      const zonaCorpo = t.closest<SVGElement>('[data-zona-corpo]');
-      if (zonaCorpo) {
-        zona = zonaCorpo.dataset.zonaCorpo as IdZona;
-        return aggiornaAccessori();
-      }
+      if (t.closest('[data-schermo-intero]')) return void schermoIntero();
     });
-
-    // cursore della potenza: segue il dito in modo continuo
-    radice.addEventListener('input', (e) => {
-      const input = (e.target as HTMLElement).closest<HTMLInputElement>('[data-intensita]');
-      const id = input?.closest<HTMLElement>('[data-canale]')?.dataset.canale as IdCorrente | undefined;
-      if (input && id) impostaIntensita(id, Number(input.value));
-    });
-
-    // + e −: un tocco = 1%, tenendo premuto la potenza sale o scende in modo fluido
-    let ripeti: number | undefined;
-    const smetti = () => {
-      clearInterval(ripeti);
-      ripeti = undefined;
-    };
-    radice.addEventListener('pointerdown', (e) => {
-      const b = (e.target as HTMLElement).closest<HTMLElement>('[data-passo]');
-      const id = b?.closest<HTMLElement>('[data-canale]')?.dataset.canale as IdCorrente | undefined;
-      if (!b || !id) return;
-      e.preventDefault();
-      const verso = Number(b.dataset.passo);
-      impostaIntensita(id, canali[id].intensita + verso);
-      let velocita = 0;
-      smetti();
-      ripeti = window.setInterval(() => {
-        velocita = Math.min(velocita + 0.25, 3);
-        impostaIntensita(id, canali[id].intensita + verso * Math.max(1, Math.floor(velocita)));
-      }, 60);
-    });
-    for (const evento of ['pointerup', 'pointercancel', 'pointerleave', 'blur'] as const) radice.addEventListener(evento, smetti, true);
-    // da tastiera i + e − funzionano con Invio/Spazio come tasti normali
     radice.addEventListener('keydown', (e) => {
-      const b = (e.target as HTMLElement).closest<HTMLElement>('[data-passo]');
-      const id = b?.closest<HTMLElement>('[data-canale]')?.dataset.canale as IdCorrente | undefined;
-      if (b && id && (e.key === 'Enter' || e.key === ' ')) {
+      const z = (e.target as Element).closest?.('.academy__punto');
+      if (z && (e.key === 'Enter' || e.key === ' ')) {
         e.preventDefault();
-        impostaIntensita(id, canali[id].intensita + Number(b.dataset.passo));
+        (z as HTMLElement).dispatchEvent(new MouseEvent('click', { bubbles: true }));
       }
     });
+    radice.addEventListener('change', (e) => {
+      const o = (e.target as HTMLInputElement).dataset.opzione as keyof typeof opzioni | undefined;
+      if (o) opzioni[o] = (e.target as HTMLInputElement).checked;
+    });
+
+    // ——— schermo intero (sul telefono anche in orizzontale) ———
+    async function schermoIntero() {
+      const d = $('[data-dispositivo]');
+      try {
+        if (document.fullscreenElement) await document.exitFullscreen();
+        else {
+          await d.requestFullscreen();
+          await (screen.orientation as ScreenOrientation & { lock?: (o: string) => Promise<void> }).lock?.('landscape').catch(() => {});
+        }
+      } catch {
+        // iPhone: niente schermo intero per gli elementi, uso la versione "ingrandita" della pagina
+        d.classList.toggle('dispositivo--grande');
+      }
+    }
 
     mostra('home');
     aggiornaTutto();
@@ -719,18 +987,11 @@ import { CORRENTI, CONFIGURAZIONI, FASI, STRATI, ZONE } from '../lib/back4';
 
   .sim__testa {
     max-width: 760px;
-    margin-bottom: 32px;
+    margin-bottom: 28px;
   }
 
   .sim__testa h2 {
     margin: 6px 0 12px;
-  }
-
-  .sim__griglia {
-    display: grid;
-    grid-template-columns: minmax(0, 1.55fr) minmax(0, 1fr);
-    gap: clamp(20px, 3vw, 36px);
-    align-items: start;
   }
 
   .sim__avviso {
@@ -739,99 +1000,88 @@ import { CORRENTI, CONFIGURAZIONI, FASI, STRATI, ZONE } from '../lib/back4';
     color: var(--grigio-500);
   }
 
-  /* ——— corpo del dispositivo: alluminio spazzolato ——— */
+  /* ——— foto del dispositivo con lo schermo sovrapposto al display ——— */
   .dispositivo {
     position: relative;
-    padding: clamp(14px, 3vw, 34px) clamp(12px, 3.5vw, 44px) 18px;
-    border-radius: 34px 34px 46px 46px;
-    background:
-      linear-gradient(115deg, rgb(255 255 255 / 0.55), transparent 40%),
-      repeating-linear-gradient(90deg, #d9dde1 0 2px, #cfd4d9 2px 4px),
-      #d4d8dc;
-    box-shadow:
-      inset 0 2px 0 rgb(255 255 255 / 0.9),
-      inset 0 -6px 18px rgb(0 0 0 / 0.12),
-      0 30px 60px rgb(8 22 63 / 0.22);
-  }
-
-  .dispositivo__marchio {
-    margin: 0 0 12px;
-    text-align: center;
-    font-size: clamp(1.4rem, 3.4vw, 2.2rem);
-    font-weight: 800;
-    letter-spacing: 0.06em;
-    color: #6b7178;
-    line-height: 1;
-  }
-
-  .dispositivo__marchio small {
-    display: block;
-    font-size: 0.32em;
-    letter-spacing: 0.18em;
-    margin-bottom: 2px;
-  }
-
-  .dispositivo__marchio span {
-    font-style: italic;
-    color: #8a9097;
-  }
-
-  .dispositivo__fondo {
-    position: relative;
-    display: flex;
-    justify-content: center;
-    padding-top: 16px;
-  }
-
-  .dispositivo__simbolo {
-    display: inline-flex;
-    gap: 6px;
-  }
-
-  .dispositivo__simbolo i {
-    width: 7px;
-    height: 34px;
-    border-radius: 2px;
-    background: linear-gradient(180deg, #f7f8f9, #aeb4ba);
-    transform: skewX(-20deg);
-    box-shadow: inset 0 0 0 1px rgb(0 0 0 / 0.08);
-  }
-
-  .dispositivo__simbolo i:last-child {
-    transform: skewX(20deg);
-  }
-
-  .dispositivo__accensione {
-    position: absolute;
-    right: 6%;
-    top: 18px;
-    width: 26px;
-    height: 26px;
-    border-radius: 50%;
-    background: radial-gradient(circle at 35% 30%, #fff, #9aa1a8 70%);
-    box-shadow: 0 0 0 3px #b9bec3;
-    transition: box-shadow 0.3s ease;
-  }
-
-  .dispositivo__accensione.acceso {
-    box-shadow:
-      0 0 0 3px #b9bec3,
-      0 0 0 5px rgb(56 189 248 / 0.7),
-      0 0 14px rgb(56 189 248 / 0.8);
-  }
-
-  /* ——— schermo ——— */
-  .schermo {
-    position: relative;
-    aspect-ratio: 4 / 3;
+    max-width: 920px;
+    margin-inline: auto;
+    border-radius: 28px;
     overflow: hidden;
-    border-radius: 12px;
-    border: 6px solid #1a1d21;
-    background: #0d1014;
-    color: #e5e9ee;
-    font-family: var(--font);
-    box-shadow: inset 0 0 30px rgb(0 0 0 / 0.7);
+    background: #cfd3d7;
+    box-shadow: 0 30px 70px rgb(8 22 63 / 0.25);
+  }
+
+  .dispositivo__foto {
+    display: block;
+    width: 100%;
+    height: auto;
+    user-select: none;
+    pointer-events: none;
+  }
+
+  .schermo {
+    /* posizione del display nella foto (misurata sull'immagine 750×540) */
+    position: absolute;
+    left: 20.27%;
+    top: 31.1%;
+    width: 59.73%;
+    height: 55.2%;
+    overflow: hidden;
+    border-radius: 0.4%;
+    background: radial-gradient(120% 90% at 50% 0%, #1b1e27, #0e1016 70%);
+    color: #eef1f5;
+    font-family: 'Montserrat', 'Plus Jakarta Sans Variable', system-ui, sans-serif;
     container-type: inline-size;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .dispositivo__intero {
+    position: absolute;
+    right: 14px;
+    bottom: 14px;
+    padding: 8px 14px;
+    border: 0;
+    border-radius: 999px;
+    background: rgb(15 33 56 / 0.85);
+    color: #fff;
+    font: inherit;
+    font-size: 0.85rem;
+    font-weight: 700;
+    cursor: pointer;
+  }
+
+  /* schermo intero: resta solo il display, grande */
+  .dispositivo:fullscreen,
+  .dispositivo--grande {
+    max-width: none;
+    display: grid;
+    place-items: center;
+    border-radius: 0;
+    background: #05070a;
+  }
+
+  .dispositivo--grande {
+    position: fixed;
+    inset: 0;
+    z-index: 200;
+  }
+
+  .dispositivo:fullscreen .dispositivo__foto,
+  .dispositivo--grande .dispositivo__foto {
+    display: none;
+  }
+
+  .dispositivo:fullscreen .schermo,
+  .dispositivo--grande .schermo {
+    position: relative;
+    left: auto;
+    top: auto;
+    width: min(100vw, 150vh);
+    height: auto;
+    aspect-ratio: 3 / 2;
+    border-radius: 12px;
   }
 
   .vista {
@@ -845,48 +1095,50 @@ import { CORRENTI, CONFIGURAZIONI, FASI, STRATI, ZONE } from '../lib/back4';
     display: none;
   }
 
-  /* home: onde colorate come sul dispositivo */
-  .onde {
+  .schermo button {
+    font: inherit;
+    color: inherit;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  .schermo svg {
+    display: block;
+  }
+
+  /* ——— home ——— */
+  .home {
+    background: #15171c;
+  }
+
+  .home__onde {
     position: absolute;
     inset: 0;
-    overflow: hidden;
+    width: 100%;
+    height: 100%;
+    filter: blur(0.35cqw);
   }
 
-  .onde span {
-    position: absolute;
-    left: -20%;
-    width: 140%;
-    height: 60%;
-    border-radius: 50%;
-    filter: blur(18px);
-    opacity: 0.55;
-    animation: ondeggia 9s ease-in-out infinite alternate;
+  .home__banda {
+    transform-origin: center;
+    animation: banda 12s ease-in-out infinite alternate;
   }
 
-  .onde span:nth-child(1) {
-    top: 10%;
-    background: radial-gradient(closest-side, #ef4444, transparent);
+  .home__banda--b {
+    animation-duration: 15s;
+    animation-delay: -4s;
   }
 
-  .onde span:nth-child(2) {
-    top: 35%;
-    background: radial-gradient(closest-side, #f97316, transparent);
-    animation-delay: -3s;
+  .home__banda--c {
+    animation-duration: 13s;
+    animation-delay: -8s;
   }
 
-  .onde span:nth-child(3) {
-    top: 45%;
-    left: 10%;
-    background: radial-gradient(closest-side, #10b981, transparent);
-    animation-delay: -6s;
-  }
-
-  @keyframes ondeggia {
+  @keyframes banda {
     from {
-      transform: translateX(-6%) rotate(-4deg);
+      transform: translate(-2%, -1.5%) skewY(-1.5deg);
     }
     to {
-      transform: translateX(6%) rotate(4deg);
+      transform: translate(2%, 1.5%) skewY(1.5deg);
     }
   }
 
@@ -894,503 +1146,901 @@ import { CORRENTI, CONFIGURAZIONI, FASI, STRATI, ZONE } from '../lib/back4';
     position: relative;
     margin: auto;
     display: flex;
-    gap: 5cqw;
+    gap: 4.5cqw;
   }
 
   .home__scelta {
-    display: grid;
-    place-items: center;
-    gap: 1.2cqw;
-    width: 22cqw;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 0.6cqw;
+    width: 29cqw;
     aspect-ratio: 1;
-    border: 1px solid rgb(255 255 255 / 0.12);
-    border-radius: 2cqw;
-    background: linear-gradient(160deg, #2a2f36, #15181d);
-    color: #fff;
-    font: inherit;
+    border: 0;
+    border-radius: 2.6cqw;
+    background: rgb(40 43 50 / 0.82);
+    backdrop-filter: blur(1cqw);
+    box-shadow: 0 1cqw 3cqw rgb(0 0 0 / 0.35);
     cursor: pointer;
-    box-shadow: 0 1.5cqw 3cqw rgb(0 0 0 / 0.5);
-    transition: transform 0.2s ease, border-color 0.2s ease;
+    transition: transform 0.25s ease, background-color 0.25s ease;
   }
 
   .home__scelta:hover,
   .home__scelta:focus-visible {
-    transform: translateY(-0.6cqw);
-    border-color: rgb(255 255 255 / 0.45);
+    transform: scale(1.03);
+    background: rgb(52 56 64 / 0.9);
+  }
+
+  .home__scelta:active {
+    transform: scale(0.97);
   }
 
   .home__scelta svg {
-    width: 5cqw;
+    width: 5.6cqw;
+    margin-bottom: 1.2cqw;
     fill: none;
-    stroke: currentColor;
-    stroke-width: 1.6;
+    stroke: #fff;
+    stroke-width: 1.7;
+    stroke-linecap: round;
+  }
+
+  .schermo svg.pieno {
+    fill: #fff;
+    stroke: none;
+  }
+
+  .home__scelta strong {
+    font-size: 2.7cqw;
+    font-weight: 700;
+    letter-spacing: 0.16em;
+  }
+
+  .home__scelta small {
+    font-size: 1.5cqw;
+    font-weight: 600;
+    letter-spacing: 0.42em;
+    color: #9aa1ab;
+  }
+
+  /* ——— testata comune ——— */
+  .testata {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 1.4cqw 2cqw 0;
+    min-height: 6cqw;
+  }
+
+  .testata__icona {
+    width: 5cqw;
+    height: 5cqw;
+    border: 0;
+    border-radius: 50%;
+    background: none;
+    font-size: 3.6cqw !important;
+    line-height: 1;
+    color: #b8bec8 !important;
+    cursor: pointer;
+  }
+
+  .testata__icona--tenue {
+    color: #4b515c !important;
+  }
+
+  .testata__titolo {
+    font-size: 2.2cqw;
+    font-weight: 600;
+    letter-spacing: 0.04em;
+    color: #d6dae1;
+  }
+
+  /* ——— Expert: colonne ——— */
+  .colonne {
+    flex: 1;
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 1.1cqw;
+    padding: 0.6cqw 3cqw 1.2cqw;
+    min-height: 0;
+  }
+
+  .col {
+    --colore: #7c8591;
+    --scuro: #20242b;
+    --livello: 0;
+    position: relative;
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+    border-radius: 1.8cqw;
+    background: linear-gradient(180deg, #1d2028, #16181e);
+    opacity: 0.38;
+    transition: opacity 0.3s ease;
+  }
+
+  .col--attiva {
+    opacity: 1;
+  }
+
+  .col__testa {
+    position: relative;
+    margin: 0.9cqw 1cqw 0;
+    padding: 1.1cqw 0 0;
+    border: 0;
+    border-radius: 1.4cqw 1.4cqw 0 0;
+    background:
+      repeating-radial-gradient(ellipse 120% 90% at 50% -10%, transparent 0 0.9cqw, color-mix(in srgb, var(--colore) 22%, transparent) 0.9cqw 1.05cqw),
+      transparent;
+    cursor: pointer;
+  }
+
+  .col--attiva .col__testa {
+    background:
+      repeating-radial-gradient(ellipse 120% 90% at 50% -10%, transparent 0 0.9cqw, color-mix(in srgb, var(--colore) 40%, transparent) 0.9cqw 1.05cqw),
+      linear-gradient(180deg, color-mix(in srgb, var(--colore) 18%, transparent), transparent);
+  }
+
+  .col__testa strong {
+    display: block;
+    font-size: 2.35cqw;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+  }
+
+  .col__tempo {
+    margin: 0 1cqw;
+    padding: 0.1cqw 0 0.9cqw;
+    border: 0;
+    background: none;
+    font-size: 2.15cqw !important;
+    font-variant-numeric: tabular-nums;
+    letter-spacing: 0.03em;
+    cursor: pointer;
+  }
+
+  /* angoli della colonna selezionata o in erogazione */
+  .angolo {
+    position: absolute;
+    width: 1.6cqw;
+    height: 1.6cqw;
+    border: 0.28cqw solid var(--colore);
+    opacity: 0;
+    transition: opacity 0.2s ease;
+  }
+
+  .angolo--a {
+    top: 0.6cqw;
+    left: 1.2cqw;
+    border-right: 0;
+    border-bottom: 0;
+  }
+
+  .angolo--b {
+    top: 0.6cqw;
+    right: 1.2cqw;
+    border-left: 0;
+    border-bottom: 0;
+  }
+
+  .angolo--c {
+    top: 7.6cqw;
+    left: 1.2cqw;
+    border-right: 0;
+    border-top: 0;
+  }
+
+  .angolo--d {
+    top: 7.6cqw;
+    right: 1.2cqw;
+    border-left: 0;
+    border-top: 0;
+  }
+
+  .col--scelta .angolo,
+  .col--eroga .angolo {
+    opacity: 1;
+  }
+
+  .col--eroga .angolo {
+    animation: lampeggia 1.6s ease-in-out infinite;
+  }
+
+  @keyframes lampeggia {
+    50% {
+      opacity: 0.35;
+    }
+  }
+
+  .col__regola-tempo {
+    position: absolute;
+    z-index: 3;
+    top: 9cqw;
+    left: 50%;
+    display: flex;
+    gap: 0.6cqw;
+    padding: 0.6cqw;
+    border-radius: 1.2cqw;
+    background: #2a2e37;
+    box-shadow: 0 1cqw 2cqw rgb(0 0 0 / 0.5);
+    transform: translateX(-50%);
+  }
+
+  .col__regola-tempo[hidden] {
+    display: none;
+  }
+
+  .col__regola-tempo button {
+    width: 4.4cqw;
+    height: 4.4cqw;
+    border: 0;
+    border-radius: 0.9cqw;
+    background: #3a3f4a;
+    font-size: 2.8cqw;
+    cursor: pointer;
+  }
+
+  .col__opzioni {
+    display: grid;
+    margin: 0 1cqw;
+    border-top: 1px solid rgb(255 255 255 / 0.06);
+  }
+
+  .col__opzioni button {
+    padding: 1cqw 0;
+    border: 0;
+    border-bottom: 1px solid rgb(255 255 255 / 0.06);
+    background: none;
+    font-size: 1.95cqw !important;
+    font-weight: 500;
+    color: #e3e7ec !important;
+    cursor: pointer;
+  }
+
+  .col__opzioni button:only-child {
+    padding-block: 2.2cqw;
+  }
+
+  .col__opzioni button:active {
+    background: rgb(255 255 255 / 0.06);
+  }
+
+  /* area della potenza: liquido colorato con l'onda in cima e la pillola della percentuale */
+  .col__potenza {
+    position: relative;
+    flex: 1;
+    min-height: 0;
+    margin: 0.8cqw 0.6cqw 0.6cqw;
+    border-radius: 1.4cqw;
+    overflow: hidden;
+    cursor: ns-resize;
+    touch-action: none;
+    outline: none;
+  }
+
+  .col__potenza:focus-visible {
+    box-shadow: inset 0 0 0 0.25cqw var(--colore);
+  }
+
+  .col__liquido {
+    position: absolute;
+    inset: auto 0 0;
+    height: calc(var(--livello) * 100%);
+    background: linear-gradient(180deg, color-mix(in srgb, var(--colore) 55%, transparent), color-mix(in srgb, var(--scuro) 90%, transparent));
+  }
+
+  .col__onda {
+    position: absolute;
+    left: 0;
+    right: 0;
+    bottom: 100%;
+    height: 2.2cqw;
+    background-color: color-mix(in srgb, var(--colore) 55%, transparent);
+    -webkit-mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M0 12C25 2 50 2 75 10s50 10 75 0 37-8 50-2V20H0z'/%3E%3C/svg%3E") repeat-x 0 100% / 200% 100%;
+    mask: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 200 20' preserveAspectRatio='none'%3E%3Cpath d='M0 12C25 2 50 2 75 10s50 10 75 0 37-8 50-2V20H0z'/%3E%3C/svg%3E") repeat-x 0 100% / 200% 100%;
+    animation: onda 6s linear infinite;
+  }
+
+  .col--eroga .col__onda {
+    animation-duration: 1.6s;
+  }
+
+  @keyframes onda {
+    to {
+      -webkit-mask-position: -200% 100%;
+      mask-position: -200% 100%;
+    }
+  }
+
+  .col__tacche {
+    position: absolute;
+    inset: 6% 0 4%;
+    background: repeating-linear-gradient(180deg, color-mix(in srgb, var(--colore) 70%, #000) 0 0.35cqw, transparent 0.35cqw 2cqw) center / 1.6cqw 100% no-repeat;
+    opacity: 0.8;
+  }
+
+  .col__pillola {
+    position: absolute;
+    left: 50%;
+    bottom: calc(var(--livello) * 82% + 9%);
+    min-width: 76%;
+    padding: 0.35cqw 1.2cqw;
+    border-radius: 99px;
+    background: var(--colore);
+    color: #fff;
+    font-size: 3.1cqw;
+    font-weight: 600;
+    line-height: 1.2;
+    text-align: center;
+    letter-spacing: 0.02em;
+    transform: translate(-50%, 50%);
+    box-shadow: 0 0 2cqw color-mix(in srgb, var(--colore) 60%, transparent);
+    pointer-events: none;
+  }
+
+  .col:not(.col--attiva) .col__pillola {
+    background: #3a3e46;
+    box-shadow: none;
+  }
+
+  .col__pillola small {
+    font-size: 0.55em;
+    vertical-align: 0.6em;
+  }
+
+  /* Hi-TENS: frequenze a cerchi e puntini luminosi */
+  .col--tens .col__tacche,
+  .col--tens .col__liquido {
+    display: none;
+  }
+
+  /* puntini luminosi ai lati dei cerchi: più potenza, più luce */
+  .col--tens .col__potenza::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle, var(--colore) 0.2cqw, transparent 0.3cqw) 0 0 / 1.3cqw 1.3cqw;
+    opacity: calc(0.15 + var(--livello) * 0.85);
+    -webkit-mask: linear-gradient(90deg, #000 0 22%, transparent 34% 66%, #000 78%);
+    mask: linear-gradient(90deg, #000 0 22%, transparent 34% 66%, #000 78%);
+  }
+
+  .col--eroga.col--tens .col__potenza::before {
+    animation: brilla 0.6s ease-in-out infinite alternate;
+  }
+
+  @keyframes brilla {
+    to {
+      filter: brightness(1.6);
+    }
+  }
+
+  .col__frequenze {
+    position: absolute;
+    inset: 2% 0 13%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: space-around;
+  }
+
+  .col__frequenze button {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    width: 6.6cqw;
+    aspect-ratio: 1;
+    border: 0;
+    border-radius: 50%;
+    background: color-mix(in srgb, var(--colore) 16%, #12151a);
+    color: color-mix(in srgb, var(--colore) 45%, #fff) !important;
+    font-size: 2.7cqw !important;
+    font-weight: 600;
+    line-height: 0.95;
+    cursor: pointer;
+    transition: background-color 0.2s ease, transform 0.2s ease;
+  }
+
+  .col__frequenze button small {
+    font-size: 0.5em;
+  }
+
+  .col__frequenze button[aria-pressed='true'] {
+    background: color-mix(in srgb, var(--colore) 70%, #0b2b29);
+    color: #fff !important;
+    transform: scale(1.12);
+  }
+
+  .col__percento {
+    font-size: 1.8cqw;
+    font-weight: 600;
+    color: #cbd5e1;
+  }
+
+  /* SWAP tra RET e Hi-TENS */
+  .swap {
+    position: absolute;
+    z-index: 2;
+    top: 12.5cqw;
+    right: -2.55cqw;
+    width: 4cqw;
+    height: 4cqw;
+    padding: 0.7cqw;
+    border: 0;
+    border-radius: 50%;
+    background: #101217;
+    cursor: pointer;
+  }
+
+  .swap svg {
+    fill: none;
+    stroke: #6b7280;
+    stroke-width: 2.2;
     stroke-linecap: round;
     stroke-linejoin: round;
   }
 
-  .home__scelta strong {
-    font-size: 2.3cqw;
-    letter-spacing: 0.12em;
+  .swap[aria-pressed='true'] svg {
+    stroke: #2dd4bf;
+    filter: drop-shadow(0 0 0.5cqw #6d5bd6);
   }
 
-  .home__scelta small {
-    margin-top: -1cqw;
-    font-size: 1.5cqw;
-    letter-spacing: 0.3em;
-    color: #9aa3ad;
+  .sim--in-corso .swap[aria-pressed='true'] svg {
+    animation: gira 2.4s linear infinite;
   }
 
-  /* barra in alto dello schermo */
-  .barra-schermo {
+  @keyframes gira {
+    to {
+      transform: rotate(360deg);
+    }
+  }
+
+  /* ——— barra in basso ——— */
+  .fondo {
+    display: grid;
+    grid-template-columns: 1fr auto 1fr;
+    align-items: center;
+    margin: 0 3cqw 1.8cqw;
+    padding: 0.8cqw 2cqw;
+    border-radius: 2cqw;
+    background:
+      repeating-radial-gradient(circle at 0 50%, transparent 0 0.8cqw, rgb(255 255 255 / 0.03) 0.8cqw 0.95cqw),
+      repeating-radial-gradient(circle at 100% 50%, transparent 0 0.8cqw, rgb(255 255 255 / 0.03) 0.8cqw 0.95cqw),
+      #1a1d23;
+  }
+
+  .fondo__accessori {
     display: flex;
     align-items: center;
-    gap: 1.2cqw;
-    padding: 1.2cqw 1.6cqw;
-    background: #16191e;
-    border-bottom: 1px solid #262b31;
-    font-size: 1.9cqw;
+    gap: 1.6cqw;
   }
 
-  .barra-schermo__home {
-    flex-shrink: 0;
-    width: 4.4cqw;
-    height: 4.4cqw;
+  .accessorio {
+    width: 6cqw;
+    padding: 0;
     border: 0;
-    border-radius: 1cqw;
-    background: #262b31;
-    color: #fff;
-    font-size: 2.6cqw;
+    background: none;
+    opacity: 0.35;
     cursor: pointer;
+    transition: opacity 0.25s ease, transform 0.25s ease;
   }
 
-  .barra-schermo__passo {
-    margin-left: auto;
-    color: #9aa3ad;
+  .accessorio--piastra {
+    width: 4.6cqw;
   }
 
-  .barra-schermo__wifi svg {
-    width: 3cqw;
+  .accessorio.collegato {
+    opacity: 1;
+  }
+
+  .accessorio:active {
+    transform: scale(0.94);
+  }
+
+  .accessorio .metallo {
+    fill: #c4c9cf;
+  }
+
+  .accessorio .cavo {
+    stroke: #6b7280;
+    stroke-width: 2;
+  }
+
+  .accessorio .spunta-cerchio {
+    fill: #9aa1a9;
+  }
+
+  .accessorio .spunta {
     fill: none;
     stroke: #22c55e;
-    stroke-width: 2;
-    stroke-linecap: round;
+    stroke-width: 1.4;
+    opacity: 0;
   }
 
-  .schede-correnti {
-    display: flex;
-    gap: 0.8cqw;
-    flex: 1;
-  }
-
-  .scheda-corrente {
-    flex: 1;
-    padding: 0.9cqw 0.4cqw;
-    border: 0;
-    border-radius: 0.8cqw;
-    background: #23272d;
-    color: #7c858f;
-    font: inherit;
-    font-size: 1.7cqw;
-    font-weight: 700;
-    cursor: pointer;
-    box-shadow: inset 0 -0.4cqw 0 transparent;
-    transition: background-color 0.2s ease, color 0.2s ease, box-shadow 0.2s ease;
-  }
-
-  .scheda-corrente[aria-pressed='true'] {
-    background: #2d333a;
-    color: #fff;
-    box-shadow: inset 0 -0.4cqw 0 var(--colore, #94a3b8);
-  }
-
-  .scheda-corrente--swap {
-    flex: 0 0 auto;
-    padding-inline: 1.2cqw;
-  }
-
-  .scheda-corrente--swap[aria-pressed='true'] {
-    box-shadow: inset 0 -0.4cqw 0 #a78bfa;
-  }
-
-  /* colonne dei canali */
-  .canali {
-    flex: 1;
-    display: grid;
-    grid-template-columns: repeat(5, 1fr);
-    gap: 0.8cqw;
-    padding: 1.2cqw 1.6cqw;
-    min-height: 0;
-  }
-
-  .canale {
-    --colore: #64748b;
-    --livello: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.9cqw;
-    padding: 1cqw 0.6cqw;
-    border-radius: 1.2cqw;
-    background: #15181c;
-    opacity: 0.45;
-    transition: opacity 0.25s ease, background-color 0.25s ease;
-  }
-
-  .canale--attivo {
+  .accessorio.collegato .spunta {
     opacity: 1;
-    background: linear-gradient(180deg, #1b1f24, #121418);
   }
 
-  .canale__modi {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.4cqw;
+  .accessorio .corpo-tx {
+    fill: #3b3f47;
+    stroke: #f2733a;
+    stroke-width: 0.8;
   }
 
-  .canale__modi button,
-  .canale__frequenza :global(button) {
-    padding: 0.4cqw 0.7cqw;
-    border: 1px solid #2c3238;
-    border-radius: 0.6cqw;
-    background: none;
-    color: #8f98a2;
-    font: inherit;
-    font-size: 1.3cqw;
-    cursor: pointer;
+  .accessorio .riflesso {
+    stroke: rgb(255 255 255 / 0.4);
+    stroke-width: 1.2;
   }
 
-  .canale__modi button[aria-pressed='true'],
-  .canale__frequenza :global(button[aria-pressed='true']) {
-    border-color: var(--colore);
-    color: #fff;
-    background: color-mix(in srgb, var(--colore) 25%, transparent);
+  .accessorio .stelo {
+    stroke: #9aa1a9;
+    stroke-width: 3;
   }
 
-  .canale__frequenza {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.4cqw;
-    min-height: 2.6cqw;
-    font-size: 1.5cqw;
-    color: #c9d1d9;
+  .accessorio .base {
+    fill: #2b2e34;
+    stroke: #9aa1a9;
+    stroke-width: 0.8;
   }
 
-  .canale__potenza {
-    flex: 1;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    gap: 0.6cqw;
-    min-height: 0;
-    width: 100%;
-  }
-
-  .canale__potenza output {
-    font-size: 2.6cqw;
-    font-weight: 700;
-    color: #fff;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .cursore {
+  .timer {
     position: relative;
-    flex: 1;
-    width: 6cqw;
-    min-height: 12cqw;
+    display: grid;
+    place-items: center;
+    width: 12.5cqw;
+    aspect-ratio: 1;
+    margin-block: 0;
   }
 
-  .cursore__traccia {
-    position: absolute;
-    inset: 0 2.2cqw;
-    border-radius: 99px;
-    background: repeating-linear-gradient(0deg, #2a3036 0 1px, transparent 1px 8%), #1d2126;
-    overflow: hidden;
-  }
-
-  .cursore__livello {
-    position: absolute;
-    inset: auto 0 0;
-    height: calc(var(--livello) * 100%);
-    border-radius: 99px;
-    background: linear-gradient(0deg, color-mix(in srgb, var(--colore) 55%, #000), var(--colore));
-    box-shadow: 0 0 1.4cqw var(--colore);
-    transition: height 0.12s linear;
-  }
-
-  /* il cursore vero, verticale, trasparente sopra la traccia: tocco, trascinamento e frecce della tastiera */
-  .cursore__input {
+  .timer > svg {
+    pointer-events: none;
     position: absolute;
     inset: 0;
     width: 100%;
     height: 100%;
-    margin: 0;
-    writing-mode: vertical-lr;
-    direction: rtl;
-    appearance: none;
-    background: transparent;
-    cursor: ns-resize;
-    touch-action: none;
-  }
-
-  .cursore__input::-webkit-slider-thumb {
-    appearance: none;
-    width: 6cqw;
-    height: 1.4cqw;
-    border-radius: 99px;
-    background: #f5f7fa;
-    box-shadow: 0 0 0 0.3cqw var(--colore), 0 0.4cqw 1cqw rgb(0 0 0 / 0.6);
-  }
-
-  .cursore__input::-moz-range-thumb {
-    width: 6cqw;
-    height: 1.4cqw;
-    border: 0;
-    border-radius: 99px;
-    background: #f5f7fa;
-    box-shadow: 0 0 0 0.3cqw var(--colore), 0 0.4cqw 1cqw rgb(0 0 0 / 0.6);
-  }
-
-  .cursore__input:focus-visible {
-    outline: 2px solid var(--colore);
-    outline-offset: 2px;
-    border-radius: 1cqw;
-  }
-
-  .canale__piu-meno {
-    display: flex;
-    gap: 0.6cqw;
-  }
-
-  .canale__piu-meno button,
-  .canale__tempo button {
-    width: 4.4cqw;
-    height: 3.6cqw;
-    border: 0;
-    border-radius: 0.8cqw;
-    background: #262b31;
-    color: #fff;
-    font: inherit;
-    font-size: 2.4cqw;
-    line-height: 1;
-    cursor: pointer;
-    touch-action: manipulation;
-    user-select: none;
-  }
-
-  .canale__piu-meno button:active,
-  .canale__tempo button:active {
-    background: var(--colore);
-  }
-
-  .canale__tempo {
-    display: flex;
-    align-items: center;
-    gap: 0.5cqw;
-    font-size: 1.8cqw;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .canale__tempo button {
-    width: 3cqw;
-    height: 3cqw;
-    font-size: 2cqw;
-  }
-
-  .comandi {
-    display: flex;
-    align-items: center;
-    gap: 2cqw;
-    padding: 1cqw 1.6cqw;
-    background: #16191e;
-    border-top: 1px solid #262b31;
-  }
-
-  .comandi__motto {
-    flex: 1;
-    font-size: 1.4cqw;
-    letter-spacing: 0.3em;
-    color: #59616b;
-  }
-
-  .comandi__tasti {
-    display: flex;
-    gap: 1cqw;
-  }
-
-  .comandi__tasti button {
-    width: 5cqw;
-    height: 4.2cqw;
-    border: 0;
-    border-radius: 1cqw;
-    background: #262b31;
-    color: #e5e9ee;
-    font-size: 1.9cqw;
-    cursor: pointer;
-  }
-
-  .comandi__tasti [data-avvia] {
-    color: #22c55e;
-  }
-
-  .sim--in-corso .comandi__tasti [data-avvia] {
-    background: #14532d;
-    color: #fff;
-  }
-
-  .anello {
-    position: relative;
-    width: 7cqw;
-    height: 7cqw;
-    display: grid;
-    place-items: center;
-  }
-
-  .anello svg {
-    position: absolute;
-    inset: 0;
     transform: rotate(-90deg);
   }
 
-  .anello__fondo,
-  .anello__avanzamento {
+  .timer__tacche,
+  .timer__fatto {
     fill: none;
-    stroke-width: 2.6;
+    stroke-width: 4;
   }
 
-  .anello__fondo {
-    stroke: #262b31;
+  .timer__tacche {
+    stroke: #2dd4bf;
+    stroke-dasharray: 1 3.6;
+    opacity: 0.85;
   }
 
-  .anello__avanzamento {
-    --avanzamento: 1;
-    stroke: #22c55e;
-    stroke-linecap: round;
-    stroke-dasharray: 106.8;
-    stroke-dashoffset: calc(106.8 * (1 - var(--avanzamento)));
-    transition: stroke-dashoffset 0.4s linear;
+  .timer__fatto {
+    --fatto: 0;
+    stroke: #1a1d23;
+    stroke-width: 6;
+    stroke-dasharray: 276.5;
+    stroke-dashoffset: calc(276.5 * (1 - var(--fatto)));
+    transition: stroke-dashoffset 0.3s linear;
   }
 
-  .anello span {
-    font-size: 2.2cqw;
-    font-weight: 700;
+  .timer__tempo {
+    margin-top: 1.6cqw;
+    font-size: 2.6cqw;
+    font-weight: 500;
+    letter-spacing: 0.03em;
     font-variant-numeric: tabular-nums;
   }
 
-  /* Academy */
-  .academy {
-    flex: 1;
+  .timer__tasti {
+    position: relative;
+    z-index: 1;
     display: flex;
-    flex-direction: column;
-    gap: 1.6cqw;
-    padding: 2cqw 3cqw;
-    overflow-y: auto;
+    gap: 1cqw;
+    margin-bottom: 1.8cqw;
   }
 
-  .academy[hidden] {
+  .timer__tasti button {
+    display: grid;
+    place-items: center;
+    width: 3.6cqw;
+    height: 3.6cqw;
+    padding: 0.85cqw;
+    border: 0;
+    border-radius: 50%;
+    background: #2a2e37;
+    cursor: pointer;
+  }
+
+  .timer__tasti svg {
+    width: 100%;
+    fill: #e6e9ee;
+  }
+
+  .timer__tasti [data-ferma] svg {
+    fill: #6b7280;
+  }
+
+  .icona-pausa,
+  .sim--in-corso .icona-avvia {
+    display: none !important;
+  }
+
+  .sim--in-corso .icona-pausa {
+    display: block !important;
+  }
+
+  .fondo__destra {
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
+    gap: 3cqw;
+  }
+
+  .fondo__wifi svg,
+  .fondo__icona svg {
+    width: 3.6cqw;
+  }
+
+  .fondo__wifi svg {
+    fill: none;
+    stroke: #fff;
+    stroke-width: 2;
+    stroke-linecap: round;
+  }
+
+  .fondo__wifi circle {
+    fill: #fff;
+  }
+
+  .fondo__icona {
+    padding: 0;
+    border: 0;
+    background: none;
+    cursor: pointer;
+  }
+
+  .fondo__icona svg {
+    fill: #fff;
+  }
+
+  .fondo__icona .foro {
+    fill: #1a1d23;
+  }
+
+  .fondo__academy {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2cqw;
+    padding: 0 0 0 3cqw;
+    border: 0;
+    border-left: 1px solid rgb(255 255 255 / 0.08);
+    background: none;
+    cursor: pointer;
+  }
+
+  .fondo__academy svg {
+    width: 3.6cqw;
+  }
+
+  .fondo__academy strong {
+    font-size: 1.6cqw;
+    letter-spacing: 0.12em;
+  }
+
+  .fondo__academy small {
+    font-size: 1cqw;
+    letter-spacing: 0.4em;
+    color: #9aa1ab;
+  }
+
+  .foglio {
+    position: absolute;
+    right: 3cqw;
+    bottom: 14cqw;
+    display: grid;
+    gap: 1.2cqw;
+    padding: 2cqw;
+    border-radius: 1.6cqw;
+    background: #262a32;
+    box-shadow: 0 1.5cqw 4cqw rgb(0 0 0 / 0.6);
+    font-size: 1.9cqw;
+  }
+
+  .foglio[hidden] {
     display: none;
   }
 
-  .academy__domanda {
+  .foglio__titolo {
     margin: 0;
-    font-size: 2.6cqw;
     font-weight: 700;
   }
 
-  .academy__scelte {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 1.2cqw;
+  .foglio label {
+    display: flex;
+    gap: 1cqw;
+    align-items: center;
   }
 
-  .academy__scelte--zone {
-    grid-template-columns: repeat(5, 1fr);
+  .foglio button {
+    padding: 0.8cqw;
+    border: 0;
+    border-radius: 0.8cqw;
+    background: #3a3f4a;
+    cursor: pointer;
   }
 
-  .academy__scelte button {
+  /* ——— Academy ——— */
+  .academy {
+    background: radial-gradient(90% 80% at 30% 40%, #1e2230, #0e1016 75%);
+  }
+
+  .academy__corpo {
+    flex: 1;
     display: grid;
-    gap: 0.6cqw;
-    padding: 1.6cqw 1.2cqw;
-    border: 1px solid #2c3238;
-    border-radius: 1.2cqw;
-    background: linear-gradient(160deg, #23282e, #16191d);
-    color: #e5e9ee;
-    font: inherit;
-    font-size: 1.8cqw;
+    grid-template-columns: 0.9fr 1.1fr;
+    gap: 2cqw;
+    min-height: 0;
+    padding: 0 3cqw 2.5cqw;
+  }
+
+  .academy__sagoma {
+    height: 100%;
+    width: 100%;
+    min-height: 0;
+  }
+
+  .academy__figura path {
+    fill: rgb(120 140 180 / 0.13);
+    stroke: rgb(160 180 220 / 0.35);
+    stroke-width: 0.35;
+  }
+
+  .academy__punto {
+    cursor: pointer;
+    outline: none;
+  }
+
+  .academy__punto circle {
+    fill: #7dd3fc;
+  }
+
+  .academy__punto .academy__alone {
+    fill: rgb(125 211 252 / 0.18);
+    transform-box: fill-box;
+    transform-origin: center;
+    animation: pulsa 2.2s ease-in-out infinite;
+  }
+
+  .academy__punto.scelta circle {
+    fill: #f2733a;
+  }
+
+  .academy__punto.scelta .academy__alone {
+    fill: rgb(242 115 58 / 0.3);
+  }
+
+  .academy__punto:hover .academy__alone,
+  .academy__punto:focus-visible .academy__alone {
+    fill: rgb(125 211 252 / 0.4);
+  }
+
+  @keyframes pulsa {
+    50% {
+      transform: scale(1.35);
+      opacity: 0.6;
+    }
+  }
+
+  .academy__lato {
+    min-height: 0;
+    overflow-y: auto;
+    scrollbar-width: none;
+  }
+
+  .academy__lato [hidden] {
+    display: none;
+  }
+
+  .academy__lista {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1cqw;
+  }
+
+  .academy__lista--fasi {
+    grid-template-columns: 1fr;
+  }
+
+  .academy__lista button {
+    display: grid;
+    gap: 0.4cqw;
+    padding: 1.5cqw 1.6cqw;
+    border: 0;
+    border-radius: 1.4cqw;
+    background: rgb(40 43 50 / 0.85);
+    font-size: 1.9cqw !important;
     text-align: left;
     cursor: pointer;
   }
 
-  .academy__scelte button:hover,
-  .academy__scelte button[aria-pressed='true'] {
-    border-color: #38bdf8;
+  .academy__lista button.scelta,
+  .academy__lista button:hover {
+    background: rgb(60 64 74 / 0.95);
+    box-shadow: inset 0.35cqw 0 0 #f2733a;
   }
 
-  .academy__scelte small {
-    font-size: 1.4cqw;
-    color: #9aa3ad;
+  .academy__lista small {
+    font-size: 1.5cqw;
+    color: #9aa1ab;
     line-height: 1.35;
   }
 
   .academy__programma {
     display: grid;
-    gap: 0.8cqw;
-    margin: 0;
+    gap: 1cqw;
+    margin: 0 0 1.6cqw;
     padding: 0;
     list-style: none;
-    counter-reset: passo;
   }
 
   .academy__programma :global(li) {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 0 1.4cqw;
     padding: 1.2cqw 1.6cqw;
     border-left: 0.6cqw solid var(--colore);
-    border-radius: 0.8cqw;
-    background: #1b1f24;
-    font-size: 1.8cqw;
-  }
-
-  .academy__azioni {
-    display: flex;
-    gap: 1.2cqw;
-  }
-
-  .tasto-schermo {
-    padding: 1.2cqw 2.4cqw;
-    border: 1px solid #2c3238;
     border-radius: 1cqw;
-    background: #23282e;
-    color: #fff;
-    font: inherit;
-    font-size: 1.8cqw;
+    background: rgb(40 43 50 / 0.85);
+    font-size: 1.7cqw;
+  }
+
+  .academy__programma :global(strong) {
+    grid-row: span 2;
+    align-self: center;
+    font-size: 2.1cqw;
+  }
+
+  .academy__programma :global(em) {
+    font-style: normal;
+    color: #9aa1ab;
+  }
+
+  .academy__avvia {
+    width: 100%;
+    padding: 1.6cqw;
+    border: 0;
+    border-radius: 1.4cqw;
+    background: linear-gradient(90deg, #f2733a, #e0452b);
+    font-size: 2.1cqw !important;
+    font-weight: 700;
+    letter-spacing: 0.06em;
     cursor: pointer;
   }
 
-  .tasto-schermo--primario {
-    border-color: #22c55e;
-    background: #14532d;
-  }
-
   .academy__nota {
-    margin: 0;
+    margin: 1cqw 0 0;
     font-size: 1.4cqw;
-    color: #7c858f;
+    color: #6b7280;
+    text-align: center;
   }
 
-  /* ——— pannello laterale ——— */
-  .pannello-sim {
+  /* ——— pannelli sotto il dispositivo ——— */
+  .pannelli {
     display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
     gap: 16px;
+    margin-top: 24px;
   }
 
-  .pannello-sim__blocco {
+  .pannello-sim {
     padding: 18px;
     border-radius: var(--raggio);
     background: var(--bianco);
     box-shadow: var(--ombra);
   }
 
-  .pannello-sim__blocco h3 {
+  .pannello-sim h3 {
     margin: 0 0 12px;
     font-size: 1.05rem;
   }
@@ -1420,46 +2070,30 @@ import { CORRENTI, CONFIGURAZIONI, FASI, STRATI, ZONE } from '../lib/back4';
   }
 
   .pannello-sim__spiega {
-    margin: 12px 0;
+    margin: 12px 0 8px;
     font-size: 0.92rem;
     color: var(--grigio-700);
   }
 
   .pannello-sim__nota {
-    margin: 8px 0 0;
+    margin: 0;
     font-size: 0.82rem;
     color: var(--grigio-500);
   }
 
-  .urto {
-    padding: 9px 16px;
-    font-size: 0.9rem;
-  }
-
-  .urto--scossa {
-    animation: scossa 0.45s ease;
-  }
-
-  @keyframes scossa {
-    20%,
-    60% {
-      transform: translateX(-4px);
-    }
-    40%,
-    80% {
-      transform: translateX(4px);
-    }
-  }
-
-  .corpo-blocco {
-    padding-bottom: 12px;
+  .pannello-sim__stato {
+    min-height: 2.6em;
+    margin: 6px 0 8px;
+    font-size: 0.88rem;
+    font-weight: 600;
+    color: var(--blu-900);
   }
 
   .corpo {
     display: block;
     width: 100%;
-    max-height: 440px;
-    margin-inline: auto;
+    max-height: 360px;
+    touch-action: none;
   }
 
   .corpo__sagoma {
@@ -1468,20 +2102,21 @@ import { CORRENTI, CONFIGURAZIONI, FASI, STRATI, ZONE } from '../lib/back4';
     stroke-width: 0.4;
   }
 
-  .corpo__zona {
-    fill: transparent;
-    stroke: transparent;
-    stroke-width: 0.6;
-    cursor: pointer;
+  .corpo__calore {
+    --calore: 0;
+    opacity: var(--calore);
+    transform-box: fill-box;
+    transform-origin: center;
+    scale: calc(0.6 + var(--calore) * 0.9);
+    pointer-events: none;
   }
 
-  .corpo__zona:hover {
-    stroke: var(--grigio-500);
+  .corpo :global(.elettrodo) {
+    cursor: grab;
   }
 
-  .corpo__zona--scelta {
-    fill: rgb(224 160 48 / 0.25);
-    stroke: var(--accento);
+  .corpo :global(.elettrodo:active) {
+    cursor: grabbing;
   }
 
   .corpo :global(.elettrodo circle),
@@ -1503,24 +2138,45 @@ import { CORRENTI, CONFIGURAZIONI, FASI, STRATI, ZONE } from '../lib/back4';
     paint-order: stroke;
     stroke: #fff;
     stroke-width: 0.8px;
+    pointer-events: none;
   }
 
   .corpo :global(.flusso) {
     stroke-width: calc(0.6px + var(--forza, 0.5) * 1.4px);
     stroke-linecap: round;
     stroke-dasharray: 1.6 2.4;
-    opacity: 0.35;
-  }
-
-  .sim--flusso .corpo :global(.flusso) {
     opacity: var(--forza, 0.8);
     animation: scorre calc(1.6s - var(--forza, 0.5) * 1s) linear infinite;
+    pointer-events: none;
   }
 
   @keyframes scorre {
     to {
       stroke-dashoffset: -8;
     }
+  }
+
+  .calore {
+    display: grid;
+    gap: 6px;
+    font-size: 0.82rem;
+    color: var(--grigio-700);
+  }
+
+  .calore__barra {
+    height: 10px;
+    border-radius: 99px;
+    background: var(--grigio-100);
+    overflow: hidden;
+  }
+
+  .calore__barra span {
+    --calore: 0;
+    display: block;
+    height: 100%;
+    width: calc(var(--calore) * 100%);
+    border-radius: 99px;
+    background: linear-gradient(90deg, #fbbf24, #f97316, #dc2626);
   }
 
   .strati {
@@ -1583,152 +2239,65 @@ import { CORRENTI, CONFIGURAZIONI, FASI, STRATI, ZONE } from '../lib/back4';
     border-left: 4px solid var(--colore);
   }
 
+  .sim--urto .dispositivo {
+    animation: scossa 0.45s ease;
+  }
+
+  @keyframes scossa {
+    20%,
+    60% {
+      transform: translateX(-5px);
+    }
+    40%,
+    80% {
+      transform: translateX(5px);
+    }
+  }
+
   @media (prefers-reduced-motion: reduce) {
-    .onde span,
-    .sim--flusso .corpo :global(.flusso) {
+    .home__banda,
+    .col__onda,
+    .academy__punto .academy__alone,
+    .corpo :global(.flusso) {
       animation: none;
     }
   }
 
   @media (max-width: 960px) {
-    .sim__griglia {
+    .pannelli {
       grid-template-columns: 1fr;
     }
   }
 
-  /* telefono: lo schermo diventa più alto per lasciare spazio ai cursori */
-  @media (max-width: 620px) {
-    .schermo {
-      aspect-ratio: 3 / 4;
+  /* telefono: senza foto lo schermo occupa tutta la larghezza, con una cornice d'alluminio */
+  @media (max-width: 720px) {
+    .dispositivo {
+      padding: 10px;
+      border-radius: 22px;
+      background: linear-gradient(135deg, #e4e7ea, #b9bec3);
     }
 
-    .canali {
-      grid-template-columns: repeat(5, minmax(30cqw, 1fr));
-      overflow-x: auto;
-      scroll-snap-type: x mandatory;
-    }
-
-    .canale {
-      scroll-snap-align: start;
-    }
-
-    .barra-schermo,
-    .canali,
-    .comandi {
-      font-size: 3cqw;
-    }
-
-    .scheda-corrente {
-      font-size: 2.6cqw;
-    }
-
-    .canale__modi button,
-    .canale__frequenza :global(button) {
-      font-size: 2.4cqw;
-    }
-
-    .canale__frequenza {
-      font-size: 2.6cqw;
-    }
-
-    .canale__potenza output {
-      font-size: 4.6cqw;
-    }
-
-    .cursore {
-      width: 12cqw;
-      min-height: 30cqw;
-    }
-
-    .cursore__traccia {
-      inset: 0 4.5cqw;
-    }
-
-    .cursore__input::-webkit-slider-thumb {
-      width: 12cqw;
-      height: 3cqw;
-    }
-
-    .cursore__input::-moz-range-thumb {
-      width: 12cqw;
-      height: 3cqw;
-    }
-
-    .canale__piu-meno button {
-      width: 9cqw;
-      height: 7cqw;
-      font-size: 4.6cqw;
-    }
-
-    .canale__tempo {
-      font-size: 3.2cqw;
-    }
-
-    .canale__tempo button {
-      width: 6cqw;
-      height: 6cqw;
-      font-size: 3.6cqw;
-    }
-
-    .home__scelta {
-      width: 36cqw;
-    }
-
-    .home__scelta svg {
-      width: 9cqw;
-    }
-
-    .home__scelta strong {
-      font-size: 4cqw;
-    }
-
-    .home__scelta small {
-      font-size: 2.6cqw;
-    }
-
-    .comandi__motto {
+    .dispositivo__foto {
       display: none;
     }
 
-    .comandi__tasti button {
-      width: 11cqw;
-      height: 9cqw;
-      font-size: 4cqw;
+    .schermo {
+      position: relative;
+      left: auto;
+      top: auto;
+      width: 100%;
+      height: auto;
+      aspect-ratio: 3 / 2;
+      border-radius: 10px;
     }
 
-    .anello {
-      width: 14cqw;
-      height: 14cqw;
-    }
-
-    .anello span {
-      font-size: 4cqw;
-    }
-
-    .academy__domanda {
-      font-size: 4.4cqw;
-    }
-
-    .academy__scelte,
-    .academy__scelte--zone {
-      grid-template-columns: repeat(2, 1fr);
-    }
-
-    .academy__scelte button,
-    .academy__programma :global(li),
-    .tasto-schermo {
-      font-size: 3.4cqw;
-    }
-
-    .academy__scelte small,
-    .academy__nota {
-      font-size: 2.8cqw;
-    }
-
-    .barra-schermo__home {
-      width: 8cqw;
-      height: 8cqw;
-      font-size: 4.4cqw;
+    .dispositivo__intero {
+      position: static;
+      display: block;
+      width: 100%;
+      margin-top: 10px;
+      padding: 12px;
+      font-size: 0.95rem;
     }
   }
 </style>
