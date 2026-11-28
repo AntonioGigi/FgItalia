@@ -124,6 +124,13 @@ collections:
         min: 0
         required: false
         hint: Per le apparecchiature. Il cliente riceve un promemoria prima della scadenza. Vuoto = 12 mesi per le apparecchiature; 0 = nessuna manutenzione.
+      - label: Simulatore interattivo
+        name: simulatore
+        widget: select
+        required: false
+        options:
+          - { label: Schermo Winback BACK4, value: back4 }
+        hint: Mostra nella scheda il simulatore dello schermo del dispositivo.
       - { label: In evidenza nella home, name: in_evidenza, widget: boolean, default: false }
       - { label: Pubblicato, name: pubblicato, widget: boolean, default: true }
       - { label: Descrizione completa, name: body, widget: markdown, required: false }

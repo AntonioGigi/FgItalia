@@ -7,6 +7,7 @@ descrizione_breve: "Il dispositivo BACK4 permette di trattare da una a tre zone 
 immagini:
   - /uploads/prodotti/back-4-tx.webp
 scheda_pdf: "/uploads/schede/BACK4.pdf"
+simulatore: back4
 in_evidenza: true
 pubblicato: true
 ---

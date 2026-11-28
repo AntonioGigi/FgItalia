@@ -4,6 +4,7 @@ import Base from '../../layouts/Base.astro';
 import Icona from '../../components/Icona.astro';
 import Condividi from '../../components/Condividi.astro';
 import CardProdotto from '../../components/CardProdotto.astro';
+import SimulatoreBack4 from '../../components/SimulatoreBack4.astro';
 import { prodottiPubblicati, type Prodotto } from '../../lib/catalogo';
 import { sito, soloCifre, linkWhatsApp, prezzo, statiDisponibilita, formatoData } from '../../lib/sito';
 import { scontoPer } from '../../lib/promozioni';
@@ -221,6 +222,8 @@ const datiStrutturati = {
       </div>
     </div>
   </section>
+
+  {prodotto.data.simulatore === 'back4' && <SimulatoreBack4 />}
 
   {
     (haDescrizione || specifiche.length > 0) && (

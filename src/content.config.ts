@@ -58,6 +58,8 @@ const prodotti = defineCollection({
     consumabile: z.preprocess((v) => (v === null || v === '' ? undefined : v), z.boolean().optional()),
     /** ogni quanti mesi va fatta la manutenzione o la verifica di sicurezza; se manca vale 12 per le apparecchiature */
     manutenzione_mesi: z.preprocess((v) => (v === '' || v === null ? undefined : v), z.coerce.number().int().min(0).max(120).optional()),
+    /** simulatore interattivo dello schermo nella scheda prodotto */
+    simulatore: z.preprocess((v) => v || undefined, z.enum(['back4']).optional()),
     in_evidenza: z.boolean().default(false),
     pubblicato: z.boolean().default(true),
   }),
